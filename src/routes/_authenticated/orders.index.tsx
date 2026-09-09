@@ -14,9 +14,10 @@ import {
 } from "@/lib/atelier";
 
 export const Route = createFileRoute("/_authenticated/orders/")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search.q === "string" && search.q ? search.q : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { q?: string } => {
+    const raw = search["q"];
+    return { q: typeof raw === "string" && raw ? raw : undefined };
+  },
   component: OrdersPage,
 });
 
