@@ -14,16 +14,269 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      order_files: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          order_id: string
+          stage_id: string | null
+          storage_path: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          order_id: string
+          stage_id?: string | null
+          storage_path: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          order_id?: string
+          stage_id?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_files_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_files_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "order_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_stages: {
+        Row: {
+          assignee_id: string | null
+          assignee_name: string | null
+          completed_at: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          position: number
+          stage: Database["public"]["Enums"]["stage_key"]
+          started_at: string | null
+          status: Database["public"]["Enums"]["stage_status"]
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          assignee_name?: string | null
+          completed_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          position: number
+          stage: Database["public"]["Enums"]["stage_key"]
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["stage_status"]
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          assignee_name?: string | null
+          completed_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          position?: number
+          stage?: Database["public"]["Enums"]["stage_key"]
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["stage_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_stages_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_stages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          booked_at: string
+          client_contact: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          created_by: string | null
+          current_stage: Database["public"]["Enums"]["stage_key"]
+          deposit_amount: number
+          due_date: string | null
+          id: string
+          materials: string | null
+          measurements: Json
+          notes: string | null
+          order_no: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          state: Database["public"]["Enums"]["order_state"]
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          booked_at?: string
+          client_contact?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_stage?: Database["public"]["Enums"]["stage_key"]
+          deposit_amount?: number
+          due_date?: string | null
+          id?: string
+          materials?: string | null
+          measurements?: Json
+          notes?: string | null
+          order_no?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          state?: Database["public"]["Enums"]["order_state"]
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          booked_at?: string
+          client_contact?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_stage?: Database["public"]["Enums"]["stage_key"]
+          deposit_amount?: number
+          due_date?: string | null
+          id?: string
+          materials?: string | null
+          measurements?: Json
+          notes?: string | null
+          order_no?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          state?: Database["public"]["Enums"]["order_state"]
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          job_title: string | null
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string
+          id: string
+          is_active?: boolean
+          job_title?: string | null
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          job_title?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      user_permissions: {
+        Row: {
+          id: string
+          permission: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          permission: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          permission?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "staff"
+      order_state: "active" | "delivered" | "cancelled"
+      payment_status: "unpaid" | "partial" | "paid"
+      stage_key:
+        | "booking"
+        | "measurements"
+        | "design"
+        | "materials"
+        | "cutting"
+        | "sewing"
+        | "finishing"
+        | "fitting1"
+        | "alterations"
+        | "fitting2"
+        | "quality"
+        | "prep_delivery"
+        | "delivery"
+      stage_status: "pending" | "in_progress" | "done" | "blocked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +403,26 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "staff"],
+      order_state: ["active", "delivered", "cancelled"],
+      payment_status: ["unpaid", "partial", "paid"],
+      stage_key: [
+        "booking",
+        "measurements",
+        "design",
+        "materials",
+        "cutting",
+        "sewing",
+        "finishing",
+        "fitting1",
+        "alterations",
+        "fitting2",
+        "quality",
+        "prep_delivery",
+        "delivery",
+      ],
+      stage_status: ["pending", "in_progress", "done", "blocked"],
+    },
   },
 } as const
