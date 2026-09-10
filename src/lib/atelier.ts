@@ -9,21 +9,56 @@ export type OrderStage = Database["public"]["Tables"]["order_stages"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type OrderFile = Database["public"]["Tables"]["order_files"]["Row"];
 
+export type Priority = Database["public"]["Enums"]["task_priority"];
+export type AlterationStatus = Database["public"]["Enums"]["alteration_status"];
+export type AppRole = Database["public"]["Enums"]["app_role"];
+
 export const STAGES: { key: StageKey; label: string }[] = [
-  { key: "booking", label: "حجز" },
+  { key: "booking", label: "الحجز" },
   { key: "measurements", label: "أخذ المقاسات" },
   { key: "design", label: "التصميم" },
+  { key: "design_approval", label: "اعتماد التصميم" },
   { key: "materials", label: "تجهيز الخامات" },
   { key: "cutting", label: "القص" },
   { key: "sewing", label: "الخياطة" },
+  { key: "embroidery", label: "التطريز" },
   { key: "finishing", label: "التشطيب" },
   { key: "fitting1", label: "البروفة الأولى" },
   { key: "alterations", label: "التعديلات" },
   { key: "fitting2", label: "البروفة الثانية" },
+  { key: "final_alterations", label: "التعديلات النهائية" },
   { key: "quality", label: "الجودة" },
   { key: "prep_delivery", label: "التجهيز للتسليم" },
   { key: "delivery", label: "التسليم" },
 ];
+
+export const ROLE_LABEL: Record<AppRole, string> = {
+  admin: "مدير النظام",
+  supervisor: "مشرف",
+  staff: "موظف",
+  cs: "خدمة عملاء",
+};
+
+export const PRIORITY_LABEL: Record<Priority, string> = {
+  low: "منخفضة",
+  normal: "عادية",
+  high: "عالية",
+  urgent: "عاجلة",
+};
+
+export const PRIORITY_ORDER: Record<Priority, number> = {
+  urgent: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+};
+
+export const ALTERATION_STATUS_LABEL: Record<AlterationStatus, string> = {
+  requested: "مطلوب",
+  in_progress: "قيد التنفيذ",
+  done: "منفَّذ",
+  cancelled: "ملغي",
+};
 
 export const stageLabel = (key: StageKey) =>
   STAGES.find((s) => s.key === key)?.label ?? key;
