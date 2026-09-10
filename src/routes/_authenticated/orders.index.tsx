@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
+import { OrdersTabs } from "@/components/OrdersTabs";
 import { Card, Chip, Empty, PaymentChip } from "@/components/kit";
 import { useOrders } from "@/lib/data";
 import {
@@ -49,6 +50,8 @@ function OrdersPage() {
         </Link>
       }
     >
+      <OrdersTabs />
+
       <div className="mb-4">
         <input
           value={term}

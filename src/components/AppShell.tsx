@@ -14,7 +14,6 @@ import {
   Settings2,
   Bell,
   Boxes,
-  Shirt,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -40,7 +39,6 @@ const NAV: NavItem[] = [
   { to: "/stages", label: "لوحة الإنتاج", icon: Layers },
   { to: "/late", label: "المتأخرات", icon: AlarmClock },
   { to: "/inventory", label: "مخزون المواد", icon: Boxes },
-  { to: "/rentals", label: "فساتين الإيجار", icon: Shirt },
   { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
   { to: "/reports", label: "تقرير الأداء", icon: BarChart3, managerOnly: true },
   { to: "/workflow", label: "إعداد المراحل", icon: Settings2, adminOnly: true },
