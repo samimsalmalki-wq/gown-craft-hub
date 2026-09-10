@@ -544,15 +544,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      log_activity: {
-        Args: {
-          _action: string
-          _details: string
-          _order_id: string
-          _stage_id: string
-        }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       alteration_status: "requested" | "in_progress" | "done" | "cancelled"
