@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
+import { OrdersTabs } from "@/components/OrdersTabs";
 import { Btn, Card, Chip, Empty, Field, Sheet, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, money } from "@/lib/atelier";
@@ -81,11 +82,13 @@ function RentalsPage() {
 
   return (
     <AppShell
-      eyebrow="المخزون"
+      eyebrow="الطلبات"
       title="فساتين الإيجار"
       subtitle="حالة كل فستان وسجل إيجاراته ومواعيد الإرجاع."
       actions={isManager ? <Btn onClick={() => setOpen(true)}>فستان جديد</Btn> : undefined}
     >
+      <OrdersTabs />
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="عدد الفساتين" value={dresses.length} onClick={() => setStatus("all")} active={status === "all"} />
         <Stat
