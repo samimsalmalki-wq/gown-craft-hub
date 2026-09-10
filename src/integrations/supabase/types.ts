@@ -14,6 +14,197 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          order_id: string | null
+          stage_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          order_id?: string | null
+          stage_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          order_id?: string | null
+          stage_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "order_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alterations: {
+        Row: {
+          assignee_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          notes: string | null
+          number: number
+          order_id: string
+          requested_at: string
+          stage_id: string | null
+          status: Database["public"]["Enums"]["alteration_status"]
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          notes?: string | null
+          number: number
+          order_id: string
+          requested_at?: string
+          stage_id?: string | null
+          status?: Database["public"]["Enums"]["alteration_status"]
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          notes?: string | null
+          number?: number
+          order_id?: string
+          requested_at?: string
+          stage_id?: string | null
+          status?: Database["public"]["Enums"]["alteration_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alterations_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alterations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alterations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alterations_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "order_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          kind: string
+          message: string
+          order_id: string | null
+          stage_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          kind: string
+          message: string
+          order_id?: string | null
+          stage_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          kind?: string
+          message?: string
+          order_id?: string | null
+          stage_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "order_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_files: {
         Row: {
           caption: string | null
@@ -64,45 +255,88 @@ export type Database = {
       }
       order_stages: {
         Row: {
+          assigned_at: string | null
+          assigned_by: string | null
           assignee_id: string | null
           assignee_name: string | null
           completed_at: string | null
+          delay_reason: string | null
+          due_at: string | null
+          duration_minutes: number | null
           id: string
           notes: string | null
           order_id: string
           position: number
+          priority: Database["public"]["Enums"]["task_priority"]
+          requires_review: boolean
+          review_notes: string | null
+          review_status: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rework_count: number
           stage: Database["public"]["Enums"]["stage_key"]
           started_at: string | null
           status: Database["public"]["Enums"]["stage_status"]
           updated_at: string
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
           assignee_id?: string | null
           assignee_name?: string | null
           completed_at?: string | null
+          delay_reason?: string | null
+          due_at?: string | null
+          duration_minutes?: number | null
           id?: string
           notes?: string | null
           order_id: string
           position: number
+          priority?: Database["public"]["Enums"]["task_priority"]
+          requires_review?: boolean
+          review_notes?: string | null
+          review_status?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rework_count?: number
           stage: Database["public"]["Enums"]["stage_key"]
           started_at?: string | null
           status?: Database["public"]["Enums"]["stage_status"]
           updated_at?: string
         }
         Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
           assignee_id?: string | null
           assignee_name?: string | null
           completed_at?: string | null
+          delay_reason?: string | null
+          due_at?: string | null
+          duration_minutes?: number | null
           id?: string
           notes?: string | null
           order_id?: string
           position?: number
+          priority?: Database["public"]["Enums"]["task_priority"]
+          requires_review?: boolean
+          review_notes?: string | null
+          review_status?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rework_count?: number
           stage?: Database["public"]["Enums"]["stage_key"]
           started_at?: string | null
           status?: Database["public"]["Enums"]["stage_status"]
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "order_stages_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_stages_assignee_id_fkey"
             columns: ["assignee_id"]
@@ -115,6 +349,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_stages_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -184,7 +425,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allowed_stages: Database["public"]["Enums"]["stage_key"][]
+          avatar_url: string | null
           created_at: string
+          department_id: string | null
           full_name: string
           id: string
           is_active: boolean
@@ -192,7 +436,10 @@ export type Database = {
           phone: string | null
         }
         Insert: {
+          allowed_stages?: Database["public"]["Enums"]["stage_key"][]
+          avatar_url?: string | null
           created_at?: string
+          department_id?: string | null
           full_name?: string
           id: string
           is_active?: boolean
@@ -200,12 +447,59 @@ export type Database = {
           phone?: string | null
         }
         Update: {
+          allowed_stages?: Database["public"]["Enums"]["stage_key"][]
+          avatar_url?: string | null
           created_at?: string
+          department_id?: string | null
           full_name?: string
           id?: string
           is_active?: boolean
           job_title?: string | null
           phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stage_templates: {
+        Row: {
+          created_at: string
+          expected_days: number
+          id: string
+          is_active: boolean
+          label: string
+          position: number
+          requires_review: boolean
+          stage: Database["public"]["Enums"]["stage_key"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expected_days?: number
+          id?: string
+          is_active?: boolean
+          label: string
+          position: number
+          requires_review?: boolean
+          stage: Database["public"]["Enums"]["stage_key"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expected_days?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          position?: number
+          requires_review?: boolean
+          stage?: Database["public"]["Enums"]["stage_key"]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -253,24 +547,36 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "staff"
+      alteration_status: "requested" | "in_progress" | "done" | "cancelled"
+      app_role: "admin" | "staff" | "supervisor" | "cs"
       order_state: "active" | "delivered" | "cancelled"
       payment_status: "unpaid" | "partial" | "paid"
       stage_key:
         | "booking"
         | "measurements"
         | "design"
+        | "design_approval"
         | "materials"
         | "cutting"
         | "sewing"
+        | "embroidery"
         | "finishing"
         | "fitting1"
         | "alterations"
         | "fitting2"
+        | "final_alterations"
         | "quality"
         | "prep_delivery"
         | "delivery"
-      stage_status: "pending" | "in_progress" | "done" | "blocked"
+      stage_status:
+        | "pending"
+        | "in_progress"
+        | "done"
+        | "blocked"
+        | "assigned"
+        | "review"
+        | "late"
+      task_priority: "low" | "normal" | "high" | "urgent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -398,25 +704,38 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff"],
+      alteration_status: ["requested", "in_progress", "done", "cancelled"],
+      app_role: ["admin", "staff", "supervisor", "cs"],
       order_state: ["active", "delivered", "cancelled"],
       payment_status: ["unpaid", "partial", "paid"],
       stage_key: [
         "booking",
         "measurements",
         "design",
+        "design_approval",
         "materials",
         "cutting",
         "sewing",
+        "embroidery",
         "finishing",
         "fitting1",
         "alterations",
         "fitting2",
+        "final_alterations",
         "quality",
         "prep_delivery",
         "delivery",
       ],
-      stage_status: ["pending", "in_progress", "done", "blocked"],
+      stage_status: [
+        "pending",
+        "in_progress",
+        "done",
+        "blocked",
+        "assigned",
+        "review",
+        "late",
+      ],
+      task_priority: ["low", "normal", "high", "urgent"],
     },
   },
 } as const

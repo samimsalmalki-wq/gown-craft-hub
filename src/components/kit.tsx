@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import type { PaymentStatus, StageStatus } from "@/lib/atelier";
-import { PAYMENT_LABEL, STAGE_STATUS_LABEL } from "@/lib/atelier";
+import type { PaymentStatus, Priority, StageStatus } from "@/lib/atelier";
+import { PAYMENT_LABEL, PRIORITY_LABEL, STAGE_STATUS_LABEL } from "@/lib/atelier";
 
 export function Card({
   children,
@@ -96,8 +96,78 @@ export function Chip({
 
 export function StageStatusChip({ status }: { status: StageStatus }) {
   const tone =
-    status === "done" ? "ok" : status === "in_progress" ? "gold" : status === "blocked" ? "late" : "neutral";
+    status === "done"
+      ? "ok"
+      : status === "in_progress"
+        ? "gold"
+        : status === "blocked" || status === "late"
+          ? "late"
+          : status === "review"
+            ? "soon"
+            : "neutral";
   return <Chip tone={tone}>{STAGE_STATUS_LABEL[status]}</Chip>;
+}
+
+export function PriorityChip({ priority }: { priority: Priority }) {
+  const tone = priority === "urgent" ? "late" : priority === "high" ? "soon" : "neutral";
+  return <Chip tone={tone}>{PRIORITY_LABEL[priority]}</Chip>;
+}
+
+export function Avatar({
+  name,
+  url,
+  size = 9,
+}: {
+  name?: string | null | undefined;
+  url?: string | null | undefined;
+  size?: 8 | 9 | 12 | 16;
+}) {
+  const cls = { 8: "size-8", 9: "size-9", 12: "size-12", 16: "size-16" }[size];
+  if (url)
+    return (
+      <img
+        src={url}
+        alt={name ?? "صورة الموظف"}
+        className={cn(cls, "shrink-0 rounded-full border border-line object-cover")}
+      />
+    );
+  return (
+    <div
+      className={cn(
+        cls,
+        "grid shrink-0 place-items-center rounded-full bg-ink text-sm font-semibold text-ivory",
+      )}
+    >
+      {(name || "؟").slice(0, 1)}
+    </div>
+  );
+}
+
+export function Sheet({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40 p-0 sm:items-center sm:p-6">
+      <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-2xl border border-line bg-paper sm:rounded-2xl">
+        <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-line bg-paper px-4 py-3">
+          <h2 className="text-[15px] font-medium">{title}</h2>
+          <button onClick={onClose} className="text-[13px] text-muted-foreground">
+            إغلاق
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export function PaymentChip({ status }: { status: PaymentStatus }) {
