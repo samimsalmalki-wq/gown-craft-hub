@@ -153,10 +153,11 @@ function OrderDetailPage() {
                   <li key={a.id} className="px-4 py-2.5">
                     <p className="text-[12.5px]">
                       <span className="font-medium">{activityLabel(a.action)}</span>
-                      {a.detail ? ` · ${a.detail}` : ""}
+                      {a.details ? ` · ${a.details}` : ""}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      {a.actor_name || "النظام"} · {fmtDateTime(a.created_at)}
+                      {profiles.find((p) => p.id === a.actor_id)?.full_name || "النظام"} ·{" "}
+                      {fmtDateTime(a.created_at)}
                     </p>
                   </li>
                 ))}
