@@ -94,14 +94,37 @@ function NewOrderPage() {
             <Field label="بيانات تواصل أخرى">
               <input className="field" value={form.client_contact} onChange={set("client_contact")} />
             </Field>
-            <Field label="تاريخ الحجز">
+          </div>
+        </Card>
+
+        <Card title="المواعيد">
+          <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
+            <Field label="تاريخ الحجز" hint="يُسجَّل تلقائيًا بتاريخ اليوم">
               <input className="field" type="date" value={form.booked_at} onChange={set("booked_at")} />
             </Field>
-            <Field label="تاريخ التسليم المتوقع">
+            <Field label="تاريخ البروفة الأولى">
+              <input className="field" type="date" value={form.fitting1_date} onChange={set("fitting1_date")} />
+            </Field>
+            {secondFitting ? (
+              <Field label="تاريخ البروفة الثانية">
+                <input className="field" type="date" value={form.fitting2_date} onChange={set("fitting2_date")} />
+              </Field>
+            ) : (
+              <div className="flex items-end">
+                <Btn type="button" variant="quiet" onClick={() => setSecondFitting(true)}>
+                  إضافة بروفة ثانية
+                </Btn>
+              </div>
+            )}
+            <Field label="تاريخ التسليم النهائي">
               <input className="field" type="date" value={form.due_date} onChange={set("due_date")} />
+            </Field>
+            <Field label="تاريخ المناسبة">
+              <input className="field" type="date" value={form.event_date} onChange={set("event_date")} />
             </Field>
           </div>
         </Card>
+
 
         <Card title="المقاسات (سم)">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-3">
