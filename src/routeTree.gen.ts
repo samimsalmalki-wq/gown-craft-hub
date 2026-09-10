@@ -19,6 +19,7 @@ import { Route as AuthenticatedStagesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedWorkflowRouteImport } from './routes/_authenticated/workflow'
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
+import { Route as AuthenticatedInventoryMaterialIdRouteImport } from './routes/_authenticated/inventory.$materialId'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
@@ -75,6 +76,12 @@ const AuthenticatedInventoryIndexRoute =
     path: '/inventory/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInventoryMaterialIdRoute =
+  AuthenticatedInventoryMaterialIdRouteImport.update({
+    id: '/inventory/$materialId',
+    path: '/inventory/$materialId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdersIndexRoute =
   AuthenticatedOrdersIndexRouteImport.update({
     id: '/orders/',
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflow': typeof AuthenticatedWorkflowRoute
+  '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
@@ -129,6 +137,7 @@ export interface FileRoutesByTo {
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflow': typeof AuthenticatedWorkflowRoute
+  '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
@@ -147,6 +156,7 @@ export interface FileRoutesById {
   '/_authenticated/stages': typeof AuthenticatedStagesRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/workflow': typeof AuthenticatedWorkflowRoute
+  '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/stages'
     | '/tasks'
     | '/workflow'
+    | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
     | '/staff/$userId'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/stages'
     | '/tasks'
     | '/workflow'
+    | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
     | '/staff/$userId'
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
     | '/_authenticated/stages'
     | '/_authenticated/tasks'
     | '/_authenticated/workflow'
+    | '/_authenticated/inventory/$materialId'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
     | '/_authenticated/staff/$userId'
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inventory/$materialId': {
+      id: '/_authenticated/inventory/$materialId'
+      path: '/inventory/$materialId'
+      fullPath: '/inventory/$materialId'
+      preLoaderRoute: typeof AuthenticatedInventoryMaterialIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders/': {
       id: '/_authenticated/orders/'
       path: '/orders'
@@ -329,6 +349,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStagesRoute: typeof AuthenticatedStagesRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedWorkflowRoute: typeof AuthenticatedWorkflowRoute
+  AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
@@ -344,6 +365,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStagesRoute: AuthenticatedStagesRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedWorkflowRoute: AuthenticatedWorkflowRoute,
+  AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
