@@ -100,13 +100,13 @@ function RentalsPage() {
         <Stat label="عدد الفساتين" value={dresses.length} onClick={() => setStatus("all")} active={status === "all"} />
         <Stat
           label="متاح للإيجار"
-          value={dresses.filter((d) => d.status === "available").length}
+          value={dresses.filter((d) => statusOf(d) === "available").length}
           onClick={() => setStatus("available")}
           active={status === "available"}
         />
         <Stat
           label="مؤجَّر حاليًا"
-          value={dresses.filter((d) => d.status === "rented").length}
+          value={dresses.filter((d) => statusOf(d) === "rented").length}
           tone="gold"
           onClick={() => setStatus("rented")}
           active={status === "rented"}
