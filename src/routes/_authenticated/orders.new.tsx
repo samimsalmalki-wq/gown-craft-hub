@@ -99,9 +99,10 @@ function NewOrderPage() {
 
         <Card title="المواعيد">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-            <Field label="تاريخ الحجز" hint="يُسجَّل تلقائيًا بتاريخ اليوم">
-              <input className="field" type="date" value={form.booked_at} onChange={set("booked_at")} />
+            <Field label="تاريخ الحجز" hint="يُسجَّل تلقائيًا بتاريخ اليوم وغير قابل للتعديل">
+              <input className="field" type="date" value={form.booked_at} readOnly disabled />
             </Field>
+
             <Field label="تاريخ البروفة الأولى">
               <input className="field" type="date" value={form.fitting1_date} onChange={set("fitting1_date")} />
             </Field>
