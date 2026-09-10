@@ -164,26 +164,49 @@ function RentalsPage() {
           )}
         </Card>
 
-        <Card title="إيجارات قائمة">
-          {openRecords.length === 0 ? (
-            <Empty>لا توجد فساتين خارج المحل.</Empty>
-          ) : (
-            <ul className="divide-y divide-line">
-              {openRecords.slice(0, 12).map((r) => {
-                const dress = dresses.find((d) => d.id === r.dress_id);
-                return (
-                  <li key={r.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-[13px]">
-                    <span className="num text-gold">{dress?.code ?? "—"}</span>
-                    <span className="min-w-0 flex-1 truncate">{r.client_name}</span>
-                    <span className={isRentalLate(r) ? "text-[12px] text-late" : "text-[12px] text-muted-foreground"}>
-                      {fmtDate(r.due_date)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Card>
+        <div className="space-y-5">
+          <Card title="خارج المحل الآن">
+            {outNow.length === 0 ? (
+              <Empty>لا توجد فساتين خارج المحل.</Empty>
+            ) : (
+              <ul className="divide-y divide-line">
+                {outNow.slice(0, 12).map((r) => {
+                  const dress = dresses.find((d) => d.id === r.dress_id);
+                  return (
+                    <li key={r.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-[13px]">
+                      <span className="num text-gold">{dress?.code ?? "—"}</span>
+                      <span className="min-w-0 flex-1 truncate">{r.client_name}</span>
+                      <span
+                        className={isRentalLate(r) ? "text-[12px] text-late" : "text-[12px] text-muted-foreground"}
+                      >
+                        {fmtDate(r.due_date)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
+          <Card title="حجوزات قادمة">
+            {upcoming.length === 0 ? (
+              <Empty>لا توجد حجوزات قادمة.</Empty>
+            ) : (
+              <ul className="divide-y divide-line">
+                {upcoming.slice(0, 12).map((r) => {
+                  const dress = dresses.find((d) => d.id === r.dress_id);
+                  return (
+                    <li key={r.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-[13px]">
+                      <span className="num text-gold">{dress?.code ?? "—"}</span>
+                      <span className="min-w-0 flex-1 truncate">{r.client_name}</span>
+                      <span className="text-[12px] text-muted-foreground">من {fmtDate(r.out_date)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+        </div>
       </div>
 
       <Sheet open={open} onClose={() => setOpen(false)} title="فستان إيجار جديد">
