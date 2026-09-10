@@ -194,8 +194,14 @@ function DressPage() {
         </Card>
       </div>
 
-      <Sheet open={outOpen} onClose={() => setOutOpen(false)} title="تأجير الفستان">
+      <Sheet open={outOpen} onClose={() => setOutOpen(false)} title="تأجير الفستان أو حجزه">
         <form onSubmit={submitOut} className="space-y-4 p-4">
+          {err && (
+            <p className="rounded-lg bg-late/10 px-3 py-2 text-[13px] text-late">{err}</p>
+          )}
+          <p className="text-[12px] text-muted-foreground">
+            إذا كان تاريخ الخروج في المستقبل يبقى الفستان متاحًا في المحل ويظهر كحجز قادم حتى يوم الخروج.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="اسم العميلة">
               <input
