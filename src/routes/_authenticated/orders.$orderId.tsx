@@ -3,30 +3,49 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
-import { Btn, Card, Chip, Empty, PaymentChip, StageStatusChip } from "@/components/kit";
+import { Btn, Card, Chip, Empty, Field, PaymentChip, Sheet } from "@/components/kit";
+import { StageRow, StageSheet } from "@/components/StageWork";
 import {
+  useActivityLog,
+  useAddAlteration,
+  useAlterations,
   useOrder,
   useOrderFiles,
   useOrderStages,
   useProfiles,
-  useSetCurrentStage,
   useSignedUrls,
+  useUpdateAlteration,
   useUpdateOrder,
-  useUpdateStage,
   useUploadFiles,
 } from "@/lib/data";
 import { useCurrentAccount } from "@/hooks/useSession";
 import {
+  ALTERATION_STATUS_LABEL,
   ORDER_STATE_LABEL,
+  activityLabel,
   fmtDate,
   fmtDateTime,
   money,
   remaining,
   stageLabel,
+  type AlterationStatus,
   type OrderStage,
 } from "@/lib/atelier";
 
 export const Route = createFileRoute("/_authenticated/orders/$orderId")({
+  head: () => ({
+    meta: [
+      { title: "تفاصيل الطلب · مَعْمَل" },
+      { name: "description", content: "بيانات الفستان والعميلة ومراحل التنفيذ والتعديلات والسجل الزمني." },
+      { property: "og:title", content: "تفاصيل الطلب · مَعْمَل" },
+      {
+        property: "og:description",
+        content: "بيانات الفستان والعميلة ومراحل التنفيذ والتعديلات والسجل الزمني.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: OrderDetailPage,
 });
 
@@ -36,12 +55,16 @@ function OrderDetailPage() {
   const { data: stages = [] } = useOrderStages(orderId);
   const { data: files = [] } = useOrderFiles(orderId);
   const { data: profiles = [] } = useProfiles();
-  const { can } = useCurrentAccount();
+  const { data: alterations = [] } = useAlterations(orderId);
+  const { data: log = [] } = useActivityLog(orderId);
+  const { can, isManager } = useCurrentAccount();
   const urls = useSignedUrls(files.map((f) => f.storage_path));
   const updateOrder = useUpdateOrder(orderId);
-  const updateStage = useUpdateStage(orderId);
-  const setCurrent = useSetCurrentStage(orderId);
   const upload = useUploadFiles(orderId);
+  const addAlteration = useAddAlteration(orderId);
+  const updateAlteration = useUpdateAlteration(orderId);
+  const [activeStage, setActiveStage] = useState<OrderStage | null>(null);
+  const [altOpen, setAltOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -59,21 +82,7 @@ function OrderDetailPage() {
   }
 
   const measures = (order.measurements ?? {}) as Record<string, unknown>;
-  const canEditStages = can("stages.edit");
   const canUpload = can("files.upload");
-
-  async function stageAction(stage: OrderStage, action: "start" | "done" | "block") {
-    const now = new Date().toISOString();
-    const patch =
-      action === "start"
-        ? { status: "in_progress" as const, started_at: stage.started_at ?? now }
-        : action === "done"
-          ? { status: "done" as const, completed_at: now, started_at: stage.started_at ?? now }
-          : { status: "blocked" as const };
-    await updateStage.mutateAsync({ id: stage.id, patch });
-    if (action !== "block") await setCurrent.mutateAsync(stage.stage);
-    toast.success("تم تحديث المرحلة");
-  }
 
   return (
     <AppShell
@@ -134,59 +143,117 @@ function OrderDetailPage() {
               )}
             </Card>
           )}
+
+          <Card title="السجل الزمني">
+            {log.length === 0 ? (
+              <Empty>لا يوجد سجل بعد.</Empty>
+            ) : (
+              <ol className="max-h-96 divide-y divide-line overflow-y-auto">
+                {log.map((a) => (
+                  <li key={a.id} className="px-4 py-2.5">
+                    <p className="text-[12.5px]">
+                      <span className="font-medium">{activityLabel(a.action)}</span>
+                      {a.detail ? ` · ${a.detail}` : ""}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {a.actor_name || "النظام"} · {fmtDateTime(a.created_at)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Card>
         </div>
 
         <div className="space-y-5">
           <Card title="مراحل التنفيذ">
             <ol className="divide-y divide-line">
               {stages.map((s) => (
-                <li key={s.id} className="px-4 py-3.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="num text-[13px] text-muted-foreground">{s.position}</span>
-                    <span className="min-w-0 flex-1 text-[14px] font-medium">{stageLabel(s.stage)}</span>
-                    <StageStatusChip status={s.status} />
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-x-4 text-[11px] text-muted-foreground">
-                    <span>بدء: {fmtDateTime(s.started_at)}</span>
-                    <span>انتهاء: {fmtDateTime(s.completed_at)}</span>
-                    <span>المسؤول: {s.assignee_name || "—"}</span>
-                  </div>
-                  {canEditStages && (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                      <button className="rounded-lg border border-line px-3 py-1.5 text-[12px]" onClick={() => stageAction(s, "start")}>
-                        بدء
-                      </button>
-                      <button className="rounded-lg border border-line px-3 py-1.5 text-[12px]" onClick={() => stageAction(s, "done")}>
-                        إنهاء
-                      </button>
-                      <button className="rounded-lg border border-line px-3 py-1.5 text-[12px] text-late" onClick={() => stageAction(s, "block")}>
-                        إيقاف
-                      </button>
-                      <select
-                        className="field h-9 min-h-0 py-0 text-[12px]"
-                        value={s.assignee_id ?? ""}
-                        onChange={(e) => {
-                          const p = profiles.find((x) => x.id === e.target.value);
-                          updateStage.mutate({
-                            id: s.id,
-                            patch: { assignee_id: p?.id ?? null, assignee_name: p?.full_name ?? null },
-                          });
-                        }}
-                      >
-                        <option value="">بدون مسؤول</option>
-                        {profiles.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.full_name}
-                          </option>
-                        ))}
-                      </select>
-                      <StageNote stage={s} onSave={(notes) => updateStage.mutate({ id: s.id, patch: { notes } })} />
-                    </div>
-                  )}
-                  {s.notes && <p className="mt-2 text-[12px] whitespace-pre-wrap">{s.notes}</p>}
+                <li key={s.id}>
+                  <StageRow stage={s} onOpen={() => setActiveStage(s)} />
                 </li>
               ))}
             </ol>
+          </Card>
+
+          <Card
+            title="التعديلات والبروفات"
+            action={
+              can("stages.edit") ? (
+                <button className="text-[13px] text-gold" onClick={() => setAltOpen(true)}>
+                  إضافة تعديل
+                </button>
+              ) : undefined
+            }
+          >
+            {alterations.length === 0 ? (
+              <Empty>لا توجد تعديلات مسجّلة.</Empty>
+            ) : (
+              <ul className="divide-y divide-line">
+                {alterations.map((a) => (
+                  <li key={a.id} className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="num text-[12px] text-muted-foreground">#{a.number}</span>
+                      <span className="min-w-0 flex-1 text-[13.5px] font-medium">{a.description}</span>
+                      <Chip tone={a.status === "done" ? "ok" : a.status === "cancelled" ? "neutral" : "soon"}>
+                        {ALTERATION_STATUS_LABEL[a.status]}
+                      </Chip>
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      طُلب {fmtDateTime(a.requested_at)}
+                      {a.completed_at ? ` · أُنجز ${fmtDateTime(a.completed_at)}` : ""}
+                    </p>
+                    {a.notes && <p className="mt-1 text-[12px] whitespace-pre-wrap">{a.notes}</p>}
+                    {can("stages.edit") && a.status !== "done" && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <select
+                          className="field h-9 min-h-0 py-0 text-[12px]"
+                          value={a.status}
+                          onChange={(e) =>
+                            updateAlteration
+                              .mutateAsync({
+                                id: a.id,
+                                patch: {
+                                  status: e.target.value as AlterationStatus,
+                                  completed_at:
+                                    e.target.value === "done" ? new Date().toISOString() : null,
+                                },
+                              })
+                              .then(() => toast.success("تم تحديث التعديل"))
+                              .catch((err: Error) => toast.error(err.message))
+                          }
+                        >
+                          {(Object.keys(ALTERATION_STATUS_LABEL) as AlterationStatus[]).map((s) => (
+                            <option key={s} value={s}>
+                              {ALTERATION_STATUS_LABEL[s]}
+                            </option>
+                          ))}
+                        </select>
+                        {isManager && (
+                          <select
+                            className="field h-9 min-h-0 py-0 text-[12px]"
+                            value={a.assignee_id ?? ""}
+                            onChange={(e) =>
+                              updateAlteration.mutate({
+                                id: a.id,
+                                patch: { assignee_id: e.target.value || null },
+                              })
+                            }
+                          >
+                            <option value="">بدون مسؤول</option>
+                            {profiles.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.full_name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           <Card
@@ -231,7 +298,101 @@ function OrderDetailPage() {
           </Card>
         </div>
       </div>
+
+      <StageSheet stage={activeStage} onClose={() => setActiveStage(null)} />
+
+      {altOpen && (
+        <NewAlterationSheet
+          stages={stages}
+          onClose={() => setAltOpen(false)}
+          onSave={(v) =>
+            addAlteration
+              .mutateAsync(v)
+              .then(() => {
+                toast.success("تم تسجيل التعديل");
+                setAltOpen(false);
+              })
+              .catch((err: Error) => toast.error(err.message))
+          }
+        />
+      )}
     </AppShell>
+  );
+}
+
+function NewAlterationSheet({
+  stages,
+  onClose,
+  onSave,
+}: {
+  stages: OrderStage[];
+  onClose: () => void;
+  onSave: (v: {
+    description: string;
+    notes: string | null;
+    assigneeId: string | null;
+    stageId: string | null;
+  }) => void;
+}) {
+  const { data: profiles = [] } = useProfiles();
+  const [description, setDescription] = useState("");
+  const [notes, setNotes] = useState("");
+  const [assignee, setAssignee] = useState("");
+  const [stageId, setStageId] = useState("");
+
+  return (
+    <Sheet open onClose={onClose} title="تعديل جديد">
+      <div className="space-y-3 px-4 py-4">
+        <Field label="وصف التعديل المطلوب">
+          <input className="field" value={description} onChange={(e) => setDescription(e.target.value)} />
+        </Field>
+        <Field label="ملاحظات">
+          <textarea className="field min-h-20" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </Field>
+        <Field label="المرحلة المرتبطة">
+          <select className="field" value={stageId} onChange={(e) => setStageId(e.target.value)}>
+            <option value="">بدون ربط</option>
+            {stages.map((s) => (
+              <option key={s.id} value={s.id}>
+                {stageLabel(s.stage)}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="الموظف المسؤول">
+          <select className="field" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
+            <option value="">بدون مسؤول</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.full_name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <div className="flex gap-2 pt-1">
+          <Btn
+            variant="gold"
+            onClick={() => {
+              if (!description.trim()) {
+                toast.error("اكتب وصف التعديل");
+                return;
+              }
+              onSave({
+                description,
+                notes: notes || null,
+                assigneeId: assignee || null,
+                stageId: stageId || null,
+              });
+            }}
+          >
+            حفظ التعديل
+          </Btn>
+          <Btn variant="quiet" onClick={onClose}>
+            إلغاء
+          </Btn>
+        </div>
+      </div>
+    </Sheet>
   );
 }
 
@@ -241,30 +402,5 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="max-w-[60%] text-left whitespace-pre-wrap">{value}</dd>
     </div>
-  );
-}
-
-function StageNote({ stage, onSave }: { stage: OrderStage; onSave: (notes: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState(stage.notes ?? "");
-  if (!open)
-    return (
-      <button className="text-[12px] text-gold" onClick={() => setOpen(true)}>
-        ملاحظة
-      </button>
-    );
-  return (
-    <span className="flex w-full items-center gap-2">
-      <input className="field h-9 min-h-0 flex-1 py-0 text-[12px]" value={text} onChange={(e) => setText(e.target.value)} />
-      <button
-        className="text-[12px] text-gold"
-        onClick={() => {
-          onSave(text);
-          setOpen(false);
-        }}
-      >
-        حفظ
-      </button>
-    </span>
   );
 }
