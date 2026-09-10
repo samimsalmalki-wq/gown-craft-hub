@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import type { PaymentStatus, StageStatus } from "@/lib/atelier";
-import { PAYMENT_LABEL, STAGE_STATUS_LABEL } from "@/lib/atelier";
+import type { PaymentStatus, Priority, StageStatus } from "@/lib/atelier";
+import { PAYMENT_LABEL, PRIORITY_LABEL, STAGE_STATUS_LABEL } from "@/lib/atelier";
 
 export function Card({
   children,
