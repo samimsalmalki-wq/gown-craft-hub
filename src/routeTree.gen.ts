@@ -24,6 +24,7 @@ import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
 import { Route as AuthenticatedRentalsIndexRouteImport } from './routes/_authenticated/rentals.index'
+import { Route as AuthenticatedRentalsDressIdRouteImport } from './routes/_authenticated/rentals.$dressId'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff.index'
 import { Route as AuthenticatedStaffUserIdRouteImport } from './routes/_authenticated/staff.$userId'
 
@@ -106,6 +107,12 @@ const AuthenticatedRentalsIndexRoute =
     path: '/rentals/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRentalsDressIdRoute =
+  AuthenticatedRentalsDressIdRouteImport.update({
+    id: '/rentals/$dressId',
+    path: '/rentals/$dressId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   id: '/staff/',
   path: '/staff/',
@@ -130,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -148,6 +156,7 @@ export interface FileRoutesByTo {
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
@@ -168,6 +177,7 @@ export interface FileRoutesById {
   '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/_authenticated/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
+    | '/rentals/$dressId'
     | '/staff/$userId'
     | '/inventory/'
     | '/orders/'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
+    | '/rentals/$dressId'
     | '/staff/$userId'
     | '/inventory'
     | '/orders'
@@ -225,6 +237,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventory/$materialId'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
+    | '/_authenticated/rentals/$dressId'
     | '/_authenticated/staff/$userId'
     | '/_authenticated/inventory/'
     | '/_authenticated/orders/'
@@ -345,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRentalsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rentals/$dressId': {
+      id: '/_authenticated/rentals/$dressId'
+      path: '/rentals/$dressId'
+      fullPath: '/rentals/$dressId'
+      preLoaderRoute: typeof AuthenticatedRentalsDressIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/staff/': {
       id: '/_authenticated/staff/'
       path: '/staff'
@@ -372,6 +392,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
+  AuthenticatedRentalsDressIdRoute: typeof AuthenticatedRentalsDressIdRoute
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
@@ -389,6 +410,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
+  AuthenticatedRentalsDressIdRoute: AuthenticatedRentalsDressIdRoute,
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,

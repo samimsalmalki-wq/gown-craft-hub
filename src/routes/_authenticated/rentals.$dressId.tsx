@@ -110,7 +110,7 @@ function DressPage() {
     <AppShell
       eyebrow="فساتين الإيجار"
       title={`فستان ${dress.code}`}
-      subtitle={[dress.model_no, dress.color, dress.size].filter(Boolean).join(" · ") || undefined}
+      subtitle={[dress.model_no, dress.color, dress.size].filter(Boolean).join(" · ") || "فستان إيجار"}
       actions={
         isManager ? (
           openRecord ? (
