@@ -67,10 +67,15 @@ export const stageIndex = (key: StageKey) => STAGES.findIndex((s) => s.key === k
 
 export const STAGE_STATUS_LABEL: Record<StageStatus, string> = {
   pending: "لم تبدأ",
+  assigned: "مسندة",
   in_progress: "قيد التنفيذ",
-  done: "منتهية",
   blocked: "متوقفة",
+  review: "تحتاج مراجعة",
+  done: "مكتملة",
+  late: "متأخرة",
 };
+
+export const OPEN_STATUSES: StageStatus[] = ["assigned", "in_progress", "blocked", "review", "late"];
 
 export const PAYMENT_LABEL: Record<PaymentStatus, string> = {
   unpaid: "غير مدفوع",
