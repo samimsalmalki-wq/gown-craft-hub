@@ -1,18 +1,46 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutGrid, ListOrdered, Layers, Users, LogOut, Search, Plus } from "lucide-react";
+import {
+  LayoutGrid,
+  ListOrdered,
+  Layers,
+  Users,
+  LogOut,
+  Search,
+  Plus,
+  CheckSquare,
+  AlarmClock,
+  BarChart3,
+  Settings2,
+  Bell,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentAccount } from "@/hooks/useSession";
+import { useMarkNotificationsRead, useNotifications } from "@/lib/data";
+import { ROLE_LABEL, fmtDateTime } from "@/lib/atelier";
+import { Avatar, Sheet } from "@/components/kit";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutGrid;
+  managerOnly?: boolean;
+  adminOnly?: boolean;
+};
+
+const NAV: NavItem[] = [
   { to: "/dashboard", label: "لوحة التحكم", icon: LayoutGrid },
+  { to: "/tasks", label: "مهامي", icon: CheckSquare },
   { to: "/orders", label: "الطلبات", icon: ListOrdered },
-  { to: "/stages", label: "المراحل", icon: Layers },
-  { to: "/staff", label: "الموظفون", icon: Users, adminOnly: true },
-] as const;
+  { to: "/stages", label: "لوحة الإنتاج", icon: Layers },
+  { to: "/late", label: "المتأخرات", icon: AlarmClock },
+  { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
+  { to: "/reports", label: "تقرير الأداء", icon: BarChart3, managerOnly: true },
+  { to: "/workflow", label: "إعداد المراحل", icon: Settings2, adminOnly: true },
+];
 
 export function AppShell({
   children,
@@ -27,13 +55,18 @@ export function AppShell({
   eyebrow?: string;
   actions?: ReactNode;
 }) {
-  const { profile, isAdmin } = useCurrentAccount();
+  const { profile, isAdmin, isManager, role, userId } = useCurrentAccount();
   const navigate = useNavigate();
   const router = useRouter();
   const qc = useQueryClient();
   const [term, setTerm] = useState("");
+  const [bellOpen, setBellOpen] = useState(false);
 
-  const items = NAV.filter((n) => !("adminOnly" in n && n.adminOnly) || isAdmin);
+  const { data: notes = [] } = useNotifications(userId);
+  const markRead = useMarkNotificationsRead();
+  const unread = notes.filter((n) => !n.is_read);
+
+  const items = NAV.filter((n) => (!n.managerOnly || isManager) && (!n.adminOnly || isAdmin));
 
   async function signOut() {
     await qc.cancelQueries();
@@ -47,10 +80,15 @@ export function AppShell({
     navigate({ to: "/orders", search: { q: term || undefined } });
   }
 
+  function openBell() {
+    setBellOpen(true);
+    if (unread.length) markRead.mutate(unread.map((n) => n.id));
+  }
+
   return (
     <div className="min-h-screen bg-ivory text-ink">
       <div className="mx-auto flex max-w-[1440px]">
-        <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col gap-1 border-l border-line bg-paper px-4 py-7 md:flex">
+        <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col gap-1 overflow-y-auto border-l border-line bg-paper px-4 py-7 md:flex">
           <div className="mb-7 flex items-baseline gap-2 px-2">
             <span className="text-[19px] font-bold tracking-tight">مَعْمَل</span>
             <span className="font-en text-[15px] text-gold italic">Atelier</span>
@@ -62,7 +100,7 @@ export function AppShell({
                 to={item.to}
                 activeProps={{ className: "bg-goldsoft/50 text-ink ring-1 ring-black/5 font-medium" }}
                 inactiveProps={{ className: "text-muted-foreground hover:text-ink" }}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px]"
               >
                 <item.icon className="size-4" strokeWidth={1.75} />
                 {item.label}
@@ -71,13 +109,12 @@ export function AppShell({
           </nav>
           <div className="mt-auto border-t border-line pt-4">
             <div className="flex items-center gap-3 px-2">
-              <div className="grid size-9 place-items-center rounded-full bg-ink text-sm font-semibold text-ivory">
-                {(profile?.full_name || "؟").slice(0, 1)}
-              </div>
+              <Avatar name={profile?.full_name} url={profile?.avatar_url} />
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-[13px] font-medium">{profile?.full_name || "حساب"}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {isAdmin ? "مدير الورشة" : profile?.job_title || "موظف"}
+                  {ROLE_LABEL[role] ?? "موظف"}
+                  {profile?.job_title ? ` · ${profile.job_title}` : ""}
                 </p>
               </div>
             </div>
@@ -113,6 +150,18 @@ export function AppShell({
                   placeholder="رقم الطلب أو اسم العميلة أو الجوال"
                 />
               </form>
+              <button
+                onClick={openBell}
+                aria-label="التنبيهات"
+                className="relative grid size-11 place-items-center rounded-lg border border-line bg-paper"
+              >
+                <Bell className="size-4" strokeWidth={1.75} />
+                {unread.length > 0 && (
+                  <span className="num absolute -top-1 -left-1 grid min-w-5 place-items-center rounded-full bg-late px-1 text-[10px] text-paper">
+                    {unread.length}
+                  </span>
+                )}
+              </button>
               {actions}
             </div>
           </header>
@@ -120,14 +169,14 @@ export function AppShell({
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-line bg-paper/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex overflow-x-auto border-t border-line bg-paper/95 backdrop-blur md:hidden">
         {items.map((item) => (
           <Link
             key={item.to}
             to={item.to}
             activeProps={{ className: "text-gold" }}
             inactiveProps={{ className: "text-muted-foreground" }}
-            className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px]"
+            className="flex min-w-[68px] flex-1 flex-col items-center gap-1 py-2.5 text-[10.5px] whitespace-nowrap"
           >
             <item.icon className="size-5" strokeWidth={1.75} />
             {item.label}
@@ -135,12 +184,27 @@ export function AppShell({
         ))}
         <Link
           to="/orders/new"
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground"
+          className="flex min-w-[68px] flex-1 flex-col items-center gap-1 py-2.5 text-[10.5px] text-muted-foreground"
         >
           <Plus className="size-5" strokeWidth={1.75} />
           جديد
         </Link>
       </nav>
+
+      <Sheet open={bellOpen} onClose={() => setBellOpen(false)} title="التنبيهات">
+        {notes.length === 0 ? (
+          <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">لا توجد تنبيهات.</p>
+        ) : (
+          <ul className="divide-y divide-line">
+            {notes.map((n) => (
+              <li key={n.id} className={cn("px-4 py-3", !n.is_read && "bg-goldsoft/30")}>
+                <p className="text-[13px]">{n.message}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{fmtDateTime(n.created_at)}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Sheet>
     </div>
   );
 }
