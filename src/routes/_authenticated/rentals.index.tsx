@@ -6,7 +6,14 @@ import { OrdersTabs } from "@/components/OrdersTabs";
 import { Btn, Card, Chip, Empty, Field, Sheet, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, money } from "@/lib/atelier";
-import { DRESS_STATUS_LABEL, isRentalLate, type DressStatus } from "@/lib/inventory";
+import {
+  DRESS_STATUS_LABEL,
+  effectiveDressStatus,
+  isOutNow,
+  isRentalLate,
+  isUpcomingRental,
+  type DressStatus,
+} from "@/lib/inventory";
 import { useRentalDresses, useRentalRecords, useSaveDress } from "@/lib/inventory-data";
 
 export const Route = createFileRoute("/_authenticated/rentals/")({
