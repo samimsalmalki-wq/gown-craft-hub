@@ -6,7 +6,14 @@ import { OrdersTabs } from "@/components/OrdersTabs";
 import { Btn, Card, Chip, Empty, Field, Sheet, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, money } from "@/lib/atelier";
-import { DRESS_STATUS_LABEL, isRentalLate, type DressStatus } from "@/lib/inventory";
+import {
+  DRESS_STATUS_LABEL,
+  effectiveDressStatus,
+  isOutNow,
+  isRentalLate,
+  isUpcomingRental,
+  type DressStatus,
+} from "@/lib/inventory";
 import { useRentalDresses, useRentalRecords, useSaveDress } from "@/lib/inventory-data";
 
 export const Route = createFileRoute("/_authenticated/rentals/")({
@@ -41,14 +48,17 @@ function RentalsPage() {
   });
   const [image, setImage] = useState<File | null>(null);
 
-  const openRecords = records.filter((r) => !r.returned_at);
-  const lateRecords = openRecords.filter(isRentalLate);
+  const outNow = records.filter(isOutNow);
+  const upcoming = records.filter(isUpcomingRental);
+  const lateRecords = outNow.filter(isRentalLate);
   const lateDressIds = new Set(lateRecords.map((r) => r.dress_id));
+  const upcomingByDress = new Map(upcoming.map((r) => [r.dress_id, r]));
+  const statusOf = (d: { id: string; status: DressStatus }): DressStatus => effectiveDressStatus(d, records);
 
   const list = useMemo(
     () =>
       dresses.filter((d) => {
-        if (status !== "all" && d.status !== status) return false;
+        if (status !== "all" && effectiveDressStatus(d, records) !== status) return false;
         const t = term.trim();
         if (!t) return true;
         return (
@@ -58,7 +68,7 @@ function RentalsPage() {
           (d.size ?? "").includes(t)
         );
       }),
-    [dresses, term, status],
+    [dresses, records, term, status],
   );
 
   async function submit(e: React.FormEvent) {
@@ -93,13 +103,13 @@ function RentalsPage() {
         <Stat label="عدد الفساتين" value={dresses.length} onClick={() => setStatus("all")} active={status === "all"} />
         <Stat
           label="متاح للإيجار"
-          value={dresses.filter((d) => d.status === "available").length}
+          value={dresses.filter((d) => statusOf(d) === "available").length}
           onClick={() => setStatus("available")}
           active={status === "available"}
         />
         <Stat
           label="مؤجَّر حاليًا"
-          value={dresses.filter((d) => d.status === "rented").length}
+          value={dresses.filter((d) => statusOf(d) === "rented").length}
           tone="gold"
           onClick={() => setStatus("rented")}
           active={status === "rented"}
@@ -147,7 +157,10 @@ function RentalsPage() {
                     <span className="min-w-0 flex-1 truncate text-[14px]">
                       {[d.model_no, d.color, d.size].filter(Boolean).join(" · ") || "—"}
                     </span>
-                    <Chip tone={STATUS_TONE[d.status]}>{DRESS_STATUS_LABEL[d.status]}</Chip>
+                    <Chip tone={STATUS_TONE[statusOf(d)]}>{DRESS_STATUS_LABEL[statusOf(d)]}</Chip>
+                    {upcomingByDress.has(d.id) && (
+                      <Chip tone="soon">محجوز من {fmtDate(upcomingByDress.get(d.id)!.out_date)}</Chip>
+                    )}
                     {lateDressIds.has(d.id) && <Chip tone="late">متأخر الإرجاع</Chip>}
                     <span className="num text-[12px] text-muted-foreground">{money(Number(d.rent_price))}</span>
                   </Link>
@@ -157,26 +170,49 @@ function RentalsPage() {
           )}
         </Card>
 
-        <Card title="إيجارات قائمة">
-          {openRecords.length === 0 ? (
-            <Empty>لا توجد فساتين خارج المحل.</Empty>
-          ) : (
-            <ul className="divide-y divide-line">
-              {openRecords.slice(0, 12).map((r) => {
-                const dress = dresses.find((d) => d.id === r.dress_id);
-                return (
-                  <li key={r.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-[13px]">
-                    <span className="num text-gold">{dress?.code ?? "—"}</span>
-                    <span className="min-w-0 flex-1 truncate">{r.client_name}</span>
-                    <span className={isRentalLate(r) ? "text-[12px] text-late" : "text-[12px] text-muted-foreground"}>
-                      {fmtDate(r.due_date)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Card>
+        <div className="space-y-5">
+          <Card title="خارج المحل الآن">
+            {outNow.length === 0 ? (
+              <Empty>لا توجد فساتين خارج المحل.</Empty>
+            ) : (
+              <ul className="divide-y divide-line">
+                {outNow.slice(0, 12).map((r) => {
+                  const dress = dresses.find((d) => d.id === r.dress_id);
+                  return (
+                    <li key={r.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-[13px]">
+                      <span className="num text-gold">{dress?.code ?? "—"}</span>
+                      <span className="min-w-0 flex-1 truncate">{r.client_name}</span>
+                      <span
+                        className={isRentalLate(r) ? "text-[12px] text-late" : "text-[12px] text-muted-foreground"}
+                      >
+                        {fmtDate(r.due_date)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
+          <Card title="حجوزات قادمة">
+            {upcoming.length === 0 ? (
+              <Empty>لا توجد حجوزات قادمة.</Empty>
+            ) : (
+              <ul className="divide-y divide-line">
+                {upcoming.slice(0, 12).map((r) => {
+                  const dress = dresses.find((d) => d.id === r.dress_id);
+                  return (
+                    <li key={r.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-[13px]">
+                      <span className="num text-gold">{dress?.code ?? "—"}</span>
+                      <span className="min-w-0 flex-1 truncate">{r.client_name}</span>
+                      <span className="text-[12px] text-muted-foreground">من {fmtDate(r.out_date)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+        </div>
       </div>
 
       <Sheet open={open} onClose={() => setOpen(false)} title="فستان إيجار جديد">

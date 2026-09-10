@@ -52,6 +52,30 @@ export const isLowStock = (m: Pick<Material, "qty_on_hand" | "qty_reserved" | "m
 export const qty = (v: number | string | null | undefined) =>
   Number(v ?? 0).toLocaleString("ar-EG", { maximumFractionDigits: 2 });
 
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+/** إيجار قائم فعليًا: خرج الفستان ولم يُرجَع بعد */
+export const isOutNow = (r: Pick<RentalRecord, "out_date" | "returned_at">) =>
+  !r.returned_at && r.out_date <= todayStr();
+
+/** حجز مسبق: مسجَّل لتاريخ قادم والفستان ما زال في المحل */
+export const isUpcomingRental = (r: Pick<RentalRecord, "out_date" | "returned_at">) =>
+  !r.returned_at && r.out_date > todayStr();
+
+/** الحالة المعروضة: الحجز المسبق لا يجعل الفستان مؤجَّرًا */
+export const effectiveDressStatus = (
+  dress: Pick<RentalDress, "id" | "status">,
+  records: Pick<RentalRecord, "dress_id" | "out_date" | "returned_at">[],
+): DressStatus => {
+  const out = records.some((r) => r.dress_id === dress.id && isOutNow(r));
+  if (out) return "rented";
+  if (dress.status === "rented") return "available";
+  return dress.status;
+};
+
 export const isRentalLate = (r: Pick<RentalRecord, "due_date" | "returned_at">) => {
   if (r.returned_at) return false;
   const due = new Date(r.due_date);

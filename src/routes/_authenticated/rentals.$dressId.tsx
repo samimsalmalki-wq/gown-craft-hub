@@ -8,7 +8,10 @@ import { fmtDate, money } from "@/lib/atelier";
 import {
   DRESS_STATUS_LABEL,
   RETURN_CONDITIONS,
+  effectiveDressStatus,
+  isOutNow,
   isRentalLate,
+  isUpcomingRental,
   type DressStatus,
 } from "@/lib/inventory";
 import {
@@ -38,7 +41,10 @@ function DressPage() {
   const urls = useInventoryUrls([dress?.image_path]);
   const image = dress?.image_path ? urls[dress.image_path] : undefined;
 
-  const openRecord = records.find((r) => !r.returned_at) ?? null;
+  const openRecord = records.find(isOutNow) ?? null;
+  const nextUpcoming =
+    [...records].filter(isUpcomingRental).sort((a, b) => a.out_date.localeCompare(b.out_date))[0] ?? null;
+  const effStatus = dress ? effectiveDressStatus(dress, records) : "available";
 
   const [outOpen, setOutOpen] = useState(false);
   const [retOpen, setRetOpen] = useState(false);
@@ -52,6 +58,7 @@ function DressPage() {
     notes: "",
   });
   const [ret, setRet] = useState({ condition: "ok", notes: "" });
+  const [err, setErr] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -71,16 +78,33 @@ function DressPage() {
   async function submitOut(e: React.FormEvent) {
     e.preventDefault();
     if (!form.client_name.trim()) return;
-    await startRental.mutateAsync({
-      dress_id: dressId,
-      client_name: form.client_name.trim(),
-      client_phone: form.client_phone.trim() || null,
-      out_date: form.out_date,
-      due_date: form.due_date,
-      amount: Number(form.amount) || Number(dress!.rent_price),
-      deposit_amount: Number(form.deposit_amount) || Number(dress!.deposit_amount),
-      notes: form.notes.trim() || null,
-    });
+    setErr(null);
+    if (form.due_date < form.out_date) {
+      setErr("تاريخ الإرجاع لا يمكن أن يكون قبل تاريخ الخروج.");
+      return;
+    }
+    const clash = records.find(
+      (r) => !r.returned_at && r.out_date <= form.due_date && r.due_date >= form.out_date,
+    );
+    if (clash) {
+      setErr(`الفستان محجوز من ${fmtDate(clash.out_date)} إلى ${fmtDate(clash.due_date)} لـ${clash.client_name}.`);
+      return;
+    }
+    try {
+      await startRental.mutateAsync({
+        dress_id: dressId,
+        client_name: form.client_name.trim(),
+        client_phone: form.client_phone.trim() || null,
+        out_date: form.out_date,
+        due_date: form.due_date,
+        amount: Number(form.amount) || Number(dress!.rent_price),
+        deposit_amount: Number(form.deposit_amount) || Number(dress!.deposit_amount),
+        notes: form.notes.trim() || null,
+      });
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : "تعذّر تسجيل الإيجار.");
+      return;
+    }
     setOutOpen(false);
     setForm({
       client_name: "",
@@ -116,8 +140,8 @@ function DressPage() {
           openRecord ? (
             <Btn onClick={() => setRetOpen(true)}>تسجيل الإرجاع</Btn>
           ) : (
-            <Btn onClick={() => setOutOpen(true)} disabled={dress.status === "retired"}>
-              تأجير الفستان
+            <Btn onClick={() => setOutOpen(true)} disabled={effStatus === "retired"}>
+              تأجير الفستان أو حجزه
             </Btn>
           )
         ) : undefined
@@ -131,7 +155,10 @@ function DressPage() {
         <div className="space-y-5">
           <Card title="بيانات الفستان">
             <dl className="divide-y divide-line text-[13px]">
-              <Row label="الحالة" value={DRESS_STATUS_LABEL[dress.status]} />
+              <Row label="الحالة" value={DRESS_STATUS_LABEL[effStatus]} />
+              {nextUpcoming && (
+                <Row label="حجز قادم" value={`${nextUpcoming.client_name} — من ${fmtDate(nextUpcoming.out_date)}`} />
+              )}
               <Row label="قيمة الإيجار" value={money(Number(dress.rent_price))} />
               <Row label="مبلغ التأمين" value={money(Number(dress.deposit_amount))} />
               <Row label="المقاس" value={dress.size || "—"} />
@@ -146,7 +173,7 @@ function DressPage() {
                 {(["available", "cleaning", "repair", "retired"] as DressStatus[]).map((s) => (
                   <Btn
                     key={s}
-                    variant={dress.status === s ? "gold" : "quiet"}
+                    variant={effStatus === s ? "gold" : "quiet"}
                     onClick={() => setStatus.mutate({ id: dress.id, status: s })}
                   >
                     {DRESS_STATUS_LABEL[s]}
@@ -175,6 +202,8 @@ function DressPage() {
                     {r.client_phone && <span className="num text-[12px] text-muted-foreground">{r.client_phone}</span>}
                     {r.returned_at ? (
                       <Chip tone="ok">تم الإرجاع</Chip>
+                    ) : isUpcomingRental(r) ? (
+                      <Chip tone="soon">حجز قادم</Chip>
                     ) : isRentalLate(r) ? (
                       <Chip tone="late">متأخر الإرجاع</Chip>
                     ) : (
@@ -194,8 +223,14 @@ function DressPage() {
         </Card>
       </div>
 
-      <Sheet open={outOpen} onClose={() => setOutOpen(false)} title="تأجير الفستان">
+      <Sheet open={outOpen} onClose={() => setOutOpen(false)} title="تأجير الفستان أو حجزه">
         <form onSubmit={submitOut} className="space-y-4 p-4">
+          {err && (
+            <p className="rounded-lg bg-late/10 px-3 py-2 text-[13px] text-late">{err}</p>
+          )}
+          <p className="text-[12px] text-muted-foreground">
+            إذا كان تاريخ الخروج في المستقبل يبقى الفستان متاحًا في المحل ويظهر كحجز قادم حتى يوم الخروج.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="اسم العميلة">
               <input
