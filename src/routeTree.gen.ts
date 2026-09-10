@@ -17,6 +17,7 @@ import { Route as AuthenticatedLateRouteImport } from './routes/_authenticated/l
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedStagesRouteImport } from './routes/_authenticated/stages'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
+import { Route as AuthenticatedWorkflowRouteImport } from './routes/_authenticated/workflow'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
@@ -62,6 +63,11 @@ const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWorkflowRoute = AuthenticatedWorkflowRouteImport.update({
+  id: '/workflow',
+  path: '/workflow',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOrdersIndexRoute =
   AuthenticatedOrdersIndexRouteImport.update({
     id: '/orders/',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/workflow': typeof AuthenticatedWorkflowRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/workflow': typeof AuthenticatedWorkflowRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/stages': typeof AuthenticatedStagesRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/_authenticated/workflow': typeof AuthenticatedWorkflowRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/stages'
     | '/tasks'
+    | '/workflow'
     | '/orders/$orderId'
     | '/orders/new'
     | '/staff/$userId'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/stages'
     | '/tasks'
+    | '/workflow'
     | '/orders/$orderId'
     | '/orders/new'
     | '/staff/$userId'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/stages'
     | '/_authenticated/tasks'
+    | '/_authenticated/workflow'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
     | '/_authenticated/staff/$userId'
@@ -245,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTasksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/workflow': {
+      id: '/_authenticated/workflow'
+      path: '/workflow'
+      fullPath: '/workflow'
+      preLoaderRoute: typeof AuthenticatedWorkflowRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders/': {
       id: '/_authenticated/orders/'
       path: '/orders'
@@ -289,6 +308,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedStagesRoute: typeof AuthenticatedStagesRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
+  AuthenticatedWorkflowRoute: typeof AuthenticatedWorkflowRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
@@ -302,6 +322,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedStagesRoute: AuthenticatedStagesRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
+  AuthenticatedWorkflowRoute: AuthenticatedWorkflowRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
