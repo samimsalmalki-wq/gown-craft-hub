@@ -371,12 +371,15 @@ export type Database = {
           current_stage: string
           deposit_amount: number
           due_date: string | null
+          embroidery_model: string | null
           event_date: string | null
           fitting1_date: string | null
           fitting2_date: string | null
           id: string
+          is_new_model: boolean
           materials: string | null
           measurements: Json
+          model_no: string | null
           notes: string | null
           order_no: string
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -394,12 +397,15 @@ export type Database = {
           current_stage?: string
           deposit_amount?: number
           due_date?: string | null
+          embroidery_model?: string | null
           event_date?: string | null
           fitting1_date?: string | null
           fitting2_date?: string | null
           id?: string
+          is_new_model?: boolean
           materials?: string | null
           measurements?: Json
+          model_no?: string | null
           notes?: string | null
           order_no?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
@@ -417,12 +423,15 @@ export type Database = {
           current_stage?: string
           deposit_amount?: number
           due_date?: string | null
+          embroidery_model?: string | null
           event_date?: string | null
           fitting1_date?: string | null
           fitting2_date?: string | null
           id?: string
+          is_new_model?: boolean
           materials?: string | null
           measurements?: Json
+          model_no?: string | null
           notes?: string | null
           order_no?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
