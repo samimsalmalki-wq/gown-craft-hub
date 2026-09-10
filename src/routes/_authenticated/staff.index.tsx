@@ -9,7 +9,7 @@ import { useProfiles } from "@/lib/data";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { PERMISSIONS } from "@/lib/atelier";
 
-export const Route = createFileRoute("/_authenticated/staff")({
+export const Route = createFileRoute("/_authenticated/staff/")({
   component: StaffPage,
 });
 
