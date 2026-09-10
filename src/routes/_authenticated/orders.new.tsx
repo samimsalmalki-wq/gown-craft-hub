@@ -28,7 +28,6 @@ const EMBROIDERY_MODELS = [
   "تطريز مشجر ثلاثي الأبعاد",
 ] as const;
 
-
 function NewOrderPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -45,12 +44,18 @@ function NewOrderPage() {
     deposit_amount: "",
     materials: "",
     notes: "",
+    model_no: "",
+    embroidery_model: "",
   });
   const [measures, setMeasures] = useState<Record<string, string>>({});
   const [secondFitting, setSecondFitting] = useState(false);
+  const [newModel, setNewModel] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set =
+    (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,6 +64,7 @@ function NewOrderPage() {
       const total = Number(form.total_amount || 0);
       const deposit = Number(form.deposit_amount || 0);
       const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id ?? null;
       const { data, error } = await supabase
         .from("orders")
         .insert({
@@ -76,11 +82,34 @@ function NewOrderPage() {
           materials: form.materials || null,
           notes: form.notes || null,
           measurements: measures,
-          created_by: userData.user?.id ?? null,
+          model_no: newModel ? null : form.model_no || null,
+          is_new_model: newModel,
+          embroidery_model: newModel ? form.embroidery_model || null : null,
+          created_by: uid,
         })
         .select("id")
         .single();
       if (error) throw error;
+
+      if (attachments.length) {
+        try {
+          for (const file of attachments) {
+            const path = `${data.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+            const up = await supabase.storage.from("order-files").upload(path, file);
+            if (up.error) throw up.error;
+            const ins = await supabase.from("order_files").insert({
+              order_id: data.id,
+              storage_path: path,
+              kind: "measurements",
+              created_by: uid,
+            });
+            if (ins.error) throw ins.error;
+          }
+        } catch {
+          toast.error("تم حفظ الطلب لكن تعذر رفع بعض المرفقات");
+        }
+      }
+
       toast.success("تم إنشاء الطلب");
       navigate({ to: "/orders/$orderId", params: { orderId: data.id } });
     } catch (err) {
@@ -103,6 +132,23 @@ function NewOrderPage() {
             </Field>
             <Field label="بيانات تواصل أخرى">
               <input className="field" value={form.client_contact} onChange={set("client_contact")} />
+            </Field>
+          </div>
+        </Card>
+
+        <Card title="المالية والملاحظات">
+          <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
+            <Field label="قيمة الفستان">
+              <input className="field" dir="ltr" inputMode="decimal" value={form.total_amount} onChange={set("total_amount")} />
+            </Field>
+            <Field label="العربون">
+              <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
+            </Field>
+            <Field label="الخامات المطلوبة">
+              <textarea className="field min-h-24" value={form.materials} onChange={set("materials")} />
+            </Field>
+            <Field label="ملاحظات العميلة">
+              <textarea className="field min-h-24" value={form.notes} onChange={set("notes")} />
             </Field>
           </div>
         </Card>
@@ -136,6 +182,36 @@ function NewOrderPage() {
           </div>
         </Card>
 
+        <Card title="الموديل">
+          <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
+            <Field label="نوع الموديل">
+              <select
+                className="field"
+                value={newModel ? "new" : "existing"}
+                onChange={(e) => setNewModel(e.target.value === "new")}
+              >
+                <option value="existing">موديل موجود برقم</option>
+                <option value="new">موديل جديد</option>
+              </select>
+            </Field>
+            {newModel ? (
+              <Field label="موديل التطريز المطلوب" hint="اختياري للموديل الجديد">
+                <select className="field" value={form.embroidery_model} onChange={set("embroidery_model")}>
+                  <option value="">اختر موديل التطريز</option>
+                  {EMBROIDERY_MODELS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            ) : (
+              <Field label="رقم الموديل المطلوب">
+                <input className="field" dir="ltr" value={form.model_no} onChange={set("model_no")} />
+              </Field>
+            )}
+          </div>
+        </Card>
 
         <Card title="المقاسات (سم)">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-3">
@@ -150,22 +226,23 @@ function NewOrderPage() {
               </Field>
             ))}
           </div>
-        </Card>
-
-        <Card title="المالية والملاحظات">
-          <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-            <Field label="قيمة الفستان">
-              <input className="field" dir="ltr" inputMode="decimal" value={form.total_amount} onChange={set("total_amount")} />
+          <div className="border-t border-black/5 px-4 py-4">
+            <Field label="مرفق" hint="صور أو ملفات ورقة المقاسات">
+              <input
+                className="field"
+                type="file"
+                multiple
+                accept="image/*,application/pdf"
+                onChange={(e) => setAttachments(Array.from(e.target.files ?? []))}
+              />
             </Field>
-            <Field label="العربون">
-              <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
-            </Field>
-            <Field label="الخامات المطلوبة">
-              <textarea className="field min-h-24" value={form.materials} onChange={set("materials")} />
-            </Field>
-            <Field label="ملاحظات العميلة">
-              <textarea className="field min-h-24" value={form.notes} onChange={set("notes")} />
-            </Field>
+            {attachments.length > 0 && (
+              <ul className="mt-2 grid gap-1 text-sm text-muted-foreground">
+                {attachments.map((f) => (
+                  <li key={f.name}>{f.name}</li>
+                ))}
+              </ul>
+            )}
           </div>
         </Card>
 
