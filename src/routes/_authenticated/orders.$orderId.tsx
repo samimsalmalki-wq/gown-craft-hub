@@ -103,6 +103,16 @@ function OrderDetailPage() {
             </dl>
           </Card>
 
+          <Card title="المواعيد">
+            <dl className="divide-y divide-line text-[13px]">
+              <Row label="تاريخ الحجز" value={fmtDate(order.booked_at)} />
+              <Row label="البروفة الأولى" value={fmtDate(order.fitting1_date)} />
+              <Row label="البروفة الثانية" value={fmtDate(order.fitting2_date)} />
+              <Row label="التسليم النهائي" value={fmtDate(order.due_date)} />
+              <Row label="تاريخ المناسبة" value={fmtDate(order.event_date)} />
+            </dl>
+          </Card>
+
           <Card title="المقاسات">
             {Object.keys(measures).length === 0 ? (
               <Empty>لم تُسجَّل المقاسات بعد.</Empty>

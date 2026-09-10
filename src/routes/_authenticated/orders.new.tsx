@@ -27,13 +27,17 @@ function NewOrderPage() {
     client_phone: "",
     client_contact: "",
     booked_at: new Date().toISOString().slice(0, 10),
+    fitting1_date: "",
+    fitting2_date: "",
     due_date: "",
+    event_date: "",
     total_amount: "",
     deposit_amount: "",
     materials: "",
     notes: "",
   });
   const [measures, setMeasures] = useState<Record<string, string>>({});
+  const [secondFitting, setSecondFitting] = useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -52,7 +56,10 @@ function NewOrderPage() {
           client_phone: form.client_phone || null,
           client_contact: form.client_contact || null,
           booked_at: form.booked_at,
+          fitting1_date: form.fitting1_date || null,
+          fitting2_date: secondFitting ? form.fitting2_date || null : null,
           due_date: form.due_date || null,
+          event_date: form.event_date || null,
           total_amount: total,
           deposit_amount: deposit,
           payment_status: deposit <= 0 ? "unpaid" : deposit >= total ? "paid" : "partial",
@@ -87,14 +94,37 @@ function NewOrderPage() {
             <Field label="بيانات تواصل أخرى">
               <input className="field" value={form.client_contact} onChange={set("client_contact")} />
             </Field>
-            <Field label="تاريخ الحجز">
+          </div>
+        </Card>
+
+        <Card title="المواعيد">
+          <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
+            <Field label="تاريخ الحجز" hint="يُسجَّل تلقائيًا بتاريخ اليوم">
               <input className="field" type="date" value={form.booked_at} onChange={set("booked_at")} />
             </Field>
-            <Field label="تاريخ التسليم المتوقع">
+            <Field label="تاريخ البروفة الأولى">
+              <input className="field" type="date" value={form.fitting1_date} onChange={set("fitting1_date")} />
+            </Field>
+            {secondFitting ? (
+              <Field label="تاريخ البروفة الثانية">
+                <input className="field" type="date" value={form.fitting2_date} onChange={set("fitting2_date")} />
+              </Field>
+            ) : (
+              <div className="flex items-end">
+                <Btn type="button" variant="quiet" onClick={() => setSecondFitting(true)}>
+                  إضافة بروفة ثانية
+                </Btn>
+              </div>
+            )}
+            <Field label="تاريخ التسليم النهائي">
               <input className="field" type="date" value={form.due_date} onChange={set("due_date")} />
+            </Field>
+            <Field label="تاريخ المناسبة">
+              <input className="field" type="date" value={form.event_date} onChange={set("event_date")} />
             </Field>
           </div>
         </Card>
+
 
         <Card title="المقاسات (سم)">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-3">

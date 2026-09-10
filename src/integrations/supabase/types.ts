@@ -371,6 +371,9 @@ export type Database = {
           current_stage: string
           deposit_amount: number
           due_date: string | null
+          event_date: string | null
+          fitting1_date: string | null
+          fitting2_date: string | null
           id: string
           materials: string | null
           measurements: Json
@@ -391,6 +394,9 @@ export type Database = {
           current_stage?: string
           deposit_amount?: number
           due_date?: string | null
+          event_date?: string | null
+          fitting1_date?: string | null
+          fitting2_date?: string | null
           id?: string
           materials?: string | null
           measurements?: Json
@@ -411,6 +417,9 @@ export type Database = {
           current_stage?: string
           deposit_amount?: number
           due_date?: string | null
+          event_date?: string | null
+          fitting1_date?: string | null
+          fitting2_date?: string | null
           id?: string
           materials?: string | null
           measurements?: Json
