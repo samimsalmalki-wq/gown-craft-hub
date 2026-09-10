@@ -427,3 +427,41 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     </div>
   );
 }
+
+function OrderMaterialsCard({ orderId, canEdit }: { orderId: string; canEdit: boolean }) {
+  const { data: rows = [] } = useOrderMaterials(orderId);
+  const { data: materials = [] } = useMaterials();
+  const issue = useIssueMaterial();
+  const release = useReleaseMaterial();
+
+  if (rows.length === 0) return null;
+
+  return (
+    <Card title="المواد المحجوزة للطلب">
+      <ul className="divide-y divide-line">
+        {rows.map((r) => {
+          const material = materials.find((m) => m.id === r.material_id);
+          const reserved = Number(r.qty_reserved);
+          return (
+            <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+              <span className="min-w-0 flex-1 truncate text-[14px]">{material?.name ?? "مادة"}</span>
+              <span className="num text-[12px] text-muted-foreground">
+                محجوز {qty(reserved)} · مصروف {qty(r.qty_issued)} {material?.unit ?? ""}
+              </span>
+              {canEdit && reserved > 0 && (
+                <div className="flex gap-2">
+                  <Btn variant="quiet" onClick={() => issue.mutate({ row: r, qty: reserved })}>
+                    صرف
+                  </Btn>
+                  <Btn variant="quiet" onClick={() => release.mutate(r)}>
+                    تحرير الحجز
+                  </Btn>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+}
