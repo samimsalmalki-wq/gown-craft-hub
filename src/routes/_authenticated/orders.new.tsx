@@ -37,6 +37,7 @@ function NewOrderPage() {
     notes: "",
   });
   const [measures, setMeasures] = useState<Record<string, string>>({});
+  const [secondFitting, setSecondFitting] = useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
