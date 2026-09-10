@@ -139,6 +139,8 @@ function OrderDetailPage() {
             <p className="px-4 py-3 text-[13px] whitespace-pre-wrap">{order.materials || "—"}</p>
           </Card>
 
+          <OrderMaterialsCard orderId={order.id} canEdit={isManager} />
+
           {can("finance.view") && (
             <Card title="المالية" action={<PaymentChip status={order.payment_status} />}>
               <dl className="divide-y divide-line text-[13px]">
