@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Card, Chip, Empty, PaymentChip, Stat } from "@/components/kit";
 import { useOrders } from "@/lib/data";
+import { useMaterials, useRentalDresses, useRentalRecords } from "@/lib/inventory-data";
+import { available, isLowStock, isRentalLate, qty } from "@/lib/inventory";
 import {
   STAGES,
   fmtDate,
@@ -45,7 +47,13 @@ const FILTERS: { key: FilterKey; label: string; test: (o: Order) => boolean }[] 
 
 function DashboardPage() {
   const { data: orders = [], isLoading } = useOrders();
+  const { data: materials = [] } = useMaterials();
+  const { data: dresses = [] } = useRentalDresses();
+  const { data: rentals = [] } = useRentalRecords();
   const [filter, setFilter] = useState<FilterKey>("new");
+
+  const lowMaterials = materials.filter((m) => m.is_active && isLowStock(m));
+  const lateRentals = rentals.filter(isRentalLate);
 
   const count = (key: FilterKey) =>
     orders.filter(FILTERS.find((f) => f.key === key)!.test).length;
@@ -133,6 +141,54 @@ function DashboardPage() {
                       <PaymentChip status={o.payment_status} />
                     </li>
                   ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card title="مواد تحت حد التنبيه">
+            {lowMaterials.length === 0 ? (
+              <Empty>كل المواد فوق حد التنبيه.</Empty>
+            ) : (
+              <ul className="divide-y divide-line">
+                {lowMaterials.slice(0, 8).map((m) => (
+                  <li key={m.id}>
+                    <Link
+                      to="/inventory/$materialId"
+                      params={{ materialId: m.id }}
+                      className="flex items-center gap-2 px-4 py-2.5 text-[13px] hover:bg-ivory"
+                    >
+                      <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                      <span className="num text-late">
+                        {qty(available(m))} {m.unit}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card title="فساتين إيجار متأخرة الإرجاع">
+            {lateRentals.length === 0 ? (
+              <Empty>لا توجد فساتين متأخرة.</Empty>
+            ) : (
+              <ul className="divide-y divide-line">
+                {lateRentals.slice(0, 8).map((r) => {
+                  const dress = dresses.find((d) => d.id === r.dress_id);
+                  return (
+                    <li key={r.id}>
+                      <Link
+                        to="/rentals/$dressId"
+                        params={{ dressId: r.dress_id }}
+                        className="flex items-center gap-2 px-4 py-2.5 text-[13px] hover:bg-ivory"
+                      >
+                        <span className="num text-gold">{dress?.code ?? "—"}</span>
+                        <span className="min-w-0 flex-1 truncate">{r.client_name}</span>
+                        <span className="text-[12px] text-late">{fmtDate(r.due_date)}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Card>

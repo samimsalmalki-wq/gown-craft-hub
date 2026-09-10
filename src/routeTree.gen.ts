@@ -18,9 +18,13 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedStagesRouteImport } from './routes/_authenticated/stages'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedWorkflowRouteImport } from './routes/_authenticated/workflow'
+import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
+import { Route as AuthenticatedInventoryMaterialIdRouteImport } from './routes/_authenticated/inventory.$materialId'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
+import { Route as AuthenticatedRentalsIndexRouteImport } from './routes/_authenticated/rentals.index'
+import { Route as AuthenticatedRentalsDressIdRouteImport } from './routes/_authenticated/rentals.$dressId'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff.index'
 import { Route as AuthenticatedStaffUserIdRouteImport } from './routes/_authenticated/staff.$userId'
 
@@ -68,6 +72,18 @@ const AuthenticatedWorkflowRoute = AuthenticatedWorkflowRouteImport.update({
   path: '/workflow',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInventoryIndexRoute =
+  AuthenticatedInventoryIndexRouteImport.update({
+    id: '/inventory/',
+    path: '/inventory/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryMaterialIdRoute =
+  AuthenticatedInventoryMaterialIdRouteImport.update({
+    id: '/inventory/$materialId',
+    path: '/inventory/$materialId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdersIndexRoute =
   AuthenticatedOrdersIndexRouteImport.update({
     id: '/orders/',
@@ -85,6 +101,18 @@ const AuthenticatedOrdersNewRoute = AuthenticatedOrdersNewRouteImport.update({
   path: '/orders/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRentalsIndexRoute =
+  AuthenticatedRentalsIndexRouteImport.update({
+    id: '/rentals/',
+    path: '/rentals/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRentalsDressIdRoute =
+  AuthenticatedRentalsDressIdRouteImport.update({
+    id: '/rentals/$dressId',
+    path: '/rentals/$dressId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   id: '/staff/',
   path: '/staff/',
@@ -106,10 +134,14 @@ export interface FileRoutesByFullPath {
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflow': typeof AuthenticatedWorkflowRoute
+  '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
+  '/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
 }
 export interface FileRoutesByTo {
@@ -121,10 +153,14 @@ export interface FileRoutesByTo {
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflow': typeof AuthenticatedWorkflowRoute
+  '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
+  '/rentals': typeof AuthenticatedRentalsIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
 }
 export interface FileRoutesById {
@@ -138,10 +174,14 @@ export interface FileRoutesById {
   '/_authenticated/stages': typeof AuthenticatedStagesRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/workflow': typeof AuthenticatedWorkflowRoute
+  '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/_authenticated/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
+  '/_authenticated/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
 }
 export interface FileRouteTypes {
@@ -155,10 +195,14 @@ export interface FileRouteTypes {
     | '/stages'
     | '/tasks'
     | '/workflow'
+    | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
+    | '/rentals/$dressId'
     | '/staff/$userId'
+    | '/inventory/'
     | '/orders/'
+    | '/rentals/'
     | '/staff/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -170,10 +214,14 @@ export interface FileRouteTypes {
     | '/stages'
     | '/tasks'
     | '/workflow'
+    | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
+    | '/rentals/$dressId'
     | '/staff/$userId'
+    | '/inventory'
     | '/orders'
+    | '/rentals'
     | '/staff'
   id:
     | '__root__'
@@ -186,10 +234,14 @@ export interface FileRouteTypes {
     | '/_authenticated/stages'
     | '/_authenticated/tasks'
     | '/_authenticated/workflow'
+    | '/_authenticated/inventory/$materialId'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
+    | '/_authenticated/rentals/$dressId'
     | '/_authenticated/staff/$userId'
+    | '/_authenticated/inventory/'
     | '/_authenticated/orders/'
+    | '/_authenticated/rentals/'
     | '/_authenticated/staff/'
   fileRoutesById: FileRoutesById
 }
@@ -264,6 +316,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkflowRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inventory/': {
+      id: '/_authenticated/inventory/'
+      path: '/inventory'
+      fullPath: '/inventory/'
+      preLoaderRoute: typeof AuthenticatedInventoryIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory/$materialId': {
+      id: '/_authenticated/inventory/$materialId'
+      path: '/inventory/$materialId'
+      fullPath: '/inventory/$materialId'
+      preLoaderRoute: typeof AuthenticatedInventoryMaterialIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders/': {
       id: '/_authenticated/orders/'
       path: '/orders'
@@ -283,6 +349,20 @@ declare module '@tanstack/react-router' {
       path: '/orders/new'
       fullPath: '/orders/new'
       preLoaderRoute: typeof AuthenticatedOrdersNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rentals/': {
+      id: '/_authenticated/rentals/'
+      path: '/rentals'
+      fullPath: '/rentals/'
+      preLoaderRoute: typeof AuthenticatedRentalsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rentals/$dressId': {
+      id: '/_authenticated/rentals/$dressId'
+      path: '/rentals/$dressId'
+      fullPath: '/rentals/$dressId'
+      preLoaderRoute: typeof AuthenticatedRentalsDressIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/staff/': {
@@ -309,10 +389,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStagesRoute: typeof AuthenticatedStagesRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedWorkflowRoute: typeof AuthenticatedWorkflowRoute
+  AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
+  AuthenticatedRentalsDressIdRoute: typeof AuthenticatedRentalsDressIdRoute
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
+  AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
+  AuthenticatedRentalsIndexRoute: typeof AuthenticatedRentalsIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
 }
 
@@ -323,10 +407,14 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStagesRoute: AuthenticatedStagesRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedWorkflowRoute: AuthenticatedWorkflowRoute,
+  AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
+  AuthenticatedRentalsDressIdRoute: AuthenticatedRentalsDressIdRoute,
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
+  AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
+  AuthenticatedRentalsIndexRoute: AuthenticatedRentalsIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
 }
 

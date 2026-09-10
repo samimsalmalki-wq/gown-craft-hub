@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Field } from "@/components/kit";
 import { supabase } from "@/integrations/supabase/client";
+import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
+import { available, qty } from "@/lib/inventory";
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
   component: NewOrderPage,
@@ -51,6 +53,28 @@ function NewOrderPage() {
   const [secondFitting, setSecondFitting] = useState(false);
   const [newModel, setNewModel] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const { data: materials = [] } = useMaterials();
+  const reserve = useReserveMaterial();
+  const [picked, setPicked] = useState<Record<string, string>>({});
+
+  // عند اختيار موديل تطريز لموديل جديد: نحجز قطع التطريز المطابقة تلقائيًا
+  useEffect(() => {
+    if (!newModel || !form.embroidery_model) return;
+    const match = materials.filter(
+      (m) =>
+        m.is_active &&
+        (m.category === "embroidery" || m.category === "beads") &&
+        (form.embroidery_model.includes(m.name) || m.name.includes(form.embroidery_model.replace("تطريز ", ""))),
+    );
+    if (match.length === 0) return;
+    setPicked((p) => {
+      const next = { ...p };
+      match.forEach((m) => {
+        if (!next[m.id]) next[m.id] = "1";
+      });
+      return next;
+    });
+  }, [newModel, form.embroidery_model, materials]);
 
   const set =
     (k: keyof typeof form) =>
@@ -107,6 +131,19 @@ function NewOrderPage() {
           }
         } catch {
           toast.error("تم حفظ الطلب لكن تعذر رفع بعض المرفقات");
+        }
+      }
+
+      const wanted = Object.entries(picked)
+        .map(([materialId, value]) => ({ materialId, amount: Number(value) }))
+        .filter((r) => r.amount > 0);
+      if (wanted.length) {
+        try {
+          for (const row of wanted) {
+            await reserve.mutateAsync({ orderId: data.id, materialId: row.materialId, qty: row.amount });
+          }
+        } catch {
+          toast.error("تم حفظ الطلب لكن تعذر حجز بعض المواد");
         }
       }
 
@@ -211,6 +248,36 @@ function NewOrderPage() {
               </Field>
             )}
           </div>
+        </Card>
+
+        <Card title="المواد المطلوبة" action={<span className="text-[12px] text-muted-foreground">تُحجز من المخزون بعد الحفظ</span>}>
+          {materials.length === 0 ? (
+            <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">
+              لا توجد مواد في المخزون بعد.
+            </p>
+          ) : (
+            <ul className="divide-y divide-black/5">
+              {materials
+                .filter((m) => m.is_active)
+                .map((m) => (
+                  <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <span className="min-w-0 flex-1 truncate text-[14px]">{m.name}</span>
+                    <span className="num text-[12px] text-muted-foreground">
+                      متاح {qty(available(m))} {m.unit}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="field w-24"
+                      placeholder="0"
+                      value={picked[m.id] ?? ""}
+                      onChange={(e) => setPicked((p) => ({ ...p, [m.id]: e.target.value }))}
+                    />
+                  </li>
+                ))}
+            </ul>
+          )}
         </Card>
 
         <Card title="المقاسات (سم)">

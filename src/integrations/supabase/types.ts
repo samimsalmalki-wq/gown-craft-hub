@@ -157,6 +157,108 @@ export type Database = {
         }
         Relationships: []
       }
+      material_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: Database["public"]["Enums"]["material_movement_kind"]
+          material_id: string
+          notes: string | null
+          order_id: string | null
+          qty: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["material_movement_kind"]
+          material_id: string
+          notes?: string | null
+          order_id?: string | null
+          qty: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["material_movement_kind"]
+          material_id?: string
+          notes?: string | null
+          order_id?: string | null
+          qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_movements_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_movements_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materials: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_path: string | null
+          is_active: boolean
+          min_qty: number
+          name: string
+          notes: string | null
+          qty_on_hand: number
+          qty_reserved: number
+          supplier: string | null
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_path?: string | null
+          is_active?: boolean
+          min_qty?: number
+          name: string
+          notes?: string | null
+          qty_on_hand?: number
+          qty_reserved?: number
+          supplier?: string | null
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_path?: string | null
+          is_active?: boolean
+          min_qty?: number
+          name?: string
+          notes?: string | null
+          qty_on_hand?: number
+          qty_reserved?: number
+          supplier?: string | null
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -249,6 +351,57 @@ export type Database = {
             columns: ["stage_id"]
             isOneToOne: false
             referencedRelation: "order_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_materials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          material_id: string
+          notes: string | null
+          order_id: string
+          qty_issued: number
+          qty_reserved: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          material_id: string
+          notes?: string | null
+          order_id: string
+          qty_issued?: number
+          qty_reserved?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          material_id?: string
+          notes?: string | null
+          order_id?: string
+          qty_issued?: number
+          qty_reserved?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_materials_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_materials_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -485,6 +638,113 @@ export type Database = {
           },
         ]
       }
+      rental_dresses: {
+        Row: {
+          code: string
+          color: string | null
+          created_at: string
+          created_by: string | null
+          deposit_amount: number
+          id: string
+          image_path: string | null
+          model_no: string | null
+          notes: string | null
+          rent_price: number
+          size: string | null
+          status: Database["public"]["Enums"]["rental_dress_status"]
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          deposit_amount?: number
+          id?: string
+          image_path?: string | null
+          model_no?: string | null
+          notes?: string | null
+          rent_price?: number
+          size?: string | null
+          status?: Database["public"]["Enums"]["rental_dress_status"]
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          deposit_amount?: number
+          id?: string
+          image_path?: string | null
+          model_no?: string | null
+          notes?: string | null
+          rent_price?: number
+          size?: string | null
+          status?: Database["public"]["Enums"]["rental_dress_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rental_records: {
+        Row: {
+          amount: number
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          created_by: string | null
+          deposit_amount: number
+          dress_id: string
+          due_date: string
+          id: string
+          notes: string | null
+          out_date: string
+          return_condition: string | null
+          returned_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          deposit_amount?: number
+          dress_id: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          out_date?: string
+          return_condition?: string | null
+          returned_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          deposit_amount?: number
+          dress_id?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          out_date?: string
+          return_condition?: string | null
+          returned_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_records_dress_id_fkey"
+            columns: ["dress_id"]
+            isOneToOne: false
+            referencedRelation: "rental_dresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stage_templates: {
         Row: {
           created_at: string
@@ -591,8 +851,15 @@ export type Database = {
     Enums: {
       alteration_status: "requested" | "in_progress" | "done" | "cancelled"
       app_role: "admin" | "staff" | "supervisor" | "cs"
+      material_movement_kind: "in" | "out" | "reserve" | "release"
       order_state: "active" | "delivered" | "cancelled"
       payment_status: "unpaid" | "partial" | "paid"
+      rental_dress_status:
+        | "available"
+        | "rented"
+        | "cleaning"
+        | "repair"
+        | "retired"
       stage_key:
         | "booking"
         | "measurements"
@@ -748,8 +1015,16 @@ export const Constants = {
     Enums: {
       alteration_status: ["requested", "in_progress", "done", "cancelled"],
       app_role: ["admin", "staff", "supervisor", "cs"],
+      material_movement_kind: ["in", "out", "reserve", "release"],
       order_state: ["active", "delivered", "cancelled"],
       payment_status: ["unpaid", "partial", "paid"],
+      rental_dress_status: [
+        "available",
+        "rented",
+        "cleaning",
+        "repair",
+        "retired",
+      ],
       stage_key: [
         "booking",
         "measurements",
