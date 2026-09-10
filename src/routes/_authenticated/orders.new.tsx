@@ -57,6 +57,25 @@ function NewOrderPage() {
   const reserve = useReserveMaterial();
   const [picked, setPicked] = useState<Record<string, string>>({});
 
+  // عند اختيار موديل تطريز لموديل جديد: نحجز قطع التطريز المطابقة تلقائيًا
+  useEffect(() => {
+    if (!newModel || !form.embroidery_model) return;
+    const match = materials.filter(
+      (m) =>
+        m.is_active &&
+        (m.category === "embroidery" || m.category === "beads") &&
+        (form.embroidery_model.includes(m.name) || m.name.includes(form.embroidery_model.replace("تطريز ", ""))),
+    );
+    if (match.length === 0) return;
+    setPicked((p) => {
+      const next = { ...p };
+      match.forEach((m) => {
+        if (!next[m.id]) next[m.id] = "1";
+      });
+      return next;
+    });
+  }, [newModel, form.embroidery_model, materials]);
+
   const set =
     (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
