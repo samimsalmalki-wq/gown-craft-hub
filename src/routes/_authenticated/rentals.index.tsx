@@ -68,7 +68,7 @@ function RentalsPage() {
           (d.size ?? "").includes(t)
         );
       }),
-    [dresses, term, status],
+    [dresses, records, term, status],
   );
 
   async function submit(e: React.FormEvent) {
