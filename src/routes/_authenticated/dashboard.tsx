@@ -47,7 +47,13 @@ const FILTERS: { key: FilterKey; label: string; test: (o: Order) => boolean }[] 
 
 function DashboardPage() {
   const { data: orders = [], isLoading } = useOrders();
+  const { data: materials = [] } = useMaterials();
+  const { data: dresses = [] } = useRentalDresses();
+  const { data: rentals = [] } = useRentalRecords();
   const [filter, setFilter] = useState<FilterKey>("new");
+
+  const lowMaterials = materials.filter((m) => m.is_active && isLowStock(m));
+  const lateRentals = rentals.filter(isRentalLate);
 
   const count = (key: FilterKey) =>
     orders.filter(FILTERS.find((f) => f.key === key)!.test).length;
