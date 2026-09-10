@@ -23,6 +23,7 @@ import { Route as AuthenticatedInventoryMaterialIdRouteImport } from './routes/_
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
+import { Route as AuthenticatedRentalsIndexRouteImport } from './routes/_authenticated/rentals.index'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff.index'
 import { Route as AuthenticatedStaffUserIdRouteImport } from './routes/_authenticated/staff.$userId'
 
@@ -99,6 +100,12 @@ const AuthenticatedOrdersNewRoute = AuthenticatedOrdersNewRouteImport.update({
   path: '/orders/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRentalsIndexRoute =
+  AuthenticatedRentalsIndexRouteImport.update({
+    id: '/rentals/',
+    path: '/rentals/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   id: '/staff/',
   path: '/staff/',
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
+  '/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
 }
 export interface FileRoutesByTo {
@@ -143,6 +151,7 @@ export interface FileRoutesByTo {
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
+  '/rentals': typeof AuthenticatedRentalsIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
 }
 export interface FileRoutesById {
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
+  '/_authenticated/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
 }
 export interface FileRouteTypes {
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/staff/$userId'
     | '/inventory/'
     | '/orders/'
+    | '/rentals/'
     | '/staff/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/staff/$userId'
     | '/inventory'
     | '/orders'
+    | '/rentals'
     | '/staff'
   id:
     | '__root__'
@@ -216,6 +228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/staff/$userId'
     | '/_authenticated/inventory/'
     | '/_authenticated/orders/'
+    | '/_authenticated/rentals/'
     | '/_authenticated/staff/'
   fileRoutesById: FileRoutesById
 }
@@ -325,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rentals/': {
+      id: '/_authenticated/rentals/'
+      path: '/rentals'
+      fullPath: '/rentals/'
+      preLoaderRoute: typeof AuthenticatedRentalsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/staff/': {
       id: '/_authenticated/staff/'
       path: '/staff'
@@ -355,6 +375,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
+  AuthenticatedRentalsIndexRoute: typeof AuthenticatedRentalsIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
 }
 
@@ -371,6 +392,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
+  AuthenticatedRentalsIndexRoute: AuthenticatedRentalsIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
 }
 
