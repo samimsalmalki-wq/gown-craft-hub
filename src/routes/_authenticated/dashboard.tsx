@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Card, Chip, Empty, PaymentChip, Stat } from "@/components/kit";
 import { useOrders } from "@/lib/data";
+import { useMaterials, useRentalDresses, useRentalRecords } from "@/lib/inventory-data";
+import { available, isLowStock, isRentalLate, qty } from "@/lib/inventory";
 import {
   STAGES,
   fmtDate,
