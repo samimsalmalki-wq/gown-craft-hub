@@ -1,6 +1,7 @@
 import type { Database } from "@/integrations/supabase/types";
 
-export type StageKey = Database["public"]["Enums"]["stage_key"];
+/** مفتاح المرحلة: نص حتى يمكن للمدير إنشاء مراحل مخصّصة */
+export type StageKey = string;
 export type StageStatus = Database["public"]["Enums"]["stage_status"];
 export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 export type OrderState = Database["public"]["Enums"]["order_state"];
