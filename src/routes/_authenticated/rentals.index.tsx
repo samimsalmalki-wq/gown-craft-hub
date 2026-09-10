@@ -154,7 +154,10 @@ function RentalsPage() {
                     <span className="min-w-0 flex-1 truncate text-[14px]">
                       {[d.model_no, d.color, d.size].filter(Boolean).join(" · ") || "—"}
                     </span>
-                    <Chip tone={STATUS_TONE[d.status]}>{DRESS_STATUS_LABEL[d.status]}</Chip>
+                    <Chip tone={STATUS_TONE[statusOf(d)]}>{DRESS_STATUS_LABEL[statusOf(d)]}</Chip>
+                    {upcomingByDress.has(d.id) && (
+                      <Chip tone="soon">محجوز من {fmtDate(upcomingByDress.get(d.id)!.out_date)}</Chip>
+                    )}
                     {lateDressIds.has(d.id) && <Chip tone="late">متأخر الإرجاع</Chip>}
                     <span className="num text-[12px] text-muted-foreground">{money(Number(d.rent_price))}</span>
                   </Link>
