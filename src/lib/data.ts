@@ -121,7 +121,7 @@ export function useUpdateOrder(orderId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (patch: Partial<Order>) => {
-      const { error } = await supabase.from("orders").update(patch).eq("id", orderId);
+      const { error } = await supabase.from("orders").update(patch as never).eq("id", orderId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -135,7 +135,7 @@ export function useUpdateStage(orderId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<OrderStage> }) => {
-      const { error } = await supabase.from("order_stages").update(patch).eq("id", id);
+      const { error } = await supabase.from("order_stages").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -235,7 +235,7 @@ export function useSaveTemplate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
-      const { error } = await supabase.from("stage_templates").update(patch).eq("id", id);
+      const { error } = await supabase.from("stage_templates").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["stage-templates"] }),
@@ -259,7 +259,7 @@ export function useUpdateProfile() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
-      const { error } = await supabase.from("profiles").update(patch).eq("id", id);
+      const { error } = await supabase.from("profiles").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -356,7 +356,7 @@ export function useStageActions() {
   const qc = useQueryClient();
 
   const run = async (id: string, patch: Record<string, unknown>) => {
-    const { error } = await supabase.from("order_stages").update(patch).eq("id", id);
+    const { error } = await supabase.from("order_stages").update(patch as never).eq("id", id);
     if (error) throw error;
   };
 
@@ -556,7 +556,7 @@ export function useUpdateAlteration(orderId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
-      const { error } = await supabase.from("alterations").update(patch).eq("id", id);
+      const { error } = await supabase.from("alterations").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
