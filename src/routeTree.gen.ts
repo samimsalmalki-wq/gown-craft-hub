@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedLateRouteImport } from './routes/_authenticated/late'
 import { Route as AuthenticatedStagesRouteImport } from './routes/_authenticated/stages'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
@@ -37,6 +38,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLateRoute = AuthenticatedLateRouteImport.update({
+  id: '/late',
+  path: '/late',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStagesRoute = AuthenticatedStagesRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/late': typeof AuthenticatedLateRoute
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/late': typeof AuthenticatedLateRoute
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/late': typeof AuthenticatedLateRoute
   '/_authenticated/stages': typeof AuthenticatedStagesRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/late'
     | '/stages'
     | '/tasks'
     | '/orders/$orderId'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/late'
     | '/stages'
     | '/tasks'
     | '/orders/$orderId'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/_authenticated/late'
     | '/_authenticated/stages'
     | '/_authenticated/tasks'
     | '/_authenticated/orders/$orderId'
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/late': {
+      id: '/_authenticated/late'
+      path: '/late'
+      fullPath: '/late'
+      preLoaderRoute: typeof AuthenticatedLateRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/stages': {
@@ -227,6 +246,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedLateRoute: typeof AuthenticatedLateRoute
   AuthenticatedStagesRoute: typeof AuthenticatedStagesRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
@@ -237,6 +257,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedLateRoute: AuthenticatedLateRoute,
   AuthenticatedStagesRoute: AuthenticatedStagesRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
