@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Field } from "@/components/kit";
 import { supabase } from "@/integrations/supabase/client";
+import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
+import { available, qty } from "@/lib/inventory";
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
   component: NewOrderPage,
