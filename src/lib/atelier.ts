@@ -1,6 +1,7 @@
 import type { Database } from "@/integrations/supabase/types";
 
-export type StageKey = Database["public"]["Enums"]["stage_key"];
+/** مفتاح المرحلة: نص حتى يمكن للمدير إنشاء مراحل مخصّصة */
+export type StageKey = string;
 export type StageStatus = Database["public"]["Enums"]["stage_status"];
 export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 export type OrderState = Database["public"]["Enums"]["order_state"];
@@ -60,10 +61,42 @@ export const ALTERATION_STATUS_LABEL: Record<AlterationStatus, string> = {
   cancelled: "ملغي",
 };
 
-export const stageLabel = (key: StageKey) =>
-  STAGES.find((s) => s.key === key)?.label ?? key;
+/* ===== سجل المراحل الحيّ: يُحدَّث من قالب المراحل في قاعدة البيانات ===== */
 
-export const stageIndex = (key: StageKey) => STAGES.findIndex((s) => s.key === key);
+export type StageCatalogRow = {
+  stage: string;
+  label: string;
+  position: number;
+  is_active: boolean;
+};
+
+let CATALOG: StageCatalogRow[] = STAGES.map((s, i) => ({
+  stage: s.key,
+  label: s.label,
+  position: i + 1,
+  is_active: true,
+}));
+
+export const setStageCatalog = (rows: StageCatalogRow[]) => {
+  if (rows.length) CATALOG = [...rows].sort((a, b) => a.position - b.position);
+};
+
+export const stageCatalog = () => CATALOG;
+
+export const activeStageList = () => CATALOG.filter((c) => c.is_active);
+
+export const stageLabel = (key: StageKey) =>
+  CATALOG.find((s) => s.stage === key)?.label ??
+  STAGES.find((s) => s.key === key)?.label ??
+  key;
+
+export const stageIndex = (key: StageKey) => {
+  const list = activeStageList();
+  const i = list.findIndex((s) => s.stage === key);
+  return i >= 0 ? i : CATALOG.findIndex((s) => s.stage === key);
+};
+
+export const stageCount = () => activeStageList().length;
 
 export const STAGE_STATUS_LABEL: Record<StageStatus, string> = {
   pending: "لم تبدأ",
@@ -151,11 +184,13 @@ export const isFinanciallyOpen = (o: Pick<Order, "total_amount" | "deposit_amoun
   remaining(o) > 0;
 
 export const isNew = (o: Pick<Order, "current_stage" | "state">) =>
-  isActive(o) && (o.current_stage === "booking" || o.current_stage === "measurements");
+  isActive(o) && stageIndex(o.current_stage) <= 1;
 
+/** قيد التصنيع: بعد أول مرحلتين وقبل آخر مرحلتين من القالب المفعّل */
 export const inProduction = (o: Pick<Order, "current_stage" | "state">) => {
   const i = stageIndex(o.current_stage);
-  return isActive(o) && i >= 2 && i <= 11;
+  const n = stageCount();
+  return isActive(o) && i >= 2 && i < Math.max(2, n - 2);
 };
 
 export const dueTone = (o: Pick<Order, "due_date" | "state">) =>

@@ -274,7 +274,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           rework_count: number
-          stage: Database["public"]["Enums"]["stage_key"]
+          stage: string
           started_at: string | null
           status: Database["public"]["Enums"]["stage_status"]
           updated_at: string
@@ -299,7 +299,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           rework_count?: number
-          stage: Database["public"]["Enums"]["stage_key"]
+          stage: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["stage_status"]
           updated_at?: string
@@ -324,7 +324,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           rework_count?: number
-          stage?: Database["public"]["Enums"]["stage_key"]
+          stage?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["stage_status"]
           updated_at?: string
@@ -368,7 +368,7 @@ export type Database = {
           client_phone: string | null
           created_at: string
           created_by: string | null
-          current_stage: Database["public"]["Enums"]["stage_key"]
+          current_stage: string
           deposit_amount: number
           due_date: string | null
           id: string
@@ -388,7 +388,7 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           created_by?: string | null
-          current_stage?: Database["public"]["Enums"]["stage_key"]
+          current_stage?: string
           deposit_amount?: number
           due_date?: string | null
           id?: string
@@ -408,7 +408,7 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           created_by?: string | null
-          current_stage?: Database["public"]["Enums"]["stage_key"]
+          current_stage?: string
           deposit_amount?: number
           due_date?: string | null
           id?: string
@@ -425,7 +425,7 @@ export type Database = {
       }
       profiles: {
         Row: {
-          allowed_stages: Database["public"]["Enums"]["stage_key"][]
+          allowed_stages: string[]
           avatar_url: string | null
           created_at: string
           department_id: string | null
@@ -436,7 +436,7 @@ export type Database = {
           phone: string | null
         }
         Insert: {
-          allowed_stages?: Database["public"]["Enums"]["stage_key"][]
+          allowed_stages?: string[]
           avatar_url?: string | null
           created_at?: string
           department_id?: string | null
@@ -447,7 +447,7 @@ export type Database = {
           phone?: string | null
         }
         Update: {
-          allowed_stages?: Database["public"]["Enums"]["stage_key"][]
+          allowed_stages?: string[]
           avatar_url?: string | null
           created_at?: string
           department_id?: string | null
@@ -476,7 +476,7 @@ export type Database = {
           label: string
           position: number
           requires_review: boolean
-          stage: Database["public"]["Enums"]["stage_key"]
+          stage: string
           updated_at: string
         }
         Insert: {
@@ -487,7 +487,7 @@ export type Database = {
           label: string
           position: number
           requires_review?: boolean
-          stage: Database["public"]["Enums"]["stage_key"]
+          stage: string
           updated_at?: string
         }
         Update: {
@@ -498,7 +498,7 @@ export type Database = {
           label?: string
           position?: number
           requires_review?: boolean
-          stage?: Database["public"]["Enums"]["stage_key"]
+          stage?: string
           updated_at?: string
         }
         Relationships: []
@@ -544,7 +544,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_stage_template: {
+        Args: {
+          p_expected_days?: number
+          p_label: string
+          p_requires_review?: boolean
+        }
+        Returns: {
+          created_at: string
+          expected_days: number
+          id: string
+          is_active: boolean
+          label: string
+          position: number
+          requires_review: boolean
+          stage: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "stage_templates"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reorder_stage_templates: { Args: { p_ids: string[] }; Returns: undefined }
     }
     Enums: {
       alteration_status: "requested" | "in_progress" | "done" | "cancelled"

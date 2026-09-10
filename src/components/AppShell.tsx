@@ -18,7 +18,7 @@ import { useState, type ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentAccount } from "@/hooks/useSession";
-import { useMarkNotificationsRead, useNotifications } from "@/lib/data";
+import { useMarkNotificationsRead, useNotifications, useStageTemplates } from "@/lib/data";
 import { ROLE_LABEL, fmtDateTime } from "@/lib/atelier";
 import { Avatar, Sheet } from "@/components/kit";
 import { cn } from "@/lib/utils";
@@ -62,6 +62,7 @@ export function AppShell({
   const [term, setTerm] = useState("");
   const [bellOpen, setBellOpen] = useState(false);
 
+  useStageTemplates(); // يحمّل أسماء المراحل وترتيبها لكل الشاشات
   const { data: notes = [] } = useNotifications(userId);
   const markRead = useMarkNotificationsRead();
   const unread = notes.filter((n) => !n.is_read);

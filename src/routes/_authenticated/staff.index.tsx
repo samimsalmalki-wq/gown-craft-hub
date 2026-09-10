@@ -7,11 +7,18 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, Btn, Card, Chip, Empty, Field, Sheet } from "@/components/kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentAccount } from "@/hooks/useSession";
-import { useAllRoles, useDepartments, useProfiles, useSetRole, useUpdateProfile } from "@/lib/data";
+import {
+  useAllRoles,
+  useDepartments,
+  useProfiles,
+  useSetRole,
+  useStageTemplates,
+  useUpdateProfile,
+} from "@/lib/data";
 import {
   PERMISSIONS,
   ROLE_LABEL,
-  STAGES,
+  stageLabel,
   type AppRole,
   type Profile,
   type StageKey,
@@ -125,7 +132,7 @@ function StaffPage() {
                       المراحل المسموحة:{" "}
                       {allowed.length === 0
                         ? "كل المراحل"
-                        : allowed.map((s) => STAGES.find((x) => x.key === s)?.label ?? s).join("، ")}
+                        : allowed.map((s) => stageLabel(s)).join("، ")}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -217,6 +224,7 @@ function EditStaffSheet({
   onSave: (patch: Record<string, unknown>) => void;
 }) {
   const { data: departments = [] } = useDepartments();
+  const { data: templates = [] } = useStageTemplates();
   const [name, setName] = useState(profile.full_name);
   const [phone, setPhone] = useState(profile.phone ?? "");
   const [job, setJob] = useState(profile.job_title ?? "");
@@ -261,13 +269,13 @@ function EditStaffSheet({
         </Field>
         <Field label="المراحل المسموح بها" hint="بدون تحديد = كل المراحل">
           <div className="flex flex-wrap gap-2">
-            {STAGES.map((s) => (
+            {templates.map((s) => (
               <button
-                key={s.key}
+                key={s.stage}
                 type="button"
-                onClick={() => toggleStage(s.key)}
+                onClick={() => toggleStage(s.stage)}
                 className={`rounded-full border px-3 py-1.5 text-[12px] ${
-                  stages.includes(s.key) ? "border-gold bg-gold/10 text-gold" : "border-line"
+                  stages.includes(s.stage) ? "border-gold bg-gold/10 text-gold" : "border-line"
                 }`}
               >
                 {s.label}

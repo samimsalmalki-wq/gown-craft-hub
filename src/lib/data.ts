@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { setStageCatalog } from "./atelier";
 import type { Order, OrderFile, OrderStage, Profile, StageKey } from "./atelier";
 
 export const ordersKey = ["orders"] as const;
@@ -227,9 +228,27 @@ export function useStageTemplates() {
     queryFn: async () => {
       const { data, error } = await supabase.from("stage_templates").select("*").order("position");
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      setStageCatalog(
+        rows.map((r) => ({
+          stage: r.stage,
+          label: r.label,
+          position: r.position,
+          is_active: r.is_active,
+        })),
+      );
+      return rows;
     },
+    staleTime: 60_000,
   });
+}
+
+function invalidateTemplateCaches(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ["stage-templates"] });
+  qc.invalidateQueries({ queryKey: ["stages"] });
+  qc.invalidateQueries({ queryKey: ["stages-with-orders"] });
+  qc.invalidateQueries({ queryKey: ["my-tasks"] });
+  qc.invalidateQueries({ queryKey: ordersKey });
 }
 
 export function useSaveTemplate() {
@@ -239,7 +258,35 @@ export function useSaveTemplate() {
       const { error } = await supabase.from("stage_templates").update(patch as never).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stage-templates"] }),
+    onSuccess: () => invalidateTemplateCaches(qc),
+  });
+}
+
+/** ترتيب المراحل حسب المصفوفة المرسلة، ويُطبّق على الطلبات الجارية */
+export function useReorderTemplates() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.rpc("reorder_stage_templates", { p_ids: ids });
+      if (error) throw error;
+    },
+    onSuccess: () => invalidateTemplateCaches(qc),
+  });
+}
+
+/** إضافة مرحلة جديدة بالاسم الذي يختاره المدير */
+export function useAddTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { label: string; expectedDays: number; requiresReview: boolean }) => {
+      const { error } = await supabase.rpc("add_stage_template", {
+        p_label: v.label,
+        p_expected_days: v.expectedDays,
+        p_requires_review: v.requiresReview,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => invalidateTemplateCaches(qc),
   });
 }
 
