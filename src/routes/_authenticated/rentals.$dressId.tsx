@@ -131,7 +131,10 @@ function DressPage() {
         <div className="space-y-5">
           <Card title="بيانات الفستان">
             <dl className="divide-y divide-line text-[13px]">
-              <Row label="الحالة" value={DRESS_STATUS_LABEL[dress.status]} />
+              <Row label="الحالة" value={DRESS_STATUS_LABEL[status]} />
+              {nextUpcoming && (
+                <Row label="حجز قادم" value={`${nextUpcoming.client_name} — من ${fmtDate(nextUpcoming.out_date)}`} />
+              )}
               <Row label="قيمة الإيجار" value={money(Number(dress.rent_price))} />
               <Row label="مبلغ التأمين" value={money(Number(dress.deposit_amount))} />
               <Row label="المقاس" value={dress.size || "—"} />
