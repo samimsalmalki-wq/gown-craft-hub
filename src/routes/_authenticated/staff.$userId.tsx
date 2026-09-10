@@ -87,7 +87,7 @@ function StaffProfilePage() {
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="مهام مفتوحة" value={open.length} />
-        <Stat label="مراحل منجزة" value={done.length} tone="ok" />
+        <Stat label="مراحل منجزة" value={done.length} />
         <Stat label="مراحل متأخرة" value={open.filter((t) => isStageLate(t)).length} tone="late" />
         <Stat label="متوسط التنفيذ" value={fmtDuration(avg)} />
       </div>

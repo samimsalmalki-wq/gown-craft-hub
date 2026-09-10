@@ -21,6 +21,7 @@ import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff.index'
+import { Route as AuthenticatedStaffUserIdRouteImport } from './routes/_authenticated/staff.$userId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -83,6 +84,12 @@ const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   path: '/staff/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStaffUserIdRoute =
+  AuthenticatedStaffUserIdRouteImport.update({
+    id: '/staff/$userId',
+    path: '/staff/$userId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AuthenticatedTasksRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
 }
@@ -107,6 +115,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AuthenticatedTasksRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
 }
@@ -122,6 +131,7 @@ export interface FileRoutesById {
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
+  '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
 }
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/orders/$orderId'
     | '/orders/new'
+    | '/staff/$userId'
     | '/orders/'
     | '/staff/'
   fileRoutesByTo: FileRoutesByTo
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/orders/$orderId'
     | '/orders/new'
+    | '/staff/$userId'
     | '/orders'
     | '/staff'
   id:
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
+    | '/_authenticated/staff/$userId'
     | '/_authenticated/orders/'
     | '/_authenticated/staff/'
   fileRoutesById: FileRoutesById
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/staff/$userId': {
+      id: '/_authenticated/staff/$userId'
+      path: '/staff/$userId'
+      fullPath: '/staff/$userId'
+      preLoaderRoute: typeof AuthenticatedStaffUserIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -271,6 +291,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
+  AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
 }
@@ -283,6 +304,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
+  AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
 }
