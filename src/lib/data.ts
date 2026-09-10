@@ -75,6 +75,7 @@ export function useProfiles() {
 export function useOrderFiles(orderId: string) {
   return useQuery({
     queryKey: ["files", orderId],
+    enabled: Boolean(orderId),
     queryFn: async (): Promise<OrderFile[]> => {
       const { data, error } = await supabase
         .from("order_files")
