@@ -183,7 +183,7 @@ export function StageSheet({
             </Btn>
 
             <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-              {(mine || isManager || true) && stage.status !== "in_progress" && stage.status !== "done" && (
+              {(mine || isManager) && stage.status !== "in_progress" && stage.status !== "done" && (
                 <Btn onClick={() => wrap(actions.start.mutateAsync(stage), "بدأ العمل في المرحلة")}>
                   بدء العمل
                 </Btn>
@@ -236,7 +236,10 @@ export function StageSheet({
                     variant="quiet"
                     className="text-late"
                     onClick={() => {
-                      if (!reason.trim()) return toast.error("اكتب سبب الرفض");
+                      if (!reason.trim()) {
+                        toast.error("اكتب سبب الرفض");
+                        return;
+                      }
                       wrap(
                         actions.reject.mutateAsync({ stage, reason, actorId: userId }),
                         "أُعيدت المرحلة للتنفيذ",
