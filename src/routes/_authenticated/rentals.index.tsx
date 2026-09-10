@@ -48,14 +48,17 @@ function RentalsPage() {
   });
   const [image, setImage] = useState<File | null>(null);
 
-  const openRecords = records.filter((r) => !r.returned_at);
-  const lateRecords = openRecords.filter(isRentalLate);
+  const outNow = records.filter(isOutNow);
+  const upcoming = records.filter(isUpcomingRental);
+  const lateRecords = outNow.filter(isRentalLate);
   const lateDressIds = new Set(lateRecords.map((r) => r.dress_id));
+  const upcomingByDress = new Map(upcoming.map((r) => [r.dress_id, r]));
+  const statusOf = (d: { id: string; status: DressStatus }): DressStatus => effectiveDressStatus(d, records);
 
   const list = useMemo(
     () =>
       dresses.filter((d) => {
-        if (status !== "all" && d.status !== status) return false;
+        if (status !== "all" && effectiveDressStatus(d, records) !== status) return false;
         const t = term.trim();
         if (!t) return true;
         return (
