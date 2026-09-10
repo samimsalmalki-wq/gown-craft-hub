@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { AppRole } from "@/lib/atelier";
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,21 +37,31 @@ export function useCurrentAccount() {
       ]);
       return {
         profile: profile.data,
-        isAdmin: (roles.data ?? []).some((r) => r.role === "admin"),
+        roles: (roles.data ?? []).map((r) => r.role as AppRole),
         permissions: (perms.data ?? []).map((p) => p.permission),
       };
     },
   });
 
-  const isAdmin = query.data?.isAdmin ?? false;
+  const roles = query.data?.roles ?? [];
   const permissions = query.data?.permissions ?? [];
+  const isAdmin = roles.includes("admin");
+  const isSupervisor = roles.includes("supervisor");
+  const isManager = isAdmin || isSupervisor;
+  const isCS = roles.includes("cs");
 
   return {
     ready: ready && (!userId || !query.isLoading),
     user,
+    userId,
     profile: query.data?.profile ?? null,
+    roles,
+    role: (roles[0] ?? "staff") as AppRole,
     isAdmin,
+    isSupervisor,
+    isManager,
+    isCS,
     permissions,
-    can: (permission: string) => isAdmin || permissions.includes(permission),
+    can: (permission: string) => isManager || permissions.includes(permission),
   };
 }
