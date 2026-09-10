@@ -53,6 +53,9 @@ function NewOrderPage() {
   const [secondFitting, setSecondFitting] = useState(false);
   const [newModel, setNewModel] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const { data: materials = [] } = useMaterials();
+  const reserve = useReserveMaterial();
+  const [picked, setPicked] = useState<Record<string, string>>({});
 
   const set =
     (k: keyof typeof form) =>
