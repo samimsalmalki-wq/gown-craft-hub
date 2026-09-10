@@ -113,6 +113,16 @@ function OrderDetailPage() {
             </dl>
           </Card>
 
+          <Card title="الموديل">
+            <dl className="divide-y divide-line text-[13px]">
+              <Row label="نوع الموديل" value={order.is_new_model ? "موديل جديد" : "موديل موجود"} />
+              <Row label="رقم الموديل" value={order.model_no || "—"} />
+              <Row label="موديل التطريز" value={order.embroidery_model || "—"} />
+            </dl>
+          </Card>
+
+
+
           <Card title="المقاسات">
             {Object.keys(measures).length === 0 ? (
               <Empty>لم تُسجَّل المقاسات بعد.</Empty>
