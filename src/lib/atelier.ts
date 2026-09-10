@@ -160,3 +160,57 @@ export const inProduction = (o: Pick<Order, "current_stage" | "state">) => {
 
 export const dueTone = (o: Pick<Order, "due_date" | "state">) =>
   isLate(o) ? "text-late" : isDueSoon(o) ? "text-soon" : "text-muted-foreground";
+
+export type Department = Database["public"]["Tables"]["departments"]["Row"];
+export type StageTemplate = Database["public"]["Tables"]["stage_templates"]["Row"];
+export type Alteration = Database["public"]["Tables"]["alterations"]["Row"];
+export type ActivityRow = Database["public"]["Tables"]["activity_log"]["Row"];
+export type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
+
+export const ACTIVITY_LABEL: Record<string, string> = {
+  order_created: "إنشاء الطلب",
+  stage_changed: "تغيير المرحلة",
+  due_date_changed: "تغيير موعد التسليم",
+  payment_changed: "تغيير حالة الدفع",
+  state_changed: "تغيير حالة الطلب",
+  assigned: "إسناد موظف",
+  stage_status: "تحديث حالة مرحلة",
+  work_started: "بدء العمل",
+  work_paused: "إيقاف العمل",
+  work_finished: "إنهاء العمل",
+  stage_approved: "اعتماد المرحلة",
+  stage_rejected: "رفض المرحلة",
+  alteration_added: "إضافة تعديل",
+  alteration_status: "تحديث تعديل",
+  file_added: "إضافة مرفق",
+};
+
+export const activityLabel = (action: string) => ACTIVITY_LABEL[action] ?? action;
+
+export const isStageLate = (
+  s: Pick<OrderStage, "due_at" | "status">,
+) => {
+  if (!s.due_at || s.status === "done") return false;
+  const due = new Date(s.due_at);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return due.getTime() < today.getTime();
+};
+
+export const stageLateDays = (s: Pick<OrderStage, "due_at" | "status">) => {
+  if (!isStageLate(s) || !s.due_at) return 0;
+  const due = new Date(s.due_at);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((today.getTime() - due.getTime()) / 86400000);
+};
+
+export const fmtDuration = (minutes: number | null | undefined) => {
+  if (!minutes && minutes !== 0) return "—";
+  if (minutes < 60) return `${minutes} دقيقة`;
+  const h = Math.floor(minutes / 60);
+  if (h < 24) return `${h} ساعة`;
+  return `${Math.floor(h / 24)} يوم و${h % 24} ساعة`;
+};
