@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLateRouteImport } from './routes/_authenticated/late'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedStagesRouteImport } from './routes/_authenticated/stages'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
@@ -43,6 +44,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedLateRoute = AuthenticatedLateRouteImport.update({
   id: '/late',
   path: '/late',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStagesRoute = AuthenticatedStagesRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/late': typeof AuthenticatedLateRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/late': typeof AuthenticatedLateRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/stages': typeof AuthenticatedStagesRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/late': typeof AuthenticatedLateRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/stages': typeof AuthenticatedStagesRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/late'
+    | '/reports'
     | '/stages'
     | '/tasks'
     | '/orders/$orderId'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/late'
+    | '/reports'
     | '/stages'
     | '/tasks'
     | '/orders/$orderId'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/late'
+    | '/_authenticated/reports'
     | '/_authenticated/stages'
     | '/_authenticated/tasks'
     | '/_authenticated/orders/$orderId'
@@ -199,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLateRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/stages': {
       id: '/_authenticated/stages'
       path: '/stages'
@@ -247,6 +266,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLateRoute: typeof AuthenticatedLateRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedStagesRoute: typeof AuthenticatedStagesRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
@@ -258,6 +278,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLateRoute: AuthenticatedLateRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedStagesRoute: AuthenticatedStagesRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
