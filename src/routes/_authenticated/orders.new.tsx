@@ -19,6 +19,16 @@ const MEASURES = [
   ["length", "طول الفستان"],
 ] as const;
 
+const EMBROIDERY_MODELS = [
+  "تطريز خرز",
+  "تطريز ترتر",
+  "تطريز كريستال",
+  "تطريز خيوط حرير",
+  "دانتيل مطرز",
+  "تطريز مشجر ثلاثي الأبعاد",
+] as const;
+
+
 function NewOrderPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
