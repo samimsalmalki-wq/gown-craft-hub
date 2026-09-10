@@ -116,8 +116,8 @@ function DressPage() {
           openRecord ? (
             <Btn onClick={() => setRetOpen(true)}>تسجيل الإرجاع</Btn>
           ) : (
-            <Btn onClick={() => setOutOpen(true)} disabled={dress.status === "retired"}>
-              تأجير الفستان
+            <Btn onClick={() => setOutOpen(true)} disabled={effStatus === "retired"}>
+              تأجير الفستان أو حجزه
             </Btn>
           )
         ) : undefined
