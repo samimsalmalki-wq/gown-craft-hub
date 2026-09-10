@@ -118,8 +118,8 @@ export function Avatar({
   url,
   size = 9,
 }: {
-  name?: string | null;
-  url?: string | null;
+  name?: string | null | undefined;
+  url?: string | null | undefined;
   size?: 8 | 9 | 12 | 16;
 }) {
   const cls = { 8: "size-8", 9: "size-9", 12: "size-12", 16: "size-16" }[size];
