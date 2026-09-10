@@ -184,11 +184,13 @@ export const isFinanciallyOpen = (o: Pick<Order, "total_amount" | "deposit_amoun
   remaining(o) > 0;
 
 export const isNew = (o: Pick<Order, "current_stage" | "state">) =>
-  isActive(o) && (o.current_stage === "booking" || o.current_stage === "measurements");
+  isActive(o) && stageIndex(o.current_stage) <= 1;
 
+/** قيد التصنيع: بعد أول مرحلتين وقبل آخر مرحلتين من القالب المفعّل */
 export const inProduction = (o: Pick<Order, "current_stage" | "state">) => {
   const i = stageIndex(o.current_stage);
-  return isActive(o) && i >= 2 && i <= 11;
+  const n = stageCount();
+  return isActive(o) && i >= 2 && i < Math.max(2, n - 2);
 };
 
 export const dueTone = (o: Pick<Order, "due_date" | "state">) =>
