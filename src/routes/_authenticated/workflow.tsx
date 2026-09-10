@@ -68,7 +68,7 @@ function WorkflowPage() {
   const move = (from: number, to: number) => {
     if (to < 0 || to >= order.length || from === to) return;
     const rows = [...order];
-    const [row] = rows.splice(from, 1);
+    const row = rows.splice(from, 1)[0]!;
     rows.splice(to, 0, row);
     commit(rows);
   };
@@ -92,7 +92,7 @@ function WorkflowPage() {
     >
       {adding && <AddStage onDone={() => setAdding(false)} add={add} />}
 
-      <Card title="قائمة المراحل" subtitle="اسحب من المقبض ⠿ أو استخدم الأسهم">
+      <Card title="قائمة المراحل">
         {order.length === 0 ? (
           <Empty>لا توجد مراحل.</Empty>
         ) : (
@@ -216,7 +216,7 @@ function AddStage({
   };
 
   return (
-    <Card title="مرحلة جديدة" subtitle="تُضاف في نهاية القائمة ثم تسحبها لمكانها">
+    <Card title="مرحلة جديدة">
       <div className="flex flex-wrap items-end gap-3 px-4 py-4">
         <div className="min-w-[180px] flex-1">
           <Field label="اسم المرحلة">
@@ -248,7 +248,7 @@ function AddStage({
           />
           تحتاج مراجعة
         </label>
-        <Btn tone="gold" onClick={submit} disabled={add.isPending}>
+        <Btn variant="gold" onClick={submit} disabled={add.isPending}>
           إضافة
         </Btn>
       </div>
