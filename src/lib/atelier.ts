@@ -61,10 +61,42 @@ export const ALTERATION_STATUS_LABEL: Record<AlterationStatus, string> = {
   cancelled: "ملغي",
 };
 
-export const stageLabel = (key: StageKey) =>
-  STAGES.find((s) => s.key === key)?.label ?? key;
+/* ===== سجل المراحل الحيّ: يُحدَّث من قالب المراحل في قاعدة البيانات ===== */
 
-export const stageIndex = (key: StageKey) => STAGES.findIndex((s) => s.key === key);
+export type StageCatalogRow = {
+  stage: string;
+  label: string;
+  position: number;
+  is_active: boolean;
+};
+
+let CATALOG: StageCatalogRow[] = STAGES.map((s, i) => ({
+  stage: s.key,
+  label: s.label,
+  position: i + 1,
+  is_active: true,
+}));
+
+export const setStageCatalog = (rows: StageCatalogRow[]) => {
+  if (rows.length) CATALOG = [...rows].sort((a, b) => a.position - b.position);
+};
+
+export const stageCatalog = () => CATALOG;
+
+export const activeStageList = () => CATALOG.filter((c) => c.is_active);
+
+export const stageLabel = (key: StageKey) =>
+  CATALOG.find((s) => s.stage === key)?.label ??
+  STAGES.find((s) => s.key === key)?.label ??
+  key;
+
+export const stageIndex = (key: StageKey) => {
+  const list = activeStageList();
+  const i = list.findIndex((s) => s.stage === key);
+  return i >= 0 ? i : CATALOG.findIndex((s) => s.stage === key);
+};
+
+export const stageCount = () => activeStageList().length;
 
 export const STAGE_STATUS_LABEL: Record<StageStatus, string> = {
   pending: "لم تبدأ",
