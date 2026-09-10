@@ -149,7 +149,7 @@ function DressPage() {
                 {(["available", "cleaning", "repair", "retired"] as DressStatus[]).map((s) => (
                   <Btn
                     key={s}
-                    variant={dress.status === s ? "gold" : "quiet"}
+                    variant={effStatus === s ? "gold" : "quiet"}
                     onClick={() => setStatus.mutate({ id: dress.id, status: s })}
                   >
                     {DRESS_STATUS_LABEL[s]}
