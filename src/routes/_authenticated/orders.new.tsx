@@ -213,6 +213,36 @@ function NewOrderPage() {
           </div>
         </Card>
 
+        <Card title="المواد المطلوبة" action={<span className="text-[12px] text-muted-foreground">تُحجز من المخزون بعد الحفظ</span>}>
+          {materials.length === 0 ? (
+            <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">
+              لا توجد مواد في المخزون بعد.
+            </p>
+          ) : (
+            <ul className="divide-y divide-black/5">
+              {materials
+                .filter((m) => m.is_active)
+                .map((m) => (
+                  <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <span className="min-w-0 flex-1 truncate text-[14px]">{m.name}</span>
+                    <span className="num text-[12px] text-muted-foreground">
+                      متاح {qty(available(m))} {m.unit}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="field w-24"
+                      placeholder="0"
+                      value={picked[m.id] ?? ""}
+                      onChange={(e) => setPicked((p) => ({ ...p, [m.id]: e.target.value }))}
+                    />
+                  </li>
+                ))}
+            </ul>
+          )}
+        </Card>
+
         <Card title="المقاسات (سم)">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-3">
             {MEASURES.map(([key, label]) => (
