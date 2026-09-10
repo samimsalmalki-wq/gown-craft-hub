@@ -38,7 +38,10 @@ function DressPage() {
   const urls = useInventoryUrls([dress?.image_path]);
   const image = dress?.image_path ? urls[dress.image_path] : undefined;
 
-  const openRecord = records.find((r) => !r.returned_at) ?? null;
+  const openRecord = records.find(isOutNow) ?? null;
+  const nextUpcoming =
+    [...records].filter(isUpcomingRental).sort((a, b) => a.out_date.localeCompare(b.out_date))[0] ?? null;
+  const effStatus = dress ? effectiveDressStatus(dress, records) : "available";
 
   const [outOpen, setOutOpen] = useState(false);
   const [retOpen, setRetOpen] = useState(false);
