@@ -8,7 +8,10 @@ import { fmtDate, money } from "@/lib/atelier";
 import {
   DRESS_STATUS_LABEL,
   RETURN_CONDITIONS,
+  effectiveDressStatus,
+  isOutNow,
   isRentalLate,
+  isUpcomingRental,
   type DressStatus,
 } from "@/lib/inventory";
 import {
