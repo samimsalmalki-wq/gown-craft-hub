@@ -14,7 +14,7 @@ import {
   qty,
 } from "@/lib/inventory";
 
-export const Route = createFileRoute("/_authenticated/inventory")({
+export const Route = createFileRoute("/_authenticated/inventory/")({
   component: InventoryPage,
 });
 
