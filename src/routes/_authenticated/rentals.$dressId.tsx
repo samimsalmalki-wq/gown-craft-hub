@@ -131,7 +131,7 @@ function DressPage() {
         <div className="space-y-5">
           <Card title="بيانات الفستان">
             <dl className="divide-y divide-line text-[13px]">
-              <Row label="الحالة" value={DRESS_STATUS_LABEL[status]} />
+              <Row label="الحالة" value={DRESS_STATUS_LABEL[effStatus]} />
               {nextUpcoming && (
                 <Row label="حجز قادم" value={`${nextUpcoming.client_name} — من ${fmtDate(nextUpcoming.out_date)}`} />
               )}
