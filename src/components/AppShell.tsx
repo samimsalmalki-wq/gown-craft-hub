@@ -13,6 +13,8 @@ import {
   BarChart3,
   Settings2,
   Bell,
+  Boxes,
+  Shirt,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
