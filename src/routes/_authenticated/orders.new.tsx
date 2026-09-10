@@ -115,6 +115,19 @@ function NewOrderPage() {
         }
       }
 
+      const wanted = Object.entries(picked)
+        .map(([materialId, value]) => ({ materialId, amount: Number(value) }))
+        .filter((r) => r.amount > 0);
+      if (wanted.length) {
+        try {
+          for (const row of wanted) {
+            await reserve.mutateAsync({ orderId: data.id, materialId: row.materialId, qty: row.amount });
+          }
+        } catch {
+          toast.error("تم حفظ الطلب لكن تعذر حجز بعض المواد");
+        }
+      }
+
       toast.success("تم إنشاء الطلب");
       navigate({ to: "/orders/$orderId", params: { orderId: data.id } });
     } catch (err) {
