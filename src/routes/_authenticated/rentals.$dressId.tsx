@@ -55,6 +55,7 @@ function DressPage() {
     notes: "",
   });
   const [ret, setRet] = useState({ condition: "ok", notes: "" });
+  const [err, setErr] = useState<string | null>(null);
 
   if (isLoading) {
     return (
