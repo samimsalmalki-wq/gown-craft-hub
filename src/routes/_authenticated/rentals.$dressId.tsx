@@ -71,16 +71,33 @@ function DressPage() {
   async function submitOut(e: React.FormEvent) {
     e.preventDefault();
     if (!form.client_name.trim()) return;
-    await startRental.mutateAsync({
-      dress_id: dressId,
-      client_name: form.client_name.trim(),
-      client_phone: form.client_phone.trim() || null,
-      out_date: form.out_date,
-      due_date: form.due_date,
-      amount: Number(form.amount) || Number(dress!.rent_price),
-      deposit_amount: Number(form.deposit_amount) || Number(dress!.deposit_amount),
-      notes: form.notes.trim() || null,
-    });
+    setErr(null);
+    if (form.due_date < form.out_date) {
+      setErr("تاريخ الإرجاع لا يمكن أن يكون قبل تاريخ الخروج.");
+      return;
+    }
+    const clash = records.find(
+      (r) => !r.returned_at && r.out_date <= form.due_date && r.due_date >= form.out_date,
+    );
+    if (clash) {
+      setErr(`الفستان محجوز من ${fmtDate(clash.out_date)} إلى ${fmtDate(clash.due_date)} لـ${clash.client_name}.`);
+      return;
+    }
+    try {
+      await startRental.mutateAsync({
+        dress_id: dressId,
+        client_name: form.client_name.trim(),
+        client_phone: form.client_phone.trim() || null,
+        out_date: form.out_date,
+        due_date: form.due_date,
+        amount: Number(form.amount) || Number(dress!.rent_price),
+        deposit_amount: Number(form.deposit_amount) || Number(dress!.deposit_amount),
+        notes: form.notes.trim() || null,
+      });
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : "تعذّر تسجيل الإيجار.");
+      return;
+    }
     setOutOpen(false);
     setForm({
       client_name: "",
