@@ -175,6 +175,8 @@ function DressPage() {
                     {r.client_phone && <span className="num text-[12px] text-muted-foreground">{r.client_phone}</span>}
                     {r.returned_at ? (
                       <Chip tone="ok">تم الإرجاع</Chip>
+                    ) : isUpcomingRental(r) ? (
+                      <Chip tone="soon">حجز قادم</Chip>
                     ) : isRentalLate(r) ? (
                       <Chip tone="late">متأخر الإرجاع</Chip>
                     ) : (
