@@ -253,24 +253,36 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "staff"
+      alteration_status: "requested" | "in_progress" | "done" | "cancelled"
+      app_role: "admin" | "staff" | "supervisor" | "cs"
       order_state: "active" | "delivered" | "cancelled"
       payment_status: "unpaid" | "partial" | "paid"
       stage_key:
         | "booking"
         | "measurements"
         | "design"
+        | "design_approval"
         | "materials"
         | "cutting"
         | "sewing"
+        | "embroidery"
         | "finishing"
         | "fitting1"
         | "alterations"
         | "fitting2"
+        | "final_alterations"
         | "quality"
         | "prep_delivery"
         | "delivery"
-      stage_status: "pending" | "in_progress" | "done" | "blocked"
+      stage_status:
+        | "pending"
+        | "in_progress"
+        | "done"
+        | "blocked"
+        | "assigned"
+        | "review"
+        | "late"
+      task_priority: "low" | "normal" | "high" | "urgent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -398,25 +410,38 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff"],
+      alteration_status: ["requested", "in_progress", "done", "cancelled"],
+      app_role: ["admin", "staff", "supervisor", "cs"],
       order_state: ["active", "delivered", "cancelled"],
       payment_status: ["unpaid", "partial", "paid"],
       stage_key: [
         "booking",
         "measurements",
         "design",
+        "design_approval",
         "materials",
         "cutting",
         "sewing",
+        "embroidery",
         "finishing",
         "fitting1",
         "alterations",
         "fitting2",
+        "final_alterations",
         "quality",
         "prep_delivery",
         "delivery",
       ],
-      stage_status: ["pending", "in_progress", "done", "blocked"],
+      stage_status: [
+        "pending",
+        "in_progress",
+        "done",
+        "blocked",
+        "assigned",
+        "review",
+        "late",
+      ],
+      task_priority: ["low", "normal", "high", "urgent"],
     },
   },
 } as const
