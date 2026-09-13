@@ -40,6 +40,7 @@ export function StageRow({ stage, onOpen }: { stage: OrderStage; onOpen: () => v
         <span className="min-w-0 flex-1 text-[14px] font-medium">{stageLabel(stage.stage)}</span>
         {stage.rework_count > 0 && <Chip tone="late">إعادة عمل ×{stage.rework_count}</Chip>}
         {late && <Chip tone="late">متأخرة {stageLateDays(stage)} يوم</Chip>}
+        {!stage.is_required && <Chip>غير مطلوبة</Chip>}
         <StageStatusChip status={stage.status} />
       </div>
       <div className="mt-1 flex flex-wrap gap-x-4 text-[11px] text-muted-foreground">
