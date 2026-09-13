@@ -476,6 +476,21 @@ export function useStageActions() {
     finish: useMutation({
       mutationFn: async (stage: OrderStage) => {
         const now = new Date().toISOString();
+        const { data: tpl } = await supabase
+          .from("stage_templates")
+          .select("is_scope_gate")
+          .eq("stage", stage.stage)
+          .maybeSingle();
+        if (tpl?.is_scope_gate) {
+          const { data: ord } = await supabase
+            .from("orders")
+            .select("scope_set_at")
+            .eq("id", stage.order_id)
+            .maybeSingle();
+          if (!ord?.scope_set_at) {
+            throw new Error("حدّد المراحل المطلوبة لهذا الطلب قبل إنهاء هذه المرحلة");
+          }
+        }
         if (stage.requires_review) {
           await run(stage.id, {
             status: "review",
