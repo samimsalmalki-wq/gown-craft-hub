@@ -129,6 +129,11 @@ export function StageSheet({
           {stage.review_notes && <Line label="ملاحظات المراجعة" value={stage.review_notes} />}
         </dl>
 
+        {templates.some((t) => t.stage === stage.stage && t.is_scope_gate) && (
+          <StageScope stage={stage} />
+        )}
+
+
         {canEdit && (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
