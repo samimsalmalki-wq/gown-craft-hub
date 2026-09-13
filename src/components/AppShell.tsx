@@ -42,6 +42,7 @@ const NAV: NavItem[] = [
   { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
   { to: "/reports", label: "تقرير الأداء", icon: BarChart3, managerOnly: true },
   { to: "/workflow", label: "إعداد المراحل", icon: Settings2, adminOnly: true },
+  { to: "/whatsapp", label: "رسائل الواتساب", icon: MessageCircle, managerOnly: true },
 ];
 
 export function AppShell({
