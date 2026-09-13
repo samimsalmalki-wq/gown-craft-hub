@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { OrdersTabs } from "@/components/OrdersTabs";
 import { Card, Chip, Empty, PaymentChip } from "@/components/kit";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { useOrders } from "@/lib/data";
 import {
   ORDER_STATE_LABEL,
