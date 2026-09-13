@@ -55,7 +55,11 @@ export function useAllStages() {
   return useQuery({
     queryKey: ["stages", "all"],
     queryFn: async (): Promise<OrderStage[]> => {
-      const { data, error } = await supabase.from("order_stages").select("*").order("position");
+      const { data, error } = await supabase
+        .from("order_stages")
+        .select("*")
+        .eq("is_required", true)
+        .order("position");
       if (error) throw error;
       return data ?? [];
     },
