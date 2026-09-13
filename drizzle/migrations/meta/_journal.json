@@ -15,6 +15,13 @@
       "when": 1789262105157,
       "tag": "0001_allow_whatsapp_activity_log_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789334350906,
+      "tag": "0002_stage_scope_gate",
+      "breakpoints": true
     }
   ]
 }

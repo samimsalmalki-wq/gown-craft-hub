@@ -417,6 +417,7 @@ export type Database = {
           due_at: string | null
           duration_minutes: number | null
           id: string
+          is_required: boolean
           notes: string | null
           order_id: string
           position: number
@@ -442,6 +443,7 @@ export type Database = {
           due_at?: string | null
           duration_minutes?: number | null
           id?: string
+          is_required?: boolean
           notes?: string | null
           order_id: string
           position: number
@@ -467,6 +469,7 @@ export type Database = {
           due_at?: string | null
           duration_minutes?: number | null
           id?: string
+          is_required?: boolean
           notes?: string | null
           order_id?: string
           position?: number
@@ -536,6 +539,8 @@ export type Database = {
           notes: string | null
           order_no: string
           payment_status: Database["public"]["Enums"]["payment_status"]
+          scope_set_at: string | null
+          scope_set_by: string | null
           state: Database["public"]["Enums"]["order_state"]
           total_amount: number
           updated_at: string
@@ -562,6 +567,8 @@ export type Database = {
           notes?: string | null
           order_no?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          scope_set_at?: string | null
+          scope_set_by?: string | null
           state?: Database["public"]["Enums"]["order_state"]
           total_amount?: number
           updated_at?: string
@@ -588,11 +595,21 @@ export type Database = {
           notes?: string | null
           order_no?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          scope_set_at?: string | null
+          scope_set_by?: string | null
           state?: Database["public"]["Enums"]["order_state"]
           total_amount?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_scope_set_by_fkey"
+            columns: ["scope_set_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -751,6 +768,7 @@ export type Database = {
           expected_days: number
           id: string
           is_active: boolean
+          is_scope_gate: boolean
           label: string
           position: number
           requires_review: boolean
@@ -762,6 +780,7 @@ export type Database = {
           expected_days?: number
           id?: string
           is_active?: boolean
+          is_scope_gate?: boolean
           label: string
           position: number
           requires_review?: boolean
@@ -773,6 +792,7 @@ export type Database = {
           expected_days?: number
           id?: string
           is_active?: boolean
+          is_scope_gate?: boolean
           label?: string
           position?: number
           requires_review?: boolean
@@ -866,6 +886,7 @@ export type Database = {
           expected_days: number
           id: string
           is_active: boolean
+          is_scope_gate: boolean
           label: string
           position: number
           requires_review: boolean
@@ -880,6 +901,10 @@ export type Database = {
         }
       }
       reorder_stage_templates: { Args: { p_ids: string[] }; Returns: undefined }
+      set_order_stage_scope: {
+        Args: { p_order_id: string; p_stages: string[] }
+        Returns: undefined
+      }
     }
     Enums: {
       alteration_status: "requested" | "in_progress" | "done" | "cancelled"

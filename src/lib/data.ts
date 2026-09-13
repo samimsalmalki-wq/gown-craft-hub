@@ -55,7 +55,11 @@ export function useAllStages() {
   return useQuery({
     queryKey: ["stages", "all"],
     queryFn: async (): Promise<OrderStage[]> => {
-      const { data, error } = await supabase.from("order_stages").select("*").order("position");
+      const { data, error } = await supabase
+        .from("order_stages")
+        .select("*")
+        .eq("is_required", true)
+        .order("position");
       if (error) throw error;
       return data ?? [];
     },
@@ -346,6 +350,7 @@ export function useStagesWithOrders() {
       const { data, error } = await supabase
         .from("order_stages")
         .select("*, orders(*)")
+        .eq("is_required", true)
         .order("position");
       if (error) throw error;
       return (data ?? []) as StageWithOrder[];
@@ -362,6 +367,7 @@ export function useMyTasks(userId: string | undefined) {
         .from("order_stages")
         .select("*, orders(*)")
         .eq("assignee_id", userId!)
+        .eq("is_required", true)
         .order("due_at", { nullsFirst: false });
       if (error) throw error;
       return (data ?? []) as StageWithOrder[];
@@ -381,22 +387,39 @@ function invalidateStageCaches(qc: ReturnType<typeof useQueryClient>, orderId?: 
   }
 }
 
+/** الانتقال للمرحلة المطلوبة التالية فقط (تتخطى المراحل غير المطلوبة لهذا الطلب) */
 async function advanceOrder(orderId: string, stage: StageKey) {
-  const { data: templates } = await supabase
-    .from("stage_templates")
-    .select("stage, position, is_active")
+  const { data: rows } = await supabase
+    .from("order_stages")
+    .select("stage, position, is_required")
+    .eq("order_id", orderId)
     .order("position");
-  const active = (templates ?? []).filter((t) => t.is_active);
-  const idx = active.findIndex((t) => t.stage === stage);
-  const next = idx >= 0 ? active[idx + 1] : undefined;
+  const list = rows ?? [];
+  const current = list.find((r) => r.stage === stage);
+  const next = list.find((r) => r.is_required && r.position > (current?.position ?? 0));
   const target = (next?.stage ?? stage) as StageKey;
   await supabase
     .from("orders")
     .update({
       current_stage: target,
-      state: !next && stage === "delivery" ? "delivered" : "active",
+      state: next ? "active" : "delivered",
     })
     .eq("id", orderId);
+}
+
+/** تحديد المراحل المطلوبة لطلب معيّن (للمدير والمشرف) */
+export function useSetStageScope() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, stages }: { orderId: string; stages: string[] }) => {
+      const { error } = await supabase.rpc("set_order_stage_scope", {
+        p_order_id: orderId,
+        p_stages: stages,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => invalidateStageCaches(qc, v.orderId),
+  });
 }
 
 /** إجراءات المرحلة: إسناد، بدء، إيقاف، إنهاء، اعتماد، رفض */
@@ -453,6 +476,21 @@ export function useStageActions() {
     finish: useMutation({
       mutationFn: async (stage: OrderStage) => {
         const now = new Date().toISOString();
+        const { data: tpl } = await supabase
+          .from("stage_templates")
+          .select("is_scope_gate")
+          .eq("stage", stage.stage)
+          .maybeSingle();
+        if (tpl?.is_scope_gate) {
+          const { data: ord } = await supabase
+            .from("orders")
+            .select("scope_set_at")
+            .eq("id", stage.order_id)
+            .maybeSingle();
+          if (!ord?.scope_set_at) {
+            throw new Error("حدّد المراحل المطلوبة لهذا الطلب قبل إنهاء هذه المرحلة");
+          }
+        }
         if (stage.requires_review) {
           await run(stage.id, {
             status: "review",

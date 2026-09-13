@@ -3,12 +3,25 @@ import { toast } from "sonner";
 
 import { Avatar, Btn, Chip, Field, PriorityChip, Sheet, StageStatusChip } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
-import { useOrderFiles, useProfiles, useSignedUrls, useStageActions, useUploadFiles } from "@/lib/data";
+import {
+  useOrder,
+  useOrderFiles,
+  useOrderStages,
+  useProfiles,
+  useSetStageScope,
+  useSignedUrls,
+  useStageActions,
+  useStageTemplates,
+  useUploadFiles,
+} from "@/lib/data";
 import {
   PRIORITY_LABEL,
+  fmtDate,
   fmtDateTime,
   fmtDuration,
   isStageLate,
+  money,
+  remaining,
   stageLabel,
   stageLateDays,
   type OrderStage,
@@ -27,6 +40,7 @@ export function StageRow({ stage, onOpen }: { stage: OrderStage; onOpen: () => v
         <span className="min-w-0 flex-1 text-[14px] font-medium">{stageLabel(stage.stage)}</span>
         {stage.rework_count > 0 && <Chip tone="late">إعادة عمل ×{stage.rework_count}</Chip>}
         {late && <Chip tone="late">متأخرة {stageLateDays(stage)} يوم</Chip>}
+        {!stage.is_required && <Chip>غير مطلوبة</Chip>}
         <StageStatusChip status={stage.status} />
       </div>
       <div className="mt-1 flex flex-wrap gap-x-4 text-[11px] text-muted-foreground">
@@ -53,6 +67,7 @@ export function StageSheet({
 }) {
   const { can, isManager, userId } = useCurrentAccount();
   const { data: profiles = [] } = useProfiles();
+  const { data: templates = [] } = useStageTemplates();
   const actions = useStageActions();
   const upload = useUploadFiles(stage?.order_id ?? "");
   const { data: files = [] } = useOrderFiles(stage?.order_id ?? "");
@@ -113,6 +128,11 @@ export function StageSheet({
           {stage.delay_reason && <Line label="سبب التوقف" value={stage.delay_reason} />}
           {stage.review_notes && <Line label="ملاحظات المراجعة" value={stage.review_notes} />}
         </dl>
+
+        {templates.some((t) => t.stage === stage.stage && t.is_scope_gate) && (
+          <StageScope stage={stage} />
+        )}
+
 
         {canEdit && (
           <>
@@ -316,6 +336,91 @@ function Line({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex items-start justify-between gap-3 border-b border-line px-3 py-2 last:border-0">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="max-w-[62%] text-left whitespace-pre-wrap">{value}</dd>
+    </div>
+  );
+}
+
+/** تحديد المراحل المطلوبة لهذا الطلب (بوابة المرحلة السادسة — للمدير والمشرف) */
+function StageScope({ stage }: { stage: OrderStage }) {
+  const { isManager } = useCurrentAccount();
+  const { data: order } = useOrder(stage.order_id);
+  const { data: stages = [] } = useOrderStages(stage.order_id);
+  const setScope = useSetStageScope();
+
+  const later = stages.filter((s) => s.position > stage.position);
+  const sig = later.map((s) => `${s.stage}:${s.is_required ? 1 : 0}`).join("|");
+  const [picked, setPicked] = useState<string[]>([]);
+
+  useEffect(() => {
+    setPicked(later.filter((s) => s.is_required).map((s) => s.stage));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig]);
+
+  const toggle = (key: string) =>
+    setPicked((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+  const save = () =>
+    setScope
+      .mutateAsync({ orderId: stage.order_id, stages: picked })
+      .then(() => toast.success("تم تحديد المراحل المطلوبة"))
+      .catch((err: Error) => toast.error(err.message));
+
+  return (
+    <div className="space-y-3 rounded-lg border border-gold/40 bg-gold/5 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[13px] font-medium">المراحل المطلوبة لهذا الطلب</p>
+        {order?.scope_set_at ? (
+          <Chip tone="ok">مُحدَّدة {fmtDate(order.scope_set_at)}</Chip>
+        ) : (
+          <Chip tone="late">لم تُحدَّد بعد</Chip>
+        )}
+      </div>
+
+      {order && (
+        <dl className="rounded-lg border border-line bg-white text-[12px]">
+          <Line
+            label="الموديل"
+            value={order.is_new_model ? `موديل جديد${order.embroidery_model ? ` · تطريز: ${order.embroidery_model}` : ""}` : order.model_no || "—"}
+          />
+          <Line label="الخامات" value={order.materials || "—"} />
+          <Line label="البروفة الأولى" value={fmtDate(order.fitting1_date)} />
+          <Line label="البروفة الثانية" value={fmtDate(order.fitting2_date)} />
+          <Line label="التسليم" value={fmtDate(order.due_date)} />
+          <Line label="القيمة" value={`${money(order.total_amount)} · المتبقي ${money(remaining(order))}`} />
+          {order.notes && <Line label="ملاحظات الفاتورة" value={order.notes} />}
+        </dl>
+      )}
+
+      <ul className="divide-y divide-line rounded-lg border border-line bg-white">
+        {later.length === 0 ? (
+          <li className="px-3 py-3 text-[12px] text-muted-foreground">لا توجد مراحل لاحقة.</li>
+        ) : (
+          later.map((s) => (
+            <li key={s.id} className="flex items-center gap-2 px-3 py-2.5 text-[13px]">
+              <input
+                type="checkbox"
+                className="size-5 accent-current"
+                disabled={!isManager || s.status === "done"}
+                checked={picked.includes(s.stage) || s.status === "done"}
+                onChange={() => toggle(s.stage)}
+              />
+              <span className="num w-6 text-[12px] text-muted-foreground">{s.position}</span>
+              <span className="min-w-0 flex-1">{stageLabel(s.stage)}</span>
+              {s.status === "done" && <Chip tone="ok">منجزة</Chip>}
+            </li>
+          ))
+        )}
+      </ul>
+
+      {isManager ? (
+        <Btn variant="gold" onClick={save} disabled={setScope.isPending}>
+          حفظ المراحل المطلوبة
+        </Btn>
+      ) : (
+        <p className="text-[12px] text-muted-foreground">
+          التحديد متاح لمدير الورشة أو المشرف فقط.
+        </p>
+      )}
     </div>
   );
 }

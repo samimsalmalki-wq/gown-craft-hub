@@ -219,6 +219,7 @@ export const ACTIVITY_LABEL: Record<string, string> = {
   alteration_status: "تحديث تعديل",
   file_added: "إضافة مرفق",
   whatsapp_sent: "إرسال رسالة واتساب",
+  scope_set: "تحديد المراحل المطلوبة",
 };
 
 export const activityLabel = (action: string) => ACTIVITY_LABEL[action] ?? action;
