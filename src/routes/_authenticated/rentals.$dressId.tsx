@@ -24,6 +24,16 @@ import {
 } from "@/lib/inventory-data";
 
 export const Route = createFileRoute("/_authenticated/rentals/$dressId")({
+  head: () => ({
+    meta: [
+      { title: "فستان إيجار · مَعْمَل" },
+      { name: "description", content: "حالة الفستان وسجل إيجاراته ومواعيد الخروج والإرجاع." },
+      { property: "og:title", content: "فستان إيجار · مَعْمَل" },
+      { property: "og:description", content: "حالة الفستان وسجل إيجاراته ومواعيد الخروج والإرجاع." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: DressPage,
 });
 
