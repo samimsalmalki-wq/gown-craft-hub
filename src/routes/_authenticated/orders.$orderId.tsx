@@ -96,7 +96,12 @@ function OrderDetailPage() {
       eyebrow={`طلب ${order.order_no}`}
       title={order.client_name}
       subtitle={`الحجز ${fmtDate(order.booked_at)} · التسليم ${fmtDate(order.due_date)} · ${ORDER_STATE_LABEL[order.state]}`}
-      actions={<Chip tone="gold">{stageLabel(order.current_stage)}</Chip>}
+      actions={
+        <>
+          <Chip tone="gold">{stageLabel(order.current_stage)}</Chip>
+          <WhatsAppButton order={order} />
+        </>
+      }
     >
       <div className="grid gap-5 lg:grid-cols-[1fr_1.3fr]">
         <div className="space-y-5">
