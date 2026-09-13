@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, PaymentChip, Sheet } from "@/components/kit";
 import { StageRow, StageSheet } from "@/components/StageWork";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import {
   useActivityLog,
   useAddAlteration,
