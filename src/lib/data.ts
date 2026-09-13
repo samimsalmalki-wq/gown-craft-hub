@@ -350,6 +350,7 @@ export function useStagesWithOrders() {
       const { data, error } = await supabase
         .from("order_stages")
         .select("*, orders(*)")
+        .eq("is_required", true)
         .order("position");
       if (error) throw error;
       return (data ?? []) as StageWithOrder[];
