@@ -69,11 +69,11 @@ function OrdersPage() {
         ) : (
           <ul className="divide-y divide-line">
             {list.map((o) => (
-              <li key={o.id}>
+              <li key={o.id} className="flex items-center gap-2 pl-3 hover:bg-ivory">
                 <Link
                   to="/orders/$orderId"
                   params={{ orderId: o.id }}
-                  className="block px-4 py-4 hover:bg-ivory"
+                  className="block min-w-0 flex-1 px-4 py-4"
                 >
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                     <span className="num text-[16px] text-gold">{o.order_no}</span>
@@ -93,6 +93,7 @@ function OrdersPage() {
                     <span>{ORDER_STATE_LABEL[o.state]}</span>
                   </div>
                 </Link>
+                <WhatsAppButton order={o} size="sm" />
               </li>
             ))}
           </ul>
