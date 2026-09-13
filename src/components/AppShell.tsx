@@ -14,6 +14,7 @@ import {
   Settings2,
   Bell,
   Boxes,
+  MessageCircle,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
