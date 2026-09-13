@@ -367,6 +367,7 @@ export function useMyTasks(userId: string | undefined) {
         .from("order_stages")
         .select("*, orders(*)")
         .eq("assignee_id", userId!)
+        .eq("is_required", true)
         .order("due_at", { nullsFirst: false });
       if (error) throw error;
       return (data ?? []) as StageWithOrder[];
