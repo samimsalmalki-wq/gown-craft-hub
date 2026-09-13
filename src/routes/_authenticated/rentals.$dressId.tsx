@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, Sheet } from "@/components/kit";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, money } from "@/lib/atelier";
 import {
