@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Card, Chip, Empty, Stat, StageStatusChip } from "@/components/kit";
 import { StageSheet } from "@/components/StageWork";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { useOrders, useStagesWithOrders } from "@/lib/data";
 import {
   daysUntilDue,
