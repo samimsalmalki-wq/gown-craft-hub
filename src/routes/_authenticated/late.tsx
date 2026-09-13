@@ -73,6 +73,7 @@ function LatePage() {
                   </div>
                   <Chip tone="late">متأخر {Math.abs(daysUntilDue(o) ?? 0)} يوم</Chip>
                   <span className="text-[11px] text-muted-foreground">{fmtDate(o.due_date)}</span>
+                  <WhatsAppButton order={o} size="sm" />
                 </li>
               ))}
             </ul>
