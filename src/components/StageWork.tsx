@@ -66,6 +66,7 @@ export function StageSheet({
 }) {
   const { can, isManager, userId } = useCurrentAccount();
   const { data: profiles = [] } = useProfiles();
+  const { data: templates = [] } = useStageTemplates();
   const actions = useStageActions();
   const upload = useUploadFiles(stage?.order_id ?? "");
   const { data: files = [] } = useOrderFiles(stage?.order_id ?? "");
