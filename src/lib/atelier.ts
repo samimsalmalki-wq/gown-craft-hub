@@ -218,6 +218,7 @@ export const ACTIVITY_LABEL: Record<string, string> = {
   alteration_added: "إضافة تعديل",
   alteration_status: "تحديث تعديل",
   file_added: "إضافة مرفق",
+  whatsapp_sent: "إرسال رسالة واتساب",
 };
 
 export const activityLabel = (action: string) => ACTIVITY_LABEL[action] ?? action;
