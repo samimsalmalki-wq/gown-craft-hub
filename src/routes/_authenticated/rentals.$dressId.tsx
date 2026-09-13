@@ -146,15 +146,20 @@ function DressPage() {
       title={`فستان ${dress.code}`}
       subtitle={[dress.model_no, dress.color, dress.size].filter(Boolean).join(" · ") || "فستان إيجار"}
       actions={
-        isManager ? (
-          openRecord ? (
-            <Btn onClick={() => setRetOpen(true)}>تسجيل الإرجاع</Btn>
-          ) : (
-            <Btn onClick={() => setOutOpen(true)} disabled={effStatus === "retired"}>
-              تأجير الفستان أو حجزه
-            </Btn>
-          )
-        ) : undefined
+        <>
+          {(openRecord ?? nextUpcoming) && (
+            <WhatsAppButton rental={{ record: (openRecord ?? nextUpcoming)!, dress }} />
+          )}
+          {isManager ? (
+            openRecord ? (
+              <Btn onClick={() => setRetOpen(true)}>تسجيل الإرجاع</Btn>
+            ) : (
+              <Btn onClick={() => setOutOpen(true)} disabled={effStatus === "retired"}>
+                تأجير الفستان أو حجزه
+              </Btn>
+            )
+          ) : null}
+        </>
       }
     >
       <Link to="/rentals" className="mb-4 inline-block text-[13px] text-muted-foreground">
