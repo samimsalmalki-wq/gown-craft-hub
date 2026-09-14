@@ -581,12 +581,14 @@ type RawLedgerRow = {
   } | null;
 };
 
-const LEDGER_SELECT = "id, entry_id, debit, credit, memo, journal_entries!inner(entry_no, entry_date, memo, source)";
+const LEDGER_SELECT =
+  "id, entry_id, debit, credit, memo, journal_entries!inner(entry_no, entry_date, memo, source, branch_id)";
 
 /** حركات حساب واحد داخل فترة + رصيد ما قبل الفترة */
 export function useLedger(accountId: string, from: string, to: string) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["ledger", accountId, from, to],
+    queryKey: ["ledger", accountId, from, to, branchId],
     enabled: Boolean(accountId),
     queryFn: async (): Promise<{
       rows: LedgerRow[];
@@ -594,18 +596,25 @@ export function useLedger(accountId: string, from: string, to: string) {
       openingCredit: number;
     }> => {
       const [period, before] = await Promise.all([
-        supabase
-          .from("journal_lines")
-          .select(LEDGER_SELECT)
-          .eq("account_id", accountId)
-          .gte("journal_entries.entry_date", from)
-          .lte("journal_entries.entry_date", to)
-          .order("entry_date", { referencedTable: "journal_entries", ascending: true }),
-        supabase
-          .from("journal_lines")
-          .select("debit, credit, journal_entries!inner(entry_date)")
-          .eq("account_id", accountId)
-          .lt("journal_entries.entry_date", from),
+        onBranch(
+          supabase
+            .from("journal_lines")
+            .select(LEDGER_SELECT)
+            .eq("account_id", accountId)
+            .gte("journal_entries.entry_date", from)
+            .lte("journal_entries.entry_date", to),
+          branchId,
+          "journal_entries.branch_id",
+        ).order("entry_date", { referencedTable: "journal_entries", ascending: true }),
+        onBranch(
+          supabase
+            .from("journal_lines")
+            .select("debit, credit, journal_entries!inner(entry_date, branch_id)")
+            .eq("account_id", accountId)
+            .lt("journal_entries.entry_date", from),
+          branchId,
+          "journal_entries.branch_id",
+        ),
       ]);
 
       if (period.error) throw period.error;
