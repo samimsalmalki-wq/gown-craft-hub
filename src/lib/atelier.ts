@@ -176,6 +176,11 @@ export const PERMISSIONS: { key: string; label: string; hint: string }[] = [
   { key: "whatsapp.manage", label: "رسائل الواتساب", hint: "تعديل نصوص الرسائل الجاهزة" },
   { key: "reports.view", label: "التقارير", hint: "تقارير الأداء والمتأخرات" },
   { key: "staff.manage", label: "إدارة الموظفين", hint: "بيانات الموظفين وأقسامهم" },
+  { key: "finance.payments", label: "الدفعات وسندات القبض", hint: "تسجيل التحصيل وإصدار سندات القبض" },
+  { key: "finance.invoices", label: "الفواتير", hint: "إصدار الفواتير وبنودها والضريبة" },
+  { key: "finance.expenses", label: "المصروفات والصناديق", hint: "المصروفات والمشتريات وحركة الصناديق" },
+  { key: "finance.accounts", label: "الحسابات والقيود", hint: "شجرة الحسابات وقيود اليومية" },
+  { key: "finance.reports", label: "التقارير المالية", hint: "المستحقات والتحصيل وتقرير الضريبة" },
 ];
 
 
@@ -268,6 +273,7 @@ export const ACTIVITY_LABEL: Record<string, string> = {
   file_added: "إضافة مرفق",
   whatsapp_sent: "إرسال رسالة واتساب",
   scope_set: "تحديد المراحل المطلوبة",
+  payment_received: "تحصيل دفعة",
 };
 
 export const activityLabel = (action: string) => ACTIVITY_LABEL[action] ?? action;

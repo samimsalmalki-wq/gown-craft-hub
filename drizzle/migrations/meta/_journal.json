@@ -29,6 +29,34 @@
       "when": 1789383276277,
       "tag": "0003_roles_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789425947929,
+      "tag": "0004_finance_payments_invoices",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789426214767,
+      "tag": "0005_finance_expenses_cashboxes",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789426406310,
+      "tag": "0006_finance_gl_accounts_journal",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789426426981,
+      "tag": "0007_finance_manual_journal_rpc",
+      "breakpoints": true
     }
   ]
 }

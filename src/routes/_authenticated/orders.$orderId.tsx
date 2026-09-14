@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, PaymentChip, Sheet } from "@/components/kit";
+import { PaymentsCard } from "@/components/PaymentsCard";
 import { StageRow, StageSheet } from "@/components/StageWork";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import {
@@ -158,26 +159,13 @@ function OrderDetailPage() {
             <Card title="المالية" action={<PaymentChip status={order.payment_status} />}>
               <dl className="divide-y divide-line text-[13px]">
                 <Row label="قيمة الفستان" value={<span className="num">{money(order.total_amount)}</span>} />
-                <Row label="العربون" value={<span className="num">{money(order.deposit_amount)}</span>} />
+                <Row label="المحصَّل" value={<span className="num">{money(order.deposit_amount)}</span>} />
                 <Row label="المتبقي" value={<span className="num">{money(remaining(order))}</span>} />
               </dl>
-              {can("orders.edit") && remaining(order) > 0 && (
-                <div className="border-t border-line px-4 py-3">
-                  <Btn
-                    variant="quiet"
-                    onClick={() =>
-                      updateOrder.mutate({
-                        deposit_amount: Number(order.total_amount),
-                        payment_status: "paid",
-                      })
-                    }
-                  >
-                    تسجيل سداد كامل
-                  </Btn>
-                </div>
-              )}
             </Card>
           )}
+
+          <PaymentsCard order={order} />
 
           <Card title="السجل الزمني">
             {log.length === 0 ? (

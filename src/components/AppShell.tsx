@@ -16,6 +16,7 @@ import {
   Boxes,
   MessageCircle,
   ShieldCheck,
+  Wallet,
 
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -33,6 +34,7 @@ type NavItem = {
   icon: typeof LayoutGrid;
   managerOnly?: boolean;
   adminOnly?: boolean;
+  financeOnly?: boolean;
 };
 
 const NAV: NavItem[] = [
@@ -41,6 +43,7 @@ const NAV: NavItem[] = [
   { to: "/orders", label: "الطلبات", icon: ListOrdered },
   { to: "/stages", label: "لوحة الإنتاج", icon: Layers },
   { to: "/late", label: "المتأخرات", icon: AlarmClock },
+  { to: "/finance", label: "الماليات", icon: Wallet, financeOnly: true },
   { to: "/inventory", label: "مخزون المواد", icon: Boxes },
   { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
   { to: "/roles", label: "الأدوار والصلاحيات", icon: ShieldCheck, adminOnly: true },
@@ -63,7 +66,7 @@ export function AppShell({
   eyebrow?: string;
   actions?: ReactNode;
 }) {
-  const { profile, isAdmin, isManager, role, userId } = useCurrentAccount();
+  const { profile, isAdmin, isManager, role, userId, can } = useCurrentAccount();
   const navigate = useNavigate();
   const router = useRouter();
   const qc = useQueryClient();
@@ -75,7 +78,14 @@ export function AppShell({
   const markRead = useMarkNotificationsRead();
   const unread = notes.filter((n) => !n.is_read);
 
-  const items = NAV.filter((n) => (!n.managerOnly || isManager) && (!n.adminOnly || isAdmin));
+  const canFinance =
+    can("finance.payments") || can("finance.invoices") || can("finance.reports");
+  const items = NAV.filter(
+    (n) =>
+      (!n.managerOnly || isManager) &&
+      (!n.adminOnly || isAdmin) &&
+      (!n.financeOnly || canFinance),
+  );
 
   async function signOut() {
     await qc.cancelQueries();

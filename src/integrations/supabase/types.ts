@@ -136,6 +136,96 @@ export type Database = {
           },
         ]
       }
+      cash_accounts: {
+        Row: {
+          created_at: string
+          gl_code: string
+          id: string
+          is_active: boolean
+          kind: Database["public"]["Enums"]["cash_account_kind"]
+          name: string
+          notes: string | null
+          opening_balance: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gl_code?: string
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["cash_account_kind"]
+          name: string
+          notes?: string | null
+          opening_balance?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gl_code?: string
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["cash_account_kind"]
+          name?: string
+          notes?: string | null
+          opening_balance?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cash_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          direction: Database["public"]["Enums"]["cash_direction"]
+          id: string
+          occurred_at: string
+          source: string
+          source_id: string | null
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          direction: Database["public"]["Enums"]["cash_direction"]
+          id?: string
+          occurred_at?: string
+          source?: string
+          source_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          direction?: Database["public"]["Enums"]["cash_direction"]
+          id?: string
+          occurred_at?: string
+          source?: string
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "cash_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string
@@ -156,6 +246,386 @@ export type Database = {
           position?: number
         }
         Relationships: []
+      }
+      expense_categories: {
+        Row: {
+          created_at: string
+          gl_code: string
+          id: string
+          is_active: boolean
+          name: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          gl_code?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          gl_code?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          position?: number
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          cash_account_id: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          expense_no: string
+          id: string
+          is_taxable: boolean
+          material_id: string | null
+          material_qty: number | null
+          occurred_at: string
+          reference: string | null
+          supplier_id: string | null
+          updated_at: string
+          vat_amount: number
+        }
+        Insert: {
+          amount: number
+          cash_account_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          expense_no: string
+          id?: string
+          is_taxable?: boolean
+          material_id?: string | null
+          material_qty?: number | null
+          occurred_at?: string
+          reference?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+          vat_amount?: number
+        }
+        Update: {
+          amount?: number
+          cash_account_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          expense_no?: string
+          id?: string
+          is_taxable?: boolean
+          material_id?: string | null
+          material_qty?: number | null
+          occurred_at?: string
+          reference?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_cash_account_id_fkey"
+            columns: ["cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "cash_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gl_accounts: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_group: boolean
+          name: string
+          parent_id: string | null
+          type: Database["public"]["Enums"]["gl_account_type"]
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_group?: boolean
+          name: string
+          parent_id?: string | null
+          type: Database["public"]["Enums"]["gl_account_type"]
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_group?: boolean
+          name?: string
+          parent_id?: string | null
+          type?: Database["public"]["Enums"]["gl_account_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_accounts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_lines: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          position: number
+          qty: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          position?: number
+          qty?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          position?: number
+          qty?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_no: string
+          is_taxable: boolean
+          issue_date: string
+          notes: string | null
+          order_id: string | null
+          rental_record_id: string | null
+          scope: Database["public"]["Enums"]["finance_scope"]
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_amount: number
+          total: number
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_no: string
+          is_taxable?: boolean
+          issue_date?: string
+          notes?: string | null
+          order_id?: string | null
+          rental_record_id?: string | null
+          scope?: Database["public"]["Enums"]["finance_scope"]
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_no?: string
+          is_taxable?: boolean
+          issue_date?: string
+          notes?: string | null
+          order_id?: string | null
+          rental_record_id?: string | null
+          scope?: Database["public"]["Enums"]["finance_scope"]
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_rental_record_id_fkey"
+            columns: ["rental_record_id"]
+            isOneToOne: false
+            referencedRelation: "rental_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          entry_no: string
+          id: string
+          is_reversal: boolean
+          memo: string
+          reverses_id: string | null
+          source: string
+          source_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          entry_no: string
+          id?: string
+          is_reversal?: boolean
+          memo: string
+          reverses_id?: string | null
+          source?: string
+          source_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          entry_no?: string
+          id?: string
+          is_reversal?: boolean
+          memo?: string
+          reverses_id?: string | null
+          source?: string
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entries_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_lines: {
+        Row: {
+          account_id: string
+          created_at: string
+          credit: number
+          debit: number
+          entry_id: string
+          id: string
+          memo: string | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          entry_id: string
+          id?: string
+          memo?: string | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          entry_id?: string
+          id?: string
+          memo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_lines_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       material_movements: {
         Row: {
@@ -611,6 +1081,86 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          cash_account_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_deposit: boolean
+          method: Database["public"]["Enums"]["payment_method"]
+          notes: string | null
+          order_id: string | null
+          paid_at: string
+          receipt_no: string
+          reference: string | null
+          rental_record_id: string | null
+          scope: Database["public"]["Enums"]["finance_scope"]
+        }
+        Insert: {
+          amount: number
+          cash_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_deposit?: boolean
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string
+          receipt_no: string
+          reference?: string | null
+          rental_record_id?: string | null
+          scope?: Database["public"]["Enums"]["finance_scope"]
+        }
+        Update: {
+          amount?: number
+          cash_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_deposit?: boolean
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string
+          receipt_no?: string
+          reference?: string | null
+          rental_record_id?: string | null
+          scope?: Database["public"]["Enums"]["finance_scope"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_cash_account_id_fkey"
+            columns: ["cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "cash_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_rental_record_id_fkey"
+            columns: ["rental_record_id"]
+            isOneToOne: false
+            referencedRelation: "rental_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           allowed_stages: string[]
@@ -873,6 +1423,69 @@ export type Database = {
         }
         Relationships: []
       }
+      suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          tax_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tax_settings: {
+        Row: {
+          business_address: string | null
+          business_name: string
+          id: string
+          tax_number: string | null
+          updated_at: string
+          vat_enabled: boolean
+          vat_rate: number
+        }
+        Insert: {
+          business_address?: string | null
+          business_name?: string
+          id?: string
+          tax_number?: string | null
+          updated_at?: string
+          vat_enabled?: boolean
+          vat_rate?: number
+        }
+        Update: {
+          business_address?: string | null
+          business_name?: string
+          id?: string
+          tax_number?: string | null
+          updated_at?: string
+          vat_enabled?: boolean
+          vat_rate?: number
+        }
+        Relationships: []
+      }
       user_permissions: {
         Row: {
           id: string
@@ -947,6 +1560,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_journal_entry: {
+        Args: { _entry_date: string; _lines: Json; _memo: string }
+        Returns: string
+      }
       add_stage_template: {
         Args: {
           p_expected_days?: number
@@ -981,8 +1598,20 @@ export type Database = {
     Enums: {
       alteration_status: "requested" | "in_progress" | "done" | "cancelled"
       app_role: "admin" | "staff" | "supervisor" | "cs"
+      cash_account_kind: "cash" | "card" | "bank"
+      cash_direction: "in" | "out"
+      finance_scope: "order" | "rental"
+      gl_account_type:
+        | "asset"
+        | "liability"
+        | "equity"
+        | "revenue"
+        | "cost"
+        | "expense"
+      invoice_status: "draft" | "issued" | "cancelled"
       material_movement_kind: "in" | "out" | "reserve" | "release"
       order_state: "active" | "delivered" | "cancelled"
+      payment_method: "cash" | "card" | "transfer" | "other"
       payment_status: "unpaid" | "partial" | "paid"
       rental_dress_status:
         | "available"
@@ -1145,8 +1774,21 @@ export const Constants = {
     Enums: {
       alteration_status: ["requested", "in_progress", "done", "cancelled"],
       app_role: ["admin", "staff", "supervisor", "cs"],
+      cash_account_kind: ["cash", "card", "bank"],
+      cash_direction: ["in", "out"],
+      finance_scope: ["order", "rental"],
+      gl_account_type: [
+        "asset",
+        "liability",
+        "equity",
+        "revenue",
+        "cost",
+        "expense",
+      ],
+      invoice_status: ["draft", "issued", "cancelled"],
       material_movement_kind: ["in", "out", "reserve", "release"],
       order_state: ["active", "delivered", "cancelled"],
+      payment_method: ["cash", "card", "transfer", "other"],
       payment_status: ["unpaid", "partial", "paid"],
       rental_dress_status: [
         "available",
