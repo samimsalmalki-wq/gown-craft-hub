@@ -171,7 +171,13 @@ export const PERMISSIONS: { key: string; label: string; hint: string }[] = [
   { key: "stages.edit", label: "تحديث المراحل", hint: "بدء وإنهاء المراحل وإضافة ملاحظات" },
   { key: "finance.view", label: "عرض المالية", hint: "القيم والعربون والمبلغ المتبقي" },
   { key: "files.upload", label: "إرفاق الصور", hint: "رفع صور الفستان وملفات المراحل" },
+  { key: "inventory.manage", label: "المخزون والمواد", hint: "إضافة المواد وحركات الصرف والحجز" },
+  { key: "rentals.manage", label: "فساتين الإيجار", hint: "إضافة الفساتين والتأجير والإرجاع" },
+  { key: "whatsapp.manage", label: "رسائل الواتساب", hint: "تعديل نصوص الرسائل الجاهزة" },
+  { key: "reports.view", label: "التقارير", hint: "تقارير الأداء والمتأخرات" },
+  { key: "staff.manage", label: "إدارة الموظفين", hint: "بيانات الموظفين وأقسامهم" },
 ];
+
 
 export const money = (v: number | string | null | undefined) =>
   `${Number(v ?? 0).toLocaleString("ar-EG", { maximumFractionDigits: 0 })} ر.س`;
