@@ -33,6 +33,7 @@ type NavItem = {
   icon: typeof LayoutGrid;
   managerOnly?: boolean;
   adminOnly?: boolean;
+  financeOnly?: boolean;
 };
 
 const NAV: NavItem[] = [
@@ -41,6 +42,7 @@ const NAV: NavItem[] = [
   { to: "/orders", label: "الطلبات", icon: ListOrdered },
   { to: "/stages", label: "لوحة الإنتاج", icon: Layers },
   { to: "/late", label: "المتأخرات", icon: AlarmClock },
+  { to: "/finance", label: "الماليات", icon: Wallet, financeOnly: true },
   { to: "/inventory", label: "مخزون المواد", icon: Boxes },
   { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
   { to: "/roles", label: "الأدوار والصلاحيات", icon: ShieldCheck, adminOnly: true },

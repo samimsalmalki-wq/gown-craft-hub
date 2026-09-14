@@ -31,6 +31,7 @@ import { Route as AuthenticatedRentalsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedRentalsDressIdRouteImport } from './routes/_authenticated/rentals.$dressId'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff.index'
 import { Route as AuthenticatedStaffUserIdRouteImport } from './routes/_authenticated/staff.$userId'
+import { Route as AuthenticatedFinanceInvoicesInvoiceIdRouteImport } from './routes/_authenticated/finance.invoices.$invoiceId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -150,6 +151,12 @@ const AuthenticatedStaffUserIdRoute =
     path: '/staff/$userId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFinanceInvoicesInvoiceIdRoute =
+  AuthenticatedFinanceInvoicesInvoiceIdRouteImport.update({
+    id: '/finance/invoices/$invoiceId',
+    path: '/finance/invoices/$invoiceId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/orders/': typeof AuthenticatedOrdersIndexRoute
   '/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
+  '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -196,6 +204,7 @@ export interface FileRoutesByTo {
   '/orders': typeof AuthenticatedOrdersIndexRoute
   '/rentals': typeof AuthenticatedRentalsIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
+  '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -221,6 +230,7 @@ export interface FileRoutesById {
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
   '/_authenticated/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
+  '/_authenticated/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/orders/'
     | '/rentals/'
     | '/staff/'
+    | '/finance/invoices/$invoiceId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/rentals'
     | '/staff'
+    | '/finance/invoices/$invoiceId'
   id:
     | '__root__'
     | '/'
@@ -293,6 +305,7 @@ export interface FileRouteTypes {
     | '/_authenticated/orders/'
     | '/_authenticated/rentals/'
     | '/_authenticated/staff/'
+    | '/_authenticated/finance/invoices/$invoiceId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -457,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffUserIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finance/invoices/$invoiceId': {
+      id: '/_authenticated/finance/invoices/$invoiceId'
+      path: '/finance/invoices/$invoiceId'
+      fullPath: '/finance/invoices/$invoiceId'
+      preLoaderRoute: typeof AuthenticatedFinanceInvoicesInvoiceIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -480,6 +500,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
   AuthenticatedRentalsIndexRoute: typeof AuthenticatedRentalsIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
+  AuthenticatedFinanceInvoicesInvoiceIdRoute: typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -502,6 +523,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
   AuthenticatedRentalsIndexRoute: AuthenticatedRentalsIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
+  AuthenticatedFinanceInvoicesInvoiceIdRoute:
+    AuthenticatedFinanceInvoicesInvoiceIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
