@@ -2,12 +2,15 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/AppShell";
 import { FinanceTabs } from "@/components/FinanceTabs";
-import { Btn, Card, Chip, Empty, Stat } from "@/components/kit";
+import { toast } from "sonner";
+
+import { Btn, Card, Chip, Empty, Field, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useOrders } from "@/lib/data";
-import { usePayments, useTaxSettings } from "@/lib/finance-data";
+import { usePayments, useTaxSettings, useUpdateTaxSettings } from "@/lib/finance-data";
 import { fmtDate, isLate, money } from "@/lib/atelier";
 import { monthKey, monthLabel, monthStartISO, orderDue, todayISO } from "@/lib/finance";
+import type { TaxSettings } from "@/lib/finance";
 
 export const Route = createFileRoute("/_authenticated/finance/")({
   head: () => ({
@@ -30,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/finance/")({
 });
 
 function FinancePage() {
-  const { can, ready } = useCurrentAccount();
+  const { can, isAdmin, ready } = useCurrentAccount();
   const { data: orders = [] } = useOrders();
   const { data: payments = [] } = usePayments();
   const { data: tax } = useTaxSettings();
@@ -149,6 +152,74 @@ function FinancePage() {
           </Card>
         </div>
       </div>
+
+      {isAdmin && tax && <TaxSettingsCard tax={tax} />}
     </AppShell>
+  );
+}
+
+function TaxSettingsCard({ tax }: { tax: TaxSettings }) {
+  const update = useUpdateTaxSettings();
+  const save = (patch: Record<string, unknown>) =>
+    update
+      .mutateAsync({ id: tax.id, patch })
+      .then(() => toast.success("تم الحفظ"))
+      .catch((e: Error) => toast.error(e.message));
+
+  return (
+    <Card title="إعدادات الضريبة والفاتورة" className="mt-5">
+      <div className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+        <Field label="نسبة ضريبة القيمة المضافة %">
+          <input
+            className="field num"
+            inputMode="decimal"
+            defaultValue={String(Number(tax.vat_rate))}
+            onBlur={(e) => {
+              const v = Number(e.target.value);
+              if (v >= 0 && v !== Number(tax.vat_rate)) save({ vat_rate: v });
+            }}
+          />
+        </Field>
+        <Field label="الرقم الضريبي">
+          <input
+            className="field num"
+            defaultValue={tax.tax_number ?? ""}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v !== (tax.tax_number ?? "")) save({ tax_number: v || null });
+            }}
+          />
+        </Field>
+        <Field label="اسم المنشأة في الفاتورة">
+          <input
+            className="field"
+            defaultValue={tax.business_name}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && v !== tax.business_name) save({ business_name: v });
+            }}
+          />
+        </Field>
+        <Field label="عنوان المنشأة">
+          <input
+            className="field"
+            defaultValue={tax.business_address ?? ""}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v !== (tax.business_address ?? "")) save({ business_address: v || null });
+            }}
+          />
+        </Field>
+        <label className="flex items-center gap-2 text-[12px] sm:col-span-2">
+          <input
+            type="checkbox"
+            className="size-5 accent-current"
+            checked={tax.vat_enabled}
+            onChange={(e) => save({ vat_enabled: e.target.checked })}
+          />
+          تطبيق ضريبة القيمة المضافة على الفواتير الجديدة
+        </label>
+      </div>
+    </Card>
   );
 }
