@@ -15,6 +15,8 @@ import {
   Bell,
   Boxes,
   MessageCircle,
+  ShieldCheck,
+
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
