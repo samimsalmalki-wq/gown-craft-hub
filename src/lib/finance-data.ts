@@ -354,14 +354,14 @@ export function useAddExpenseCategory() {
 }
 
 export function useCashAccounts() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["cash-accounts"],
+    queryKey: ["cash-accounts", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cash_accounts")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at");
+      const { data, error } = await onBranch(
+        supabase.from("cash_accounts").select("*").eq("is_active", true),
+        branchId,
+      ).order("created_at");
       if (error) throw error;
       return data ?? [];
     },
@@ -369,12 +369,15 @@ export function useCashAccounts() {
 }
 
 export function useCashTransactions() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["cash-transactions"],
+    queryKey: ["cash-transactions", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cash_transactions")
-        .select("*")
+      const { data, error } = await onBranch(
+        supabase.from("cash_transactions").select("*, cash_accounts!inner(branch_id)"),
+        branchId,
+        "cash_accounts.branch_id",
+      )
         .order("occurred_at", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -384,13 +387,14 @@ export function useCashTransactions() {
 }
 
 export function useExpenses() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["expenses"],
+    queryKey: ["expenses", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("*")
-        .order("occurred_at", { ascending: false });
+      const { data, error } = await onBranch(
+        supabase.from("expenses").select("*"),
+        branchId,
+      ).order("occurred_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
