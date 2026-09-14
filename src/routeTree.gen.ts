@@ -24,6 +24,7 @@ import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedFinanceAccountsRouteImport } from './routes/_authenticated/finance.accounts'
 import { Route as AuthenticatedFinanceExpensesRouteImport } from './routes/_authenticated/finance.expenses'
 import { Route as AuthenticatedFinanceJournalRouteImport } from './routes/_authenticated/finance.journal'
+import { Route as AuthenticatedFinanceLedgerRouteImport } from './routes/_authenticated/finance.ledger'
 import { Route as AuthenticatedFinancePaymentsRouteImport } from './routes/_authenticated/finance.payments'
 import { Route as AuthenticatedFinanceReportsRouteImport } from './routes/_authenticated/finance.reports'
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
@@ -115,6 +116,12 @@ const AuthenticatedFinanceJournalRoute =
     path: '/finance/journal',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFinanceLedgerRoute =
+  AuthenticatedFinanceLedgerRouteImport.update({
+    id: '/finance/ledger',
+    path: '/finance/ledger',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFinancePaymentsRoute =
   AuthenticatedFinancePaymentsRouteImport.update({
     id: '/finance/payments',
@@ -200,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/finance/expenses': typeof AuthenticatedFinanceExpensesRoute
   '/finance/journal': typeof AuthenticatedFinanceJournalRoute
+  '/finance/ledger': typeof AuthenticatedFinanceLedgerRoute
   '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/finance/reports': typeof AuthenticatedFinanceReportsRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
@@ -228,6 +236,7 @@ export interface FileRoutesByTo {
   '/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/finance/expenses': typeof AuthenticatedFinanceExpensesRoute
   '/finance/journal': typeof AuthenticatedFinanceJournalRoute
+  '/finance/ledger': typeof AuthenticatedFinanceLedgerRoute
   '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/finance/reports': typeof AuthenticatedFinanceReportsRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
@@ -258,6 +267,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/_authenticated/finance/expenses': typeof AuthenticatedFinanceExpensesRoute
   '/_authenticated/finance/journal': typeof AuthenticatedFinanceJournalRoute
+  '/_authenticated/finance/ledger': typeof AuthenticatedFinanceLedgerRoute
   '/_authenticated/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/_authenticated/finance/reports': typeof AuthenticatedFinanceReportsRoute
   '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/finance/accounts'
     | '/finance/expenses'
     | '/finance/journal'
+    | '/finance/ledger'
     | '/finance/payments'
     | '/finance/reports'
     | '/inventory/$materialId'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/finance/accounts'
     | '/finance/expenses'
     | '/finance/journal'
+    | '/finance/ledger'
     | '/finance/payments'
     | '/finance/reports'
     | '/inventory/$materialId'
@@ -345,6 +357,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/accounts'
     | '/_authenticated/finance/expenses'
     | '/_authenticated/finance/journal'
+    | '/_authenticated/finance/ledger'
     | '/_authenticated/finance/payments'
     | '/_authenticated/finance/reports'
     | '/_authenticated/inventory/$materialId'
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finance/ledger': {
+      id: '/_authenticated/finance/ledger'
+      path: '/finance/ledger'
+      fullPath: '/finance/ledger'
+      preLoaderRoute: typeof AuthenticatedFinanceLedgerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/finance/payments': {
       id: '/_authenticated/finance/payments'
       path: '/finance/payments'
@@ -572,6 +592,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceAccountsRoute: typeof AuthenticatedFinanceAccountsRoute
   AuthenticatedFinanceExpensesRoute: typeof AuthenticatedFinanceExpensesRoute
   AuthenticatedFinanceJournalRoute: typeof AuthenticatedFinanceJournalRoute
+  AuthenticatedFinanceLedgerRoute: typeof AuthenticatedFinanceLedgerRoute
   AuthenticatedFinancePaymentsRoute: typeof AuthenticatedFinancePaymentsRoute
   AuthenticatedFinanceReportsRoute: typeof AuthenticatedFinanceReportsRoute
   AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
@@ -599,6 +620,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceAccountsRoute: AuthenticatedFinanceAccountsRoute,
   AuthenticatedFinanceExpensesRoute: AuthenticatedFinanceExpensesRoute,
   AuthenticatedFinanceJournalRoute: AuthenticatedFinanceJournalRoute,
+  AuthenticatedFinanceLedgerRoute: AuthenticatedFinanceLedgerRoute,
   AuthenticatedFinancePaymentsRoute: AuthenticatedFinancePaymentsRoute,
   AuthenticatedFinanceReportsRoute: AuthenticatedFinanceReportsRoute,
   AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
