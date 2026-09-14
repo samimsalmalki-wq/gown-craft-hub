@@ -610,6 +610,35 @@ export function useLedger(accountId: string, from: string, to: string) {
   });
 }
 
+/** مجاميع المدين والدائن لكل حساب داخل فترة — لميزان المراجعة */
+export function useTrialBalance(from: string, to: string) {
+  return useQuery({
+    queryKey: ["trial-balance", from, to],
+    queryFn: async (): Promise<Record<string, { debit: number; credit: number }>> => {
+      const { data, error } = await supabase
+        .from("journal_lines")
+        .select("account_id, debit, credit, journal_entries!inner(entry_date)")
+        .gte("journal_entries.entry_date", from)
+        .lte("journal_entries.entry_date", to);
+      if (error) throw error;
+
+      const rows = (data ?? []) as unknown as {
+        account_id: string;
+        debit: number | string;
+        credit: number | string;
+      }[];
+
+      const totals: Record<string, { debit: number; credit: number }> = {};
+      for (const r of rows) {
+        const t = (totals[r.account_id] ??= { debit: 0, credit: 0 });
+        t.debit += Number(r.debit);
+        t.credit += Number(r.credit);
+      }
+      return totals;
+    },
+  });
+}
+
 /** كل مواد الطلبات — لحساب تكلفة الخامات وربحية كل طلب */
 export function useAllOrderMaterials() {
   return useQuery({
