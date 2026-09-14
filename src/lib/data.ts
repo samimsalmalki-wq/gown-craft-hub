@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { setStageCatalog } from "./atelier";
-import type { Order, OrderFile, OrderStage, Profile, StageKey } from "./atelier";
+import { isBuiltinRole, roleCatalog, setRoleCatalog, setStageCatalog } from "./atelier";
+import type { Order, OrderFile, OrderStage, Profile, RoleCatalogRow, StageKey } from "./atelier";
+
 
 export const ordersKey = ["orders"] as const;
 
