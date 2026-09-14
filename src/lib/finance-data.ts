@@ -184,6 +184,7 @@ export function useInvoiceLines(invoiceId: string) {
 
 export function useCreateInvoice() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       scope?: "order" | "rental";
@@ -193,6 +194,7 @@ export function useCreateInvoice() {
       vatRate: number;
       lines: { description: string; qty: number; unit_price: number }[];
       notes?: string;
+      branchId?: string | null;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const { data: invoice, error } = await supabase
@@ -204,6 +206,7 @@ export function useCreateInvoice() {
           is_taxable: input.isTaxable,
           vat_rate: input.vatRate,
           notes: input.notes?.trim() || null,
+          branch_id: input.branchId ?? writeBranchId,
           created_by: auth.user?.id ?? null,
         } as never)
         .select()
