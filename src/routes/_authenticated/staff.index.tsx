@@ -11,20 +11,23 @@ import {
   useAllRoles,
   useDepartments,
   useProfiles,
+  useRolePermissions,
+  useRoles,
   useSetRole,
   useStageTemplates,
   useUpdateProfile,
 } from "@/lib/data";
 import {
   PERMISSIONS,
-  ROLE_LABEL,
+  roleLabel,
   stageLabel,
   type AppRole,
   type Profile,
   type StageKey,
 } from "@/lib/atelier";
 
-const ROLES: AppRole[] = ["admin", "supervisor", "staff", "cs"];
+
+
 
 export const Route = createFileRoute("/_authenticated/staff/")({
   head: () => ({
@@ -48,6 +51,9 @@ function StaffPage() {
   const { data: profiles = [] } = useProfiles();
   const { data: departments = [] } = useDepartments();
   const { data: roles = [] } = useAllRoles();
+  const { data: roleList = [] } = useRoles();
+  const { data: rolePerms = [] } = useRolePermissions();
+
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Profile | null>(null);
 
@@ -93,21 +99,31 @@ function StaffPage() {
     );
   }
 
-  const roleOf = (id: string) => (roles.find((r) => r.user_id === id)?.role ?? "staff") as AppRole;
+  const enumRoleOf = (id: string) =>
+    (roles.find((r) => r.user_id === id)?.role ?? "staff") as AppRole;
+
+  const rolePermsOf = (roleId: string | null) =>
+    roleId ? rolePerms.filter((rp) => rp.role_id === roleId).map((rp) => rp.permission) : [];
 
   return (
     <AppShell
       eyebrow="الفريق"
       title="الموظفون والصلاحيات"
       subtitle="الأقسام والأدوار والمراحل المسموح بها وما يستطيع كل موظف رؤيته وتعديله."
+      actions={
+        isAdmin ? (
+          <Link to="/roles" className="btn-quiet">
+            الأدوار والصلاحيات
+          </Link>
+        ) : undefined
+      }
     >
       {profiles.length === 0 ? (
         <Empty>لا يوجد موظفون بعد.</Empty>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {profiles.map((p) => {
-            const role = roleOf(p.id);
-            const admin = role === "admin";
+            const admin = enumRoleOf(p.id) === "admin";
             const dept = departments.find((d) => d.id === p.department_id);
             const allowed = p.allowed_stages ?? [];
             return (
@@ -116,7 +132,10 @@ function StaffPage() {
                 title={p.full_name}
                 action={
                   <div className="flex items-center gap-2">
-                    <Chip tone={admin ? "gold" : "neutral"}>{ROLE_LABEL[role]}</Chip>
+                    <Chip tone={admin ? "gold" : "neutral"}>
+                      {roleLabel(roleList.find((r) => r.id === p.role_id)?.key ?? enumRoleOf(p.id))}
+                    </Chip>
+
                     <Link to="/staff/$userId" params={{ userId: p.id }} className="text-[12px] text-gold">
                       الملف
                     </Link>
@@ -147,22 +166,27 @@ function StaffPage() {
 
                 {isAdmin && (
                   <div className="border-b border-line px-4 py-3">
-                    <Field label="الدور">
+                    <Field label="الدور" hint="الأدوار تُضاف وتُسمّى من شاشة «الأدوار والصلاحيات»">
                       <select
                         className="field"
-                        value={role}
+                        value={p.role_id ?? ""}
                         onChange={(e) =>
                           setRole
-                            .mutateAsync({ userId: p.id, role: e.target.value })
+                            .mutateAsync({ userId: p.id, roleId: e.target.value })
                             .then(() => toast.success("تم تحديث الدور"))
                             .catch((err: Error) => toast.error(err.message))
                         }
                       >
-                        {ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {ROLE_LABEL[r]}
-                          </option>
-                        ))}
+                        <option value="" disabled>
+                          اختر دورًا
+                        </option>
+                        {roleList
+                          .filter((r) => r.is_active || r.id === p.role_id)
+                          .map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.label}
+                            </option>
+                          ))}
                       </select>
                     </Field>
                   </div>
@@ -170,25 +194,30 @@ function StaffPage() {
 
                 <ul className="divide-y divide-line">
                   {PERMISSIONS.map((perm) => {
-                    const on =
-                      admin || perms.some((x) => x.user_id === p.id && x.permission === perm.key);
+                    const fromRole = admin || rolePermsOf(p.role_id).includes(perm.key);
+                    const own = perms.some(
+                      (x) => x.user_id === p.id && x.permission === perm.key,
+                    );
                     return (
                       <li key={perm.key} className="flex items-center justify-between gap-3 px-4 py-3">
                         <div>
                           <p className="text-[13px] font-medium">{perm.label}</p>
-                          <p className="text-[11px] text-muted-foreground">{perm.hint}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {fromRole ? "ممنوحة من الدور" : perm.hint}
+                          </p>
                         </div>
                         <input
                           type="checkbox"
                           className="size-5 accent-current"
-                          checked={on}
-                          disabled={admin || !isAdmin}
+                          checked={fromRole || own}
+                          disabled={fromRole || !isAdmin}
                           onChange={(e) => togglePerm(p.id, perm.key, e.target.checked)}
                         />
                       </li>
                     );
                   })}
                 </ul>
+
               </Card>
             );
           })}

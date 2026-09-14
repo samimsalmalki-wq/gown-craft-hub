@@ -35,13 +35,27 @@ export function useCurrentAccount() {
         supabase.from("user_roles").select("role").eq("user_id", userId!),
         supabase.from("user_permissions").select("permission").eq("user_id", userId!),
       ]);
+
+      let rolePerms: string[] = [];
+      const roleId = profile.data?.role_id;
+      if (roleId) {
+        const { data } = await supabase
+          .from("role_permissions")
+          .select("permission")
+          .eq("role_id", roleId);
+        rolePerms = (data ?? []).map((p) => p.permission);
+      }
+
       return {
         profile: profile.data,
         roles: (roles.data ?? []).map((r) => r.role as AppRole),
-        permissions: (perms.data ?? []).map((p) => p.permission),
+        permissions: Array.from(
+          new Set([...(perms.data ?? []).map((p) => p.permission), ...rolePerms]),
+        ),
       };
     },
   });
+
 
   const roles = query.data?.roles ?? [];
   const permissions = query.data?.permissions ?? [];
