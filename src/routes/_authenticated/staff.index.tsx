@@ -93,21 +93,31 @@ function StaffPage() {
     );
   }
 
-  const roleOf = (id: string) => (roles.find((r) => r.user_id === id)?.role ?? "staff") as AppRole;
+  const enumRoleOf = (id: string) =>
+    (roles.find((r) => r.user_id === id)?.role ?? "staff") as AppRole;
+
+  const rolePermsOf = (roleId: string | null) =>
+    roleId ? rolePerms.filter((rp) => rp.role_id === roleId).map((rp) => rp.permission) : [];
 
   return (
     <AppShell
       eyebrow="الفريق"
       title="الموظفون والصلاحيات"
       subtitle="الأقسام والأدوار والمراحل المسموح بها وما يستطيع كل موظف رؤيته وتعديله."
+      actions={
+        isAdmin ? (
+          <Link to="/roles" className="btn-quiet">
+            الأدوار والصلاحيات
+          </Link>
+        ) : undefined
+      }
     >
       {profiles.length === 0 ? (
         <Empty>لا يوجد موظفون بعد.</Empty>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {profiles.map((p) => {
-            const role = roleOf(p.id);
-            const admin = role === "admin";
+            const admin = enumRoleOf(p.id) === "admin";
             const dept = departments.find((d) => d.id === p.department_id);
             const allowed = p.allowed_stages ?? [];
             return (
@@ -116,7 +126,10 @@ function StaffPage() {
                 title={p.full_name}
                 action={
                   <div className="flex items-center gap-2">
-                    <Chip tone={admin ? "gold" : "neutral"}>{ROLE_LABEL[role]}</Chip>
+                    <Chip tone={admin ? "gold" : "neutral"}>
+                      {roleLabel(roleList.find((r) => r.id === p.role_id)?.key ?? enumRoleOf(p.id))}
+                    </Chip>
+
                     <Link to="/staff/$userId" params={{ userId: p.id }} className="text-[12px] text-gold">
                       الملف
                     </Link>
