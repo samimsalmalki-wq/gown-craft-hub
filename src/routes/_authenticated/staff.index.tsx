@@ -11,18 +11,21 @@ import {
   useAllRoles,
   useDepartments,
   useProfiles,
+  useRolePermissions,
+  useRoles,
   useSetRole,
   useStageTemplates,
   useUpdateProfile,
 } from "@/lib/data";
 import {
   PERMISSIONS,
-  ROLE_LABEL,
+  roleLabel,
   stageLabel,
   type AppRole,
   type Profile,
   type StageKey,
 } from "@/lib/atelier";
+
 
 const ROLES: AppRole[] = ["admin", "supervisor", "staff", "cs"];
 
