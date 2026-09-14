@@ -82,3 +82,48 @@ export const cashBalance = (
       (sum, t) => sum + (t.direction === "in" ? Number(t.amount) : -Number(t.amount)),
       Number(account.opening_balance),
     );
+
+/* ===== دليل الحسابات والقيود ===== */
+
+export type GlAccount = Database["public"]["Tables"]["gl_accounts"]["Row"];
+export type JournalEntry = Database["public"]["Tables"]["journal_entries"]["Row"];
+export type JournalLine = Database["public"]["Tables"]["journal_lines"]["Row"];
+export type GlAccountType = Database["public"]["Enums"]["gl_account_type"];
+
+export const ACCOUNT_TYPE_LABEL: Record<GlAccountType, string> = {
+  asset: "أصول",
+  liability: "التزامات",
+  equity: "حقوق ملكية",
+  revenue: "إيرادات",
+  cost: "تكلفة إيراد",
+  expense: "مصاريف تشغيل",
+};
+
+export const ENTRY_SOURCE_LABEL: Record<string, string> = {
+  manual: "قيد يدوي",
+  payment: "سند قبض",
+  expense: "مصروف",
+  invoice: "فاتورة",
+  material_out: "صرف خامات",
+  order_delivered: "تسليم طلب",
+};
+
+/** الرصيد بالطبيعة: الأصول والمصاريف مدينة، والباقي دائن */
+export const naturalBalance = (type: GlAccountType, debit: number, credit: number) =>
+  type === "asset" || type === "expense" || type === "cost" ? debit - credit : credit - debit;
+
+export const agingBucket = (daysLate: number) => {
+  if (daysLate <= 0) return "لم يستحق";
+  if (daysLate <= 30) return "1 – 30 يومًا";
+  if (daysLate <= 60) return "31 – 60 يومًا";
+  if (daysLate <= 90) return "61 – 90 يومًا";
+  return "أكثر من 90 يومًا";
+};
+
+export const AGING_BUCKETS = [
+  "لم يستحق",
+  "1 – 30 يومًا",
+  "31 – 60 يومًا",
+  "61 – 90 يومًا",
+  "أكثر من 90 يومًا",
+];

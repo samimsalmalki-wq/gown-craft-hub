@@ -420,3 +420,105 @@ export function useAddExpense() {
     },
   });
 }
+
+/* ===== دليل الحسابات والقيود ===== */
+
+export function useGlAccounts() {
+  return useQuery({
+    queryKey: ["gl-accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("gl_accounts").select("*").order("code");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useAddGlAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      code: string;
+      name: string;
+      type: string;
+      parentId?: string | undefined;
+    }) => {
+      if (!/^\d{3,6}$/.test(input.code.trim())) throw new Error("رقم الحساب يجب أن يكون أرقامًا");
+      if (!input.name.trim()) throw new Error("اسم الحساب مطلوب");
+      const { error } = await supabase.from("gl_accounts").insert({
+        code: input.code.trim(),
+        name: input.name.trim(),
+        type: input.type,
+        parent_id: input.parentId || null,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gl-accounts"] }),
+  });
+}
+
+export function useUpdateGlAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+      const { error } = await supabase.from("gl_accounts").update(patch as never).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gl-accounts"] }),
+  });
+}
+
+export function useJournalEntries() {
+  return useQuery({
+    queryKey: ["journal-entries"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("journal_entries")
+        .select("*")
+        .order("entry_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useJournalLines() {
+  return useQuery({
+    queryKey: ["journal-lines"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("journal_lines").select("*");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useAddJournalEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      entryDate: string;
+      memo: string;
+      lines: { code: string; debit: number; credit: number; memo?: string }[];
+    }) => {
+      const lines = input.lines.filter((l) => l.code && (l.debit > 0 || l.credit > 0));
+      if (lines.length < 2) throw new Error("القيد يحتاج سطرين على الأقل");
+      const debit = lines.reduce((s, l) => s + l.debit, 0);
+      const credit = lines.reduce((s, l) => s + l.credit, 0);
+      if (Math.round(debit * 100) !== Math.round(credit * 100))
+        throw new Error("مجموع المدين لا يساوي مجموع الدائن");
+
+      const { error } = await supabase.rpc("add_journal_entry", {
+        _entry_date: input.entryDate,
+        _memo: input.memo,
+        _lines: lines as never,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["journal-entries"] });
+      qc.invalidateQueries({ queryKey: ["journal-lines"] });
+    },
+  });
+}
