@@ -622,6 +622,7 @@ export type Database = {
           is_active: boolean
           job_title: string | null
           phone: string | null
+          role_id: string | null
         }
         Insert: {
           allowed_stages?: string[]
@@ -633,6 +634,7 @@ export type Database = {
           is_active?: boolean
           job_title?: string | null
           phone?: string | null
+          role_id?: string | null
         }
         Update: {
           allowed_stages?: string[]
@@ -644,6 +646,7 @@ export type Database = {
           is_active?: boolean
           job_title?: string | null
           phone?: string | null
+          role_id?: string | null
         }
         Relationships: [
           {
@@ -651,6 +654,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
@@ -761,6 +771,68 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          is_builtin: boolean
+          key: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_builtin?: boolean
+          key: string
+          label: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_builtin?: boolean
+          key?: string
+          label?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       stage_templates: {
         Row: {
