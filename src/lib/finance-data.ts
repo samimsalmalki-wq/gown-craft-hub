@@ -522,3 +522,17 @@ export function useAddJournalEntry() {
     },
   });
 }
+
+/** كل مواد الطلبات — لحساب تكلفة الخامات وربحية كل طلب */
+export function useAllOrderMaterials() {
+  return useQuery({
+    queryKey: ["order-materials", "all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("order_materials")
+        .select("order_id, material_id, qty_issued");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
