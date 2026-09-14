@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
+import { FinanceTabs } from "@/components/FinanceTabs";
 import { Card, Chip, Empty, Field, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useOrders } from "@/lib/data";
@@ -50,6 +51,8 @@ function PaymentsPage() {
 
   return (
     <AppShell eyebrow="الماليات" title="سجل التحصيل" subtitle="سندات القبض والدفعات">
+      <FinanceTabs />
+
       <Card title="الفترة">
         <div className="grid gap-3 px-4 py-4 sm:grid-cols-2">
           <Field label="من تاريخ">

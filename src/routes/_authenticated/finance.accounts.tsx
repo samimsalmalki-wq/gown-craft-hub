@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { FinanceTabs } from "@/components/FinanceTabs";
 import { Btn, Card, Chip, Empty, Field } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useAddGlAccount, useGlAccounts, useJournalLines, useUpdateGlAccount } from "@/lib/finance-data";
@@ -87,6 +88,8 @@ function AccountsPage() {
         </Chip>
       }
     >
+      <FinanceTabs />
+
       {canEdit && (
         <Card title="حساب جديد" className="mb-5">
           <div className="grid gap-3 px-4 py-4 sm:grid-cols-4">

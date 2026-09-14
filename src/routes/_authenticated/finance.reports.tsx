@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
+import { FinanceTabs } from "@/components/FinanceTabs";
 import { Card, Chip, Empty, Field, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useOrders } from "@/lib/data";
@@ -137,6 +138,8 @@ function FinanceReportsPage() {
       title="التقارير المالية"
       subtitle={`ضريبة القيمة المضافة ${tax?.vat_enabled ? `${Number(tax.vat_rate)}%` : "غير مفعّلة"}`}
     >
+      <FinanceTabs />
+
       <Card title="الفترة" className="mb-5">
         <div className="grid gap-3 px-4 py-4 sm:grid-cols-2">
           <Field label="من تاريخ">
