@@ -81,7 +81,7 @@ function AccountsPage() {
     <AppShell
       eyebrow="الماليات"
       title="دليل الحسابات"
-      subtitle="شجرة الحسابات وميزان المراجعة"
+      subtitle="شجرة الحسابات وأرصدتها"
       actions={
         <Chip tone={Math.round(totalDebit) === Math.round(totalCredit) ? "ok" : "late"}>
           {Math.round(totalDebit) === Math.round(totalCredit) ? "الميزان متوازن" : "الميزان غير متوازن"}
