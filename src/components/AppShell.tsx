@@ -163,6 +163,7 @@ export function AppShell({
               {subtitle && <p className="text-[13px] text-muted-foreground">{subtitle}</p>}
             </div>
             <div className="flex items-center gap-2">
+              <BranchSwitcher />
               <form onSubmit={submitSearch} className="relative hidden sm:block">
                 <Search className="absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <input
