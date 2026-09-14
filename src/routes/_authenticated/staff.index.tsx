@@ -51,6 +51,9 @@ function StaffPage() {
   const { data: profiles = [] } = useProfiles();
   const { data: departments = [] } = useDepartments();
   const { data: roles = [] } = useAllRoles();
+  const { data: roleList = [] } = useRoles();
+  const { data: rolePerms = [] } = useRolePermissions();
+
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Profile | null>(null);
 
