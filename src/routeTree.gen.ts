@@ -21,7 +21,9 @@ import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedWhatsappRouteImport } from './routes/_authenticated/whatsapp'
 import { Route as AuthenticatedWorkflowRouteImport } from './routes/_authenticated/workflow'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance.index'
+import { Route as AuthenticatedFinanceAccountsRouteImport } from './routes/_authenticated/finance.accounts'
 import { Route as AuthenticatedFinanceExpensesRouteImport } from './routes/_authenticated/finance.expenses'
+import { Route as AuthenticatedFinanceJournalRouteImport } from './routes/_authenticated/finance.journal'
 import { Route as AuthenticatedFinancePaymentsRouteImport } from './routes/_authenticated/finance.payments'
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
 import { Route as AuthenticatedInventoryMaterialIdRouteImport } from './routes/_authenticated/inventory.$materialId'
@@ -94,10 +96,22 @@ const AuthenticatedFinanceIndexRoute =
     path: '/finance/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFinanceAccountsRoute =
+  AuthenticatedFinanceAccountsRouteImport.update({
+    id: '/finance/accounts',
+    path: '/finance/accounts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFinanceExpensesRoute =
   AuthenticatedFinanceExpensesRouteImport.update({
     id: '/finance/expenses',
     path: '/finance/expenses',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceJournalRoute =
+  AuthenticatedFinanceJournalRouteImport.update({
+    id: '/finance/journal',
+    path: '/finance/journal',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedFinancePaymentsRoute =
@@ -176,7 +190,9 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AuthenticatedTasksRoute
   '/whatsapp': typeof AuthenticatedWhatsappRoute
   '/workflow': typeof AuthenticatedWorkflowRoute
+  '/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/finance/expenses': typeof AuthenticatedFinanceExpensesRoute
+  '/finance/journal': typeof AuthenticatedFinanceJournalRoute
   '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -201,7 +217,9 @@ export interface FileRoutesByTo {
   '/tasks': typeof AuthenticatedTasksRoute
   '/whatsapp': typeof AuthenticatedWhatsappRoute
   '/workflow': typeof AuthenticatedWorkflowRoute
+  '/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/finance/expenses': typeof AuthenticatedFinanceExpensesRoute
+  '/finance/journal': typeof AuthenticatedFinanceJournalRoute
   '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -228,7 +246,9 @@ export interface FileRoutesById {
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/whatsapp': typeof AuthenticatedWhatsappRoute
   '/_authenticated/workflow': typeof AuthenticatedWorkflowRoute
+  '/_authenticated/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/_authenticated/finance/expenses': typeof AuthenticatedFinanceExpensesRoute
+  '/_authenticated/finance/journal': typeof AuthenticatedFinanceJournalRoute
   '/_authenticated/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -255,7 +275,9 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/whatsapp'
     | '/workflow'
+    | '/finance/accounts'
     | '/finance/expenses'
+    | '/finance/journal'
     | '/finance/payments'
     | '/inventory/$materialId'
     | '/orders/$orderId'
@@ -280,7 +302,9 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/whatsapp'
     | '/workflow'
+    | '/finance/accounts'
     | '/finance/expenses'
+    | '/finance/journal'
     | '/finance/payments'
     | '/inventory/$materialId'
     | '/orders/$orderId'
@@ -306,7 +330,9 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/_authenticated/whatsapp'
     | '/_authenticated/workflow'
+    | '/_authenticated/finance/accounts'
     | '/_authenticated/finance/expenses'
+    | '/_authenticated/finance/journal'
     | '/_authenticated/finance/payments'
     | '/_authenticated/inventory/$materialId'
     | '/_authenticated/orders/$orderId'
@@ -413,11 +439,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finance/accounts': {
+      id: '/_authenticated/finance/accounts'
+      path: '/finance/accounts'
+      fullPath: '/finance/accounts'
+      preLoaderRoute: typeof AuthenticatedFinanceAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/finance/expenses': {
       id: '/_authenticated/finance/expenses'
       path: '/finance/expenses'
       fullPath: '/finance/expenses'
       preLoaderRoute: typeof AuthenticatedFinanceExpensesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance/journal': {
+      id: '/_authenticated/finance/journal'
+      path: '/finance/journal'
+      fullPath: '/finance/journal'
+      preLoaderRoute: typeof AuthenticatedFinanceJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/finance/payments': {
@@ -509,7 +549,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedWhatsappRoute: typeof AuthenticatedWhatsappRoute
   AuthenticatedWorkflowRoute: typeof AuthenticatedWorkflowRoute
+  AuthenticatedFinanceAccountsRoute: typeof AuthenticatedFinanceAccountsRoute
   AuthenticatedFinanceExpensesRoute: typeof AuthenticatedFinanceExpensesRoute
+  AuthenticatedFinanceJournalRoute: typeof AuthenticatedFinanceJournalRoute
   AuthenticatedFinancePaymentsRoute: typeof AuthenticatedFinancePaymentsRoute
   AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
@@ -533,7 +575,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedWhatsappRoute: AuthenticatedWhatsappRoute,
   AuthenticatedWorkflowRoute: AuthenticatedWorkflowRoute,
+  AuthenticatedFinanceAccountsRoute: AuthenticatedFinanceAccountsRoute,
   AuthenticatedFinanceExpensesRoute: AuthenticatedFinanceExpensesRoute,
+  AuthenticatedFinanceJournalRoute: AuthenticatedFinanceJournalRoute,
   AuthenticatedFinancePaymentsRoute: AuthenticatedFinancePaymentsRoute,
   AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
