@@ -403,6 +403,7 @@ export function useExpenses() {
 
 export function useAddExpense() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       description: string;
@@ -430,6 +431,7 @@ export function useAddExpense() {
         reference: input.reference?.trim() || null,
         material_id: input.materialId || null,
         material_qty: input.materialQty ?? null,
+        branch_id: writeBranchId,
         created_by: auth.user?.id ?? null,
       } as never);
       if (error) throw error;
