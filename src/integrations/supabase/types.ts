@@ -139,6 +139,7 @@ export type Database = {
       cash_accounts: {
         Row: {
           created_at: string
+          gl_code: string
           id: string
           is_active: boolean
           kind: Database["public"]["Enums"]["cash_account_kind"]
@@ -149,6 +150,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          gl_code?: string
           id?: string
           is_active?: boolean
           kind?: Database["public"]["Enums"]["cash_account_kind"]
@@ -159,6 +161,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          gl_code?: string
           id?: string
           is_active?: boolean
           kind?: Database["public"]["Enums"]["cash_account_kind"]
@@ -247,6 +250,7 @@ export type Database = {
       expense_categories: {
         Row: {
           created_at: string
+          gl_code: string
           id: string
           is_active: boolean
           name: string
@@ -254,6 +258,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          gl_code?: string
           id?: string
           is_active?: boolean
           name: string
@@ -261,6 +266,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          gl_code?: string
           id?: string
           is_active?: boolean
           name?: string
@@ -357,6 +363,50 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gl_accounts: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_group: boolean
+          name: string
+          parent_id: string | null
+          type: Database["public"]["Enums"]["gl_account_type"]
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_group?: boolean
+          name: string
+          parent_id?: string | null
+          type: Database["public"]["Enums"]["gl_account_type"]
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_group?: boolean
+          name?: string
+          parent_id?: string | null
+          type?: Database["public"]["Enums"]["gl_account_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_accounts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -474,6 +524,105 @@ export type Database = {
             columns: ["rental_record_id"]
             isOneToOne: false
             referencedRelation: "rental_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          entry_no: string
+          id: string
+          is_reversal: boolean
+          memo: string
+          reverses_id: string | null
+          source: string
+          source_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          entry_no: string
+          id?: string
+          is_reversal?: boolean
+          memo: string
+          reverses_id?: string | null
+          source?: string
+          source_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          entry_no?: string
+          id?: string
+          is_reversal?: boolean
+          memo?: string
+          reverses_id?: string | null
+          source?: string
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entries_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_lines: {
+        Row: {
+          account_id: string
+          created_at: string
+          credit: number
+          debit: number
+          entry_id: string
+          id: string
+          memo: string | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          entry_id: string
+          id?: string
+          memo?: string | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          entry_id?: string
+          id?: string
+          memo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_lines_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1448,6 +1597,13 @@ export type Database = {
       cash_account_kind: "cash" | "card" | "bank"
       cash_direction: "in" | "out"
       finance_scope: "order" | "rental"
+      gl_account_type:
+        | "asset"
+        | "liability"
+        | "equity"
+        | "revenue"
+        | "cost"
+        | "expense"
       invoice_status: "draft" | "issued" | "cancelled"
       material_movement_kind: "in" | "out" | "reserve" | "release"
       order_state: "active" | "delivered" | "cancelled"
@@ -1617,6 +1773,14 @@ export const Constants = {
       cash_account_kind: ["cash", "card", "bank"],
       cash_direction: ["in", "out"],
       finance_scope: ["order", "rental"],
+      gl_account_type: [
+        "asset",
+        "liability",
+        "equity",
+        "revenue",
+        "cost",
+        "expense",
+      ],
       invoice_status: ["draft", "issued", "cancelled"],
       material_movement_kind: ["in", "out", "reserve", "release"],
       order_state: ["active", "delivered", "cancelled"],

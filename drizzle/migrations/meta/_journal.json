@@ -43,6 +43,13 @@
       "when": 1789426214767,
       "tag": "0005_finance_expenses_cashboxes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789426406310,
+      "tag": "0006_finance_gl_accounts_journal",
+      "breakpoints": true
     }
   ]
 }
