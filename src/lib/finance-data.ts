@@ -1,17 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { ALL_BRANCHES, useBranchScope } from "./branches";
 import type { Invoice, InvoiceLine, Payment, PaymentMethod, TaxSettings } from "./finance";
+
+/** يضيف شرط الفرع على الاستعلام إن كان فرعًا محددًا */
+const onBranch = <T>(q: T, branchId: string, column = "branch_id"): T =>
+  branchId === ALL_BRANCHES
+    ? q
+    : ((q as { eq: (c: string, v: string) => T }).eq(column, branchId) as T);
 
 /* ===== إعدادات الضريبة ===== */
 
 export function useTaxSettings() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["tax-settings"],
+    queryKey: ["tax-settings", branchId],
     queryFn: async (): Promise<TaxSettings | null> => {
-      const { data, error } = await supabase.from("tax_settings").select("*").limit(1).maybeSingle();
+      const { data, error } = await onBranch(
+        supabase.from("tax_settings").select("*"),
+        branchId,
+      ).limit(1);
       if (error) throw error;
-      return data;
+      return data?.[0] ?? null;
     },
   });
 }
@@ -30,12 +41,11 @@ export function useUpdateTaxSettings() {
 /* ===== الدفعات وسندات القبض ===== */
 
 export function usePayments() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["payments"],
+    queryKey: ["payments", branchId],
     queryFn: async (): Promise<Payment[]> => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select("*")
+      const { data, error } = await onBranch(supabase.from("payments").select("*"), branchId)
         .order("paid_at", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
