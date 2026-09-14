@@ -81,8 +81,9 @@ export type NewPayment = {
   amount: number;
   method: PaymentMethod;
   paidAt: string;
-  reference?: string;
-  notes?: string;
+  reference?: string | undefined;
+  notes?: string | undefined;
+  cashAccountId?: string | undefined;
 };
 
 export function useAddPayment() {
@@ -102,6 +103,7 @@ export function useAddPayment() {
           paid_at: input.paidAt,
           reference: input.reference?.trim() || null,
           notes: input.notes?.trim() || null,
+          cash_account_id: input.cashAccountId || null,
           created_by: auth.user?.id ?? null,
         } as never)
         .select()
@@ -115,6 +117,7 @@ export function useAddPayment() {
       qc.invalidateQueries({ queryKey: ["order"] });
       qc.invalidateQueries({ queryKey: ["activity"] });
       qc.invalidateQueries({ queryKey: ["rentals"] });
+      qc.invalidateQueries({ queryKey: ["cash-transactions"] });
     },
   });
 }
@@ -187,6 +190,7 @@ export function useCreateInvoice() {
           is_taxable: input.isTaxable,
           vat_rate: input.vatRate,
           notes: input.notes?.trim() || null,
+          cash_account_id: input.cashAccountId || null,
           created_by: auth.user?.id ?? null,
         } as never)
         .select()

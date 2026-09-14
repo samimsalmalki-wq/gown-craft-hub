@@ -8,6 +8,7 @@ import { fmtDate, money } from "@/lib/atelier";
 import type { Order } from "@/lib/atelier";
 import {
   useAddPayment,
+  useCashAccounts,
   useCreateInvoice,
   useInvoices,
   useOrderPayments,
@@ -24,6 +25,7 @@ export function PaymentsCard({ order }: { order: Order }) {
   const { data: payments = [] } = useOrderPayments(order.id);
   const { data: invoices = [] } = useInvoices();
   const { data: tax } = useTaxSettings();
+  const { data: cashAccounts = [] } = useCashAccounts();
   const add = useAddPayment();
   const createInvoice = useCreateInvoice();
 
@@ -33,6 +35,7 @@ export function PaymentsCard({ order }: { order: Order }) {
   const [paidAt, setPaidAt] = useState(todayISO());
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
+  const [cashAccountId, setCashAccountId] = useState("");
 
   const canPay = can("finance.payments");
   const canInvoice = can("finance.invoices");
@@ -56,6 +59,7 @@ export function PaymentsCard({ order }: { order: Order }) {
         paidAt,
         reference,
         notes,
+        cashAccountId: cashAccountId || undefined,
       })
       .then((p) => {
         toast.success(`تم تسجيل الدفعة — سند ${p.receipt_no}`);
@@ -216,6 +220,20 @@ export function PaymentsCard({ order }: { order: Order }) {
               value={reference}
               onChange={(e) => setReference(e.target.value)}
             />
+          </Field>
+          <Field label="الصندوق" hint="يُضاف إليه المبلغ">
+            <select
+              className="field"
+              value={cashAccountId}
+              onChange={(e) => setCashAccountId(e.target.value)}
+            >
+              <option value="">— بدون —</option>
+              {cashAccounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
           </Field>
           <div className="sm:col-span-2">
             <Field label="ملاحظة">
