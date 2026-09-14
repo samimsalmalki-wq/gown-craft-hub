@@ -6,7 +6,13 @@ import { Card, Chip, Empty, Field, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useOrders } from "@/lib/data";
 import { useMaterials, useRentalRecords } from "@/lib/inventory-data";
-import { useExpenses, useInvoices, usePayments, useTaxSettings } from "@/lib/finance-data";
+import {
+  useAllOrderMaterials,
+  useExpenses,
+  useInvoices,
+  usePayments,
+  useTaxSettings,
+} from "@/lib/finance-data";
 import { daysUntilDue, fmtDate, money } from "@/lib/atelier";
 import {
   AGING_BUCKETS,
@@ -47,6 +53,7 @@ function FinanceReportsPage() {
   const { data: materials = [] } = useMaterials();
   const { data: rentals = [] } = useRentalRecords();
   const { data: tax } = useTaxSettings();
+  const { data: orderMaterials = [] } = useAllOrderMaterials();
 
   const [from, setFrom] = useState(monthStartISO());
   const [to, setTo] = useState(todayISO());
@@ -81,12 +88,15 @@ function FinanceReportsPage() {
   const months = [...byMonth.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 12);
 
   /* ربحية الطلبات: القيمة − تكلفة الخامات المصروفة */
-  const costOf = (orderId: string) =>
-    materials.length === 0
-      ? 0
-      : 0 +
-        (orderMaterialCost.get(orderId) ?? 0);
   const orderMaterialCost = new Map<string, number>();
+  for (const row of orderMaterials) {
+    const unit = Number(materials.find((m) => m.id === row.material_id)?.unit_cost ?? 0);
+    orderMaterialCost.set(
+      row.order_id,
+      (orderMaterialCost.get(row.order_id) ?? 0) + Number(row.qty_issued) * unit,
+    );
+  }
+  const costOf = (orderId: string) => orderMaterialCost.get(orderId) ?? 0;
 
   const profitRows = orders
     .filter((o) => o.state !== "cancelled")
