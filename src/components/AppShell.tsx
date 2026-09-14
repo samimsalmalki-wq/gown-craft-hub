@@ -16,6 +16,7 @@ import {
   Boxes,
   MessageCircle,
   ShieldCheck,
+  Store,
   Wallet,
 
 } from "lucide-react";
@@ -26,6 +27,7 @@ import { useCurrentAccount } from "@/hooks/useSession";
 import { useMarkNotificationsRead, useNotifications, useStageTemplates } from "@/lib/data";
 import { ROLE_LABEL, fmtDateTime } from "@/lib/atelier";
 import { Avatar, Sheet } from "@/components/kit";
+import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -47,6 +49,7 @@ const NAV: NavItem[] = [
   { to: "/inventory", label: "مخزون المواد", icon: Boxes },
   { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
   { to: "/roles", label: "الأدوار والصلاحيات", icon: ShieldCheck, adminOnly: true },
+  { to: "/branches", label: "الفروع", icon: Store, adminOnly: true },
 
   { to: "/reports", label: "تقرير الأداء", icon: BarChart3, managerOnly: true },
   { to: "/workflow", label: "إعداد المراحل", icon: Settings2, adminOnly: true },
