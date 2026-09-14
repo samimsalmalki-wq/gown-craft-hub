@@ -66,7 +66,7 @@ export function AppShell({
   eyebrow?: string;
   actions?: ReactNode;
 }) {
-  const { profile, isAdmin, isManager, role, userId } = useCurrentAccount();
+  const { profile, isAdmin, isManager, role, userId, can } = useCurrentAccount();
   const navigate = useNavigate();
   const router = useRouter();
   const qc = useQueryClient();
