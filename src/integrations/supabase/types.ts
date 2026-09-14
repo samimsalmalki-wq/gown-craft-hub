@@ -157,6 +157,123 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_lines: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          position: number
+          qty: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          position?: number
+          qty?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          position?: number
+          qty?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_no: string
+          is_taxable: boolean
+          issue_date: string
+          notes: string | null
+          order_id: string | null
+          rental_record_id: string | null
+          scope: Database["public"]["Enums"]["finance_scope"]
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_amount: number
+          total: number
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_no: string
+          is_taxable?: boolean
+          issue_date?: string
+          notes?: string | null
+          order_id?: string | null
+          rental_record_id?: string | null
+          scope?: Database["public"]["Enums"]["finance_scope"]
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_no?: string
+          is_taxable?: boolean
+          issue_date?: string
+          notes?: string | null
+          order_id?: string | null
+          rental_record_id?: string | null
+          scope?: Database["public"]["Enums"]["finance_scope"]
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_rental_record_id_fkey"
+            columns: ["rental_record_id"]
+            isOneToOne: false
+            referencedRelation: "rental_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_movements: {
         Row: {
           created_at: string
@@ -611,6 +728,76 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          is_deposit: boolean
+          method: Database["public"]["Enums"]["payment_method"]
+          notes: string | null
+          order_id: string | null
+          paid_at: string
+          receipt_no: string
+          reference: string | null
+          rental_record_id: string | null
+          scope: Database["public"]["Enums"]["finance_scope"]
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_deposit?: boolean
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string
+          receipt_no: string
+          reference?: string | null
+          rental_record_id?: string | null
+          scope?: Database["public"]["Enums"]["finance_scope"]
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_deposit?: boolean
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string
+          receipt_no?: string
+          reference?: string | null
+          rental_record_id?: string | null
+          scope?: Database["public"]["Enums"]["finance_scope"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_rental_record_id_fkey"
+            columns: ["rental_record_id"]
+            isOneToOne: false
+            referencedRelation: "rental_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           allowed_stages: string[]
@@ -873,6 +1060,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_settings: {
+        Row: {
+          business_address: string | null
+          business_name: string
+          id: string
+          tax_number: string | null
+          updated_at: string
+          vat_enabled: boolean
+          vat_rate: number
+        }
+        Insert: {
+          business_address?: string | null
+          business_name?: string
+          id?: string
+          tax_number?: string | null
+          updated_at?: string
+          vat_enabled?: boolean
+          vat_rate?: number
+        }
+        Update: {
+          business_address?: string | null
+          business_name?: string
+          id?: string
+          tax_number?: string | null
+          updated_at?: string
+          vat_enabled?: boolean
+          vat_rate?: number
+        }
+        Relationships: []
+      }
       user_permissions: {
         Row: {
           id: string
@@ -981,8 +1198,11 @@ export type Database = {
     Enums: {
       alteration_status: "requested" | "in_progress" | "done" | "cancelled"
       app_role: "admin" | "staff" | "supervisor" | "cs"
+      finance_scope: "order" | "rental"
+      invoice_status: "draft" | "issued" | "cancelled"
       material_movement_kind: "in" | "out" | "reserve" | "release"
       order_state: "active" | "delivered" | "cancelled"
+      payment_method: "cash" | "card" | "transfer" | "other"
       payment_status: "unpaid" | "partial" | "paid"
       rental_dress_status:
         | "available"
@@ -1145,8 +1365,11 @@ export const Constants = {
     Enums: {
       alteration_status: ["requested", "in_progress", "done", "cancelled"],
       app_role: ["admin", "staff", "supervisor", "cs"],
+      finance_scope: ["order", "rental"],
+      invoice_status: ["draft", "issued", "cancelled"],
       material_movement_kind: ["in", "out", "reserve", "release"],
       order_state: ["active", "delivered", "cancelled"],
+      payment_method: ["cash", "card", "transfer", "other"],
       payment_status: ["unpaid", "partial", "paid"],
       rental_dress_status: [
         "available",

@@ -29,6 +29,13 @@
       "when": 1789383276277,
       "tag": "0003_roles_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789425947929,
+      "tag": "0004_finance_payments_invoices",
+      "breakpoints": true
     }
   ]
 }
