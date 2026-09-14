@@ -94,10 +94,12 @@ export type NewPayment = {
   reference?: string | undefined;
   notes?: string | undefined;
   cashAccountId?: string | undefined;
+  branchId?: string | null | undefined;
 };
 
 export function useAddPayment() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: NewPayment) => {
       if (!(input.amount > 0)) throw new Error("اكتب مبلغًا أكبر من صفر");
@@ -114,6 +116,7 @@ export function useAddPayment() {
           reference: input.reference?.trim() || null,
           notes: input.notes?.trim() || null,
           cash_account_id: input.cashAccountId || null,
+          branch_id: input.branchId ?? writeBranchId,
           created_by: auth.user?.id ?? null,
         } as never)
         .select()
@@ -135,13 +138,14 @@ export function useAddPayment() {
 /* ===== الفواتير ===== */
 
 export function useInvoices() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["invoices"],
+    queryKey: ["invoices", branchId],
     queryFn: async (): Promise<Invoice[]> => {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select("*")
-        .order("issue_date", { ascending: false });
+      const { data, error } = await onBranch(
+        supabase.from("invoices").select("*"),
+        branchId,
+      ).order("issue_date", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
