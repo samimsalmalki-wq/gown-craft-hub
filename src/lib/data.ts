@@ -321,23 +321,137 @@ export function useUpdateProfile() {
   });
 }
 
-export function useSetRole() {
+/** كتالوج الأدوار القابل للتوسيع */
+export function useRoles() {
+  const query = useQuery({
+    queryKey: ["roles"],
+    queryFn: async (): Promise<RoleCatalogRow[]> => {
+      const { data, error } = await supabase
+        .from("roles")
+        .select("id, key, label, position, is_builtin, is_active")
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  useEffect(() => {
+    if (query.data?.length) setRoleCatalog(query.data);
+  }, [query.data]);
+
+  return query;
+}
+
+export function useRolePermissions() {
+  return useQuery({
+    queryKey: ["role-permissions"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("role_permissions").select("role_id, permission");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useAddRole() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const del = await supabase.from("user_roles").delete().eq("user_id", userId);
-      if (del.error) throw del.error;
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: role as never });
+    mutationFn: async ({ label }: { label: string }) => {
+      const name = label.trim();
+      if (!name) throw new Error("اسم الدور مطلوب");
+      const max = await supabase
+        .from("roles")
+        .select("position")
+        .order("position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const key = `role_${Math.random().toString(36).slice(2, 10)}`;
+      const { data, error } = await supabase
+        .from("roles")
+        .insert({ key, label: name, position: (max.data?.position ?? 0) + 1 })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["roles"] }),
+  });
+}
+
+export function useUpdateRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+      const { error } = await supabase.from("roles").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["all-roles"] });
+      qc.invalidateQueries({ queryKey: ["roles"] });
       qc.invalidateQueries({ queryKey: ["account"] });
     },
   });
 }
+
+export function useSetRolePermission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      roleId,
+      permission,
+      on,
+    }: {
+      roleId: string;
+      permission: string;
+      on: boolean;
+    }) => {
+      if (on) {
+        const { error } = await supabase
+          .from("role_permissions")
+          .insert({ role_id: roleId, permission });
+        if (error && error.code !== "23505") throw error;
+      } else {
+        const { error } = await supabase
+          .from("role_permissions")
+          .delete()
+          .eq("role_id", roleId)
+          .eq("permission", permission);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["role-permissions"] });
+      qc.invalidateQueries({ queryKey: ["account"] });
+    },
+  });
+}
+
+export function useSetRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, roleId }: { userId: string; roleId: string }) => {
+      const role = roleCatalog().find((r) => r.id === roleId);
+      if (!role) throw new Error("دور غير معروف");
+
+      // الأدوار الأساسية تقود صلاحيات النظام في user_roles، والأدوار الجديدة تُعتبر «موظف»
+      const enumRole = isBuiltinRole(role.key) ? role.key : "staff";
+      const del = await supabase.from("user_roles").delete().eq("user_id", userId);
+      if (del.error) throw del.error;
+      const ins = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: enumRole as never });
+      if (ins.error) throw ins.error;
+
+      const { error } = await supabase.from("profiles").update({ role_id: roleId }).eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["all-roles"] });
+      qc.invalidateQueries({ queryKey: ["profiles"] });
+      qc.invalidateQueries({ queryKey: ["account"] });
+    },
+  });
+}
+
 
 /* ================= المهام والمراحل ================= */
 
