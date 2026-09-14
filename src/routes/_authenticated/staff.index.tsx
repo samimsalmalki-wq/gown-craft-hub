@@ -27,7 +27,7 @@ import {
 } from "@/lib/atelier";
 
 
-const ROLES: AppRole[] = ["admin", "supervisor", "staff", "cs"];
+
 
 export const Route = createFileRoute("/_authenticated/staff/")({
   head: () => ({
