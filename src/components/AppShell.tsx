@@ -78,7 +78,14 @@ export function AppShell({
   const markRead = useMarkNotificationsRead();
   const unread = notes.filter((n) => !n.is_read);
 
-  const items = NAV.filter((n) => (!n.managerOnly || isManager) && (!n.adminOnly || isAdmin));
+  const canFinance =
+    can("finance.payments") || can("finance.invoices") || can("finance.reports");
+  const items = NAV.filter(
+    (n) =>
+      (!n.managerOnly || isManager) &&
+      (!n.adminOnly || isAdmin) &&
+      (!n.financeOnly || canFinance),
+  );
 
   async function signOut() {
     await qc.cancelQueries();
