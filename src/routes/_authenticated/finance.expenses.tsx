@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { FinanceTabs } from "@/components/FinanceTabs";
 import { Btn, Card, Chip, Empty, Field, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useMaterials } from "@/lib/inventory-data";
@@ -109,6 +110,8 @@ function ExpensesPage() {
       title="المصروفات والصناديق"
       subtitle="سجّل المصروفات والمشتريات وتابع أرصدة الصناديق"
     >
+      <FinanceTabs />
+
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="مصروفات هذا الشهر" value={money(monthTotal)} tone="late" />
         <Stat label="ضريبة مدخلات الشهر" value={money(vatTotal)} />

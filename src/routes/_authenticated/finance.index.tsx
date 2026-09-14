@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/AppShell";
+import { FinanceTabs } from "@/components/FinanceTabs";
 import { Btn, Card, Chip, Empty, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useOrders } from "@/lib/data";
@@ -77,6 +78,8 @@ function FinancePage() {
         </Link>
       }
     >
+      <FinanceTabs />
+
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="إجمالي قيمة الطلبات" value={money(totalValue)} />
         <Stat label="المحصَّل" value={money(totalCollected)} tone="gold" />

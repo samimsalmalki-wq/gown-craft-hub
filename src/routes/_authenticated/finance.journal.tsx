@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { FinanceTabs } from "@/components/FinanceTabs";
 import { Btn, Card, Chip, Empty, Field } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import {
@@ -95,6 +96,8 @@ function JournalPage() {
 
   return (
     <AppShell eyebrow="الماليات" title="قيود اليومية" subtitle="دفتر اليومية المزدوج">
+      <FinanceTabs />
+
       {canEdit && (
         <Card
           title="قيد يدوي"
