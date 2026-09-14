@@ -40,6 +40,48 @@ export const ROLE_LABEL: Record<AppRole, string> = {
   cs: "خدمة عملاء",
 };
 
+/* ===== كتالوج الأدوار الحيّ: يُحدَّث من جدول الأدوار ===== */
+
+export type RoleCatalogRow = {
+  id: string;
+  key: string;
+  label: string;
+  position: number;
+  is_builtin: boolean;
+  is_active: boolean;
+};
+
+export const BUILTIN_ROLES: AppRole[] = ["admin", "supervisor", "staff", "cs"];
+
+let ROLE_CATALOG: RoleCatalogRow[] = BUILTIN_ROLES.map((key, i) => ({
+  id: key,
+  key,
+  label: ROLE_LABEL[key],
+  position: i + 1,
+  is_builtin: true,
+  is_active: true,
+}));
+
+export const setRoleCatalog = (rows: RoleCatalogRow[]) => {
+  if (rows.length) ROLE_CATALOG = [...rows].sort((a, b) => a.position - b.position);
+};
+
+export const roleCatalog = () => ROLE_CATALOG;
+
+export const activeRoleList = () => ROLE_CATALOG.filter((r) => r.is_active);
+
+export const roleLabel = (key: string | null | undefined) => {
+  if (!key) return "موظف";
+  return (
+    ROLE_CATALOG.find((r) => r.key === key)?.label ??
+    ROLE_LABEL[key as AppRole] ??
+    key
+  );
+};
+
+export const isBuiltinRole = (key: string) => BUILTIN_ROLES.includes(key as AppRole);
+
+
 export const PRIORITY_LABEL: Record<Priority, string> = {
   low: "منخفضة",
   normal: "عادية",
