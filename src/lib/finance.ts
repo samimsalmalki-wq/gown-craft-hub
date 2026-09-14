@@ -55,3 +55,30 @@ export const monthStartISO = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 };
+
+/* ===== المصروفات والصناديق ===== */
+
+export type Supplier = Database["public"]["Tables"]["suppliers"]["Row"];
+export type ExpenseCategory = Database["public"]["Tables"]["expense_categories"]["Row"];
+export type CashAccount = Database["public"]["Tables"]["cash_accounts"]["Row"];
+export type CashTransaction = Database["public"]["Tables"]["cash_transactions"]["Row"];
+export type Expense = Database["public"]["Tables"]["expenses"]["Row"];
+export type CashAccountKind = Database["public"]["Enums"]["cash_account_kind"];
+
+export const CASH_KIND_LABEL: Record<CashAccountKind, string> = {
+  cash: "نقدي",
+  card: "شبكة",
+  bank: "بنكي",
+};
+
+/** رصيد الصندوق = الرصيد الافتتاحي + المقبوضات − المدفوعات */
+export const cashBalance = (
+  account: Pick<CashAccount, "id" | "opening_balance">,
+  txs: Pick<CashTransaction, "account_id" | "direction" | "amount">[],
+) =>
+  txs
+    .filter((t) => t.account_id === account.id)
+    .reduce(
+      (sum, t) => sum + (t.direction === "in" ? Number(t.amount) : -Number(t.amount)),
+      Number(account.opening_balance),
+    );

@@ -178,6 +178,8 @@ export const PERMISSIONS: { key: string; label: string; hint: string }[] = [
   { key: "staff.manage", label: "إدارة الموظفين", hint: "بيانات الموظفين وأقسامهم" },
   { key: "finance.payments", label: "الدفعات وسندات القبض", hint: "تسجيل التحصيل وإصدار سندات القبض" },
   { key: "finance.invoices", label: "الفواتير", hint: "إصدار الفواتير وبنودها والضريبة" },
+  { key: "finance.expenses", label: "المصروفات والصناديق", hint: "المصروفات والمشتريات وحركة الصناديق" },
+  { key: "finance.accounts", label: "الحسابات والقيود", hint: "شجرة الحسابات وقيود اليومية" },
   { key: "finance.reports", label: "التقارير المالية", hint: "المستحقات والتحصيل وتقرير الضريبة" },
 ];
 

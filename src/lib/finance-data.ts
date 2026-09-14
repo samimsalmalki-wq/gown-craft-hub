@@ -267,3 +267,153 @@ export function useDeleteInvoiceLine(invoiceId: string) {
     },
   });
 }
+
+/* ===== المصروفات والصناديق والموردون ===== */
+
+export function useSuppliers() {
+  return useQuery({
+    queryKey: ["suppliers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("suppliers").select("*").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useAddSupplier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; phone?: string; tax_number?: string }) => {
+      if (!input.name.trim()) throw new Error("اسم المورد مطلوب");
+      const { error } = await supabase.from("suppliers").insert({
+        name: input.name.trim(),
+        phone: input.phone?.trim() || null,
+        tax_number: input.tax_number?.trim() || null,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["suppliers"] }),
+  });
+}
+
+export function useExpenseCategories() {
+  return useQuery({
+    queryKey: ["expense-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("expense_categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useAddExpenseCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      if (!name.trim()) throw new Error("اسم التصنيف مطلوب");
+      const max = await supabase
+        .from("expense_categories")
+        .select("position")
+        .order("position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const { error } = await supabase.from("expense_categories").insert({
+        name: name.trim(),
+        position: (max.data?.position ?? 0) + 1,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["expense-categories"] }),
+  });
+}
+
+export function useCashAccounts() {
+  return useQuery({
+    queryKey: ["cash-accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cash_accounts")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useCashTransactions() {
+  return useQuery({
+    queryKey: ["cash-transactions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cash_transactions")
+        .select("*")
+        .order("occurred_at", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useExpenses() {
+  return useQuery({
+    queryKey: ["expenses"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .order("occurred_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useAddExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      description: string;
+      amount: number;
+      occurredAt: string;
+      categoryId?: string;
+      supplierId?: string;
+      cashAccountId?: string;
+      isTaxable: boolean;
+      reference?: string;
+      materialId?: string;
+      materialQty?: number;
+    }) => {
+      if (!input.description.trim()) throw new Error("اكتب وصف المصروف");
+      if (!(input.amount > 0)) throw new Error("اكتب مبلغًا أكبر من صفر");
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await supabase.from("expenses").insert({
+        description: input.description.trim(),
+        amount: input.amount,
+        occurred_at: input.occurredAt,
+        category_id: input.categoryId || null,
+        supplier_id: input.supplierId || null,
+        cash_account_id: input.cashAccountId || null,
+        is_taxable: input.isTaxable,
+        reference: input.reference?.trim() || null,
+        material_id: input.materialId || null,
+        material_qty: input.materialQty ?? null,
+        created_by: auth.user?.id ?? null,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expenses"] });
+      qc.invalidateQueries({ queryKey: ["cash-transactions"] });
+      qc.invalidateQueries({ queryKey: ["materials"] });
+    },
+  });
+}
