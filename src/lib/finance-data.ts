@@ -190,7 +190,6 @@ export function useCreateInvoice() {
           is_taxable: input.isTaxable,
           vat_rate: input.vatRate,
           notes: input.notes?.trim() || null,
-          cash_account_id: input.cashAccountId || null,
           created_by: auth.user?.id ?? null,
         } as never)
         .select()
