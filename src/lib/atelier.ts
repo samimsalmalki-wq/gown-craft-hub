@@ -181,6 +181,9 @@ export const PERMISSIONS: { key: string; label: string; hint: string }[] = [
   { key: "finance.expenses", label: "المصروفات والصناديق", hint: "المصروفات والمشتريات وحركة الصناديق" },
   { key: "finance.accounts", label: "الحسابات والقيود", hint: "شجرة الحسابات وقيود اليومية" },
   { key: "finance.reports", label: "التقارير المالية", hint: "المستحقات والتحصيل وتقرير الضريبة" },
+  { key: "branches.all", label: "كل الفروع", hint: "رؤية بيانات جميع الفروع والتبديل بينها" },
+  { key: "branches.manage", label: "إدارة الفروع", hint: "إضافة الفروع وتعديل بياناتها" },
+  { key: "inventory.transfer", label: "نقل المخزون", hint: "نقل الخامات بين الفروع" },
 ];
 
 
