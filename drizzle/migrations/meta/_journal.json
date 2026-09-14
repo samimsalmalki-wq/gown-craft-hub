@@ -50,6 +50,13 @@
       "when": 1789426406310,
       "tag": "0006_finance_gl_accounts_journal",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789426426981,
+      "tag": "0007_finance_manual_journal_rpc",
+      "breakpoints": true
     }
   ]
 }

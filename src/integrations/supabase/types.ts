@@ -1560,6 +1560,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_journal_entry: {
+        Args: { _entry_date: string; _lines: Json; _memo: string }
+        Returns: string
+      }
       add_stage_template: {
         Args: {
           p_expected_days?: number
