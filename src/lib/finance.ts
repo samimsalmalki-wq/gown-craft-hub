@@ -112,6 +112,19 @@ export const ENTRY_SOURCE_LABEL: Record<string, string> = {
 export const naturalBalance = (type: GlAccountType, debit: number, credit: number) =>
   type === "asset" || type === "expense" || type === "cost" ? debit - credit : credit - debit;
 
+/** يبني الرصيد المتسلسل لحركات حساب واحد بحسب طبيعة الحساب */
+export const runningLedger = <T extends { debit: number; credit: number }>(
+  type: GlAccountType,
+  opening: number,
+  rows: T[],
+): (T & { balance: number })[] => {
+  let balance = opening;
+  return rows.map((r) => {
+    balance += naturalBalance(type, r.debit, r.credit);
+    return { ...r, balance };
+  });
+};
+
 export const agingBucket = (daysLate: number) => {
   if (daysLate <= 0) return "لم يستحق";
   if (daysLate <= 30) return "1 – 30 يومًا";

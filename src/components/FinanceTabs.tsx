@@ -8,6 +8,7 @@ const TABS = [
   { to: "/finance/expenses", label: "المصروفات", perms: ["finance.expenses", "finance.reports"] },
   { to: "/finance/accounts", label: "الحسابات", perms: ["finance.accounts", "finance.reports"] },
   { to: "/finance/journal", label: "القيود", perms: ["finance.accounts", "finance.reports"] },
+  { to: "/finance/ledger", label: "دفتر الأستاذ", perms: ["finance.accounts", "finance.reports"] },
   { to: "/finance/reports", label: "التقارير", perms: ["finance.reports"] },
 ] as const;
 

@@ -523,6 +523,93 @@ export function useAddJournalEntry() {
   });
 }
 
+/* ===== دفتر الأستاذ ===== */
+
+export type LedgerRow = {
+  id: string;
+  entry_id: string;
+  debit: number;
+  credit: number;
+  memo: string | null;
+  entry_no: string;
+  entry_date: string;
+  entry_memo: string;
+  source: string;
+};
+
+type RawLedgerRow = {
+  id: string;
+  entry_id: string;
+  debit: number | string;
+  credit: number | string;
+  memo: string | null;
+  journal_entries: {
+    entry_no: string;
+    entry_date: string;
+    memo: string;
+    source: string;
+  } | null;
+};
+
+const LEDGER_SELECT = "id, entry_id, debit, credit, memo, journal_entries!inner(entry_no, entry_date, memo, source)";
+
+/** حركات حساب واحد داخل فترة + رصيد ما قبل الفترة */
+export function useLedger(accountId: string, from: string, to: string) {
+  return useQuery({
+    queryKey: ["ledger", accountId, from, to],
+    enabled: Boolean(accountId),
+    queryFn: async (): Promise<{
+      rows: LedgerRow[];
+      openingDebit: number;
+      openingCredit: number;
+    }> => {
+      const [period, before] = await Promise.all([
+        supabase
+          .from("journal_lines")
+          .select(LEDGER_SELECT)
+          .eq("account_id", accountId)
+          .gte("journal_entries.entry_date", from)
+          .lte("journal_entries.entry_date", to)
+          .order("entry_date", { referencedTable: "journal_entries", ascending: true }),
+        supabase
+          .from("journal_lines")
+          .select("debit, credit, journal_entries!inner(entry_date)")
+          .eq("account_id", accountId)
+          .lt("journal_entries.entry_date", from),
+      ]);
+
+      if (period.error) throw period.error;
+      if (before.error) throw before.error;
+
+      const raw = (period.data ?? []) as unknown as RawLedgerRow[];
+      const rows: LedgerRow[] = raw
+        .map((l) => ({
+          id: l.id,
+          entry_id: l.entry_id,
+          debit: Number(l.debit),
+          credit: Number(l.credit),
+          memo: l.memo,
+          entry_no: l.journal_entries?.entry_no ?? "",
+          entry_date: l.journal_entries?.entry_date ?? "",
+          entry_memo: l.journal_entries?.memo ?? "",
+          source: l.journal_entries?.source ?? "manual",
+        }))
+        .sort((a, b) =>
+          a.entry_date === b.entry_date
+            ? a.entry_no.localeCompare(b.entry_no)
+            : a.entry_date.localeCompare(b.entry_date),
+        );
+
+      const prior = (before.data ?? []) as unknown as { debit: number | string; credit: number | string }[];
+      return {
+        rows,
+        openingDebit: prior.reduce((s, l) => s + Number(l.debit), 0),
+        openingCredit: prior.reduce((s, l) => s + Number(l.credit), 0),
+      };
+    },
+  });
+}
+
 /** كل مواد الطلبات — لحساب تكلفة الخامات وربحية كل طلب */
 export function useAllOrderMaterials() {
   return useQuery({
