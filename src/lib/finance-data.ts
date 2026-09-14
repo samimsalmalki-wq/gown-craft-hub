@@ -492,12 +492,14 @@ export function useUpdateGlAccount() {
 }
 
 export function useJournalEntries() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["journal-entries"],
+    queryKey: ["journal-entries", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("journal_entries")
-        .select("*")
+      const { data, error } = await onBranch(
+        supabase.from("journal_entries").select("*"),
+        branchId,
+      )
         .order("entry_date", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -507,10 +509,15 @@ export function useJournalEntries() {
 }
 
 export function useJournalLines() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["journal-lines"],
+    queryKey: ["journal-lines", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("journal_lines").select("*");
+      const { data, error } = await onBranch(
+        supabase.from("journal_lines").select("*, journal_entries!inner(branch_id)"),
+        branchId,
+        "journal_entries.branch_id",
+      );
       if (error) throw error;
       return data ?? [];
     },
