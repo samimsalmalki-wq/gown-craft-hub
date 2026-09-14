@@ -147,22 +147,27 @@ function StaffPage() {
 
                 {isAdmin && (
                   <div className="border-b border-line px-4 py-3">
-                    <Field label="الدور">
+                    <Field label="الدور" hint="الأدوار تُضاف وتُسمّى من شاشة «الأدوار والصلاحيات»">
                       <select
                         className="field"
-                        value={role}
+                        value={p.role_id ?? ""}
                         onChange={(e) =>
                           setRole
-                            .mutateAsync({ userId: p.id, role: e.target.value })
+                            .mutateAsync({ userId: p.id, roleId: e.target.value })
                             .then(() => toast.success("تم تحديث الدور"))
                             .catch((err: Error) => toast.error(err.message))
                         }
                       >
-                        {ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {ROLE_LABEL[r]}
-                          </option>
-                        ))}
+                        <option value="" disabled>
+                          اختر دورًا
+                        </option>
+                        {roleList
+                          .filter((r) => r.is_active || r.id === p.role_id)
+                          .map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.label}
+                            </option>
+                          ))}
                       </select>
                     </Field>
                   </div>
@@ -170,25 +175,30 @@ function StaffPage() {
 
                 <ul className="divide-y divide-line">
                   {PERMISSIONS.map((perm) => {
-                    const on =
-                      admin || perms.some((x) => x.user_id === p.id && x.permission === perm.key);
+                    const fromRole = admin || rolePermsOf(p.role_id).includes(perm.key);
+                    const own = perms.some(
+                      (x) => x.user_id === p.id && x.permission === perm.key,
+                    );
                     return (
                       <li key={perm.key} className="flex items-center justify-between gap-3 px-4 py-3">
                         <div>
                           <p className="text-[13px] font-medium">{perm.label}</p>
-                          <p className="text-[11px] text-muted-foreground">{perm.hint}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {fromRole ? "ممنوحة من الدور" : perm.hint}
+                          </p>
                         </div>
                         <input
                           type="checkbox"
                           className="size-5 accent-current"
-                          checked={on}
-                          disabled={admin || !isAdmin}
+                          checked={fromRole || own}
+                          disabled={fromRole || !isAdmin}
                           onChange={(e) => togglePerm(p.id, perm.key, e.target.checked)}
                         />
                       </li>
                     );
                   })}
                 </ul>
+
               </Card>
             );
           })}
