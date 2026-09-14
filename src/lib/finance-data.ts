@@ -384,13 +384,13 @@ export function useAddExpense() {
       description: string;
       amount: number;
       occurredAt: string;
-      categoryId?: string;
-      supplierId?: string;
-      cashAccountId?: string;
+      categoryId?: string | undefined;
+      supplierId?: string | undefined;
+      cashAccountId?: string | undefined;
       isTaxable: boolean;
-      reference?: string;
-      materialId?: string;
-      materialQty?: number;
+      reference?: string | undefined;
+      materialId?: string | undefined;
+      materialQty?: number | undefined;
     }) => {
       if (!input.description.trim()) throw new Error("اكتب وصف المصروف");
       if (!(input.amount > 0)) throw new Error("اكتب مبلغًا أكبر من صفر");
