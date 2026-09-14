@@ -121,7 +121,7 @@ export function useTransferMaterial() {
         p_from_branch: input.fromBranch,
         p_to_branch: input.toBranch,
         p_qty: input.qty,
-        p_notes: input.notes ?? null,
+        p_notes: input.notes ?? undefined,
       });
       if (error) throw error;
     },
