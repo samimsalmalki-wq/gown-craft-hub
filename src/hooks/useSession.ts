@@ -76,6 +76,10 @@ export function useCurrentAccount() {
     isManager,
     isCS,
     permissions,
-    can: (permission: string) => isManager || permissions.includes(permission),
+    /** المدير يرى كل شيء، والمشرف يرى كل شيء ما عدا المالية التي تُمنح صلاحياتها صراحة */
+    can: (permission: string) =>
+      isAdmin ||
+      permissions.includes(permission) ||
+      (isManager && !permission.startsWith("finance.")),
   };
 }
