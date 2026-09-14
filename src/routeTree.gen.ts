@@ -27,6 +27,7 @@ import { Route as AuthenticatedFinanceJournalRouteImport } from './routes/_authe
 import { Route as AuthenticatedFinanceLedgerRouteImport } from './routes/_authenticated/finance.ledger'
 import { Route as AuthenticatedFinancePaymentsRouteImport } from './routes/_authenticated/finance.payments'
 import { Route as AuthenticatedFinanceReportsRouteImport } from './routes/_authenticated/finance.reports'
+import { Route as AuthenticatedFinanceTrialBalanceRouteImport } from './routes/_authenticated/finance.trial-balance'
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
 import { Route as AuthenticatedInventoryMaterialIdRouteImport } from './routes/_authenticated/inventory.$materialId'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
@@ -134,6 +135,12 @@ const AuthenticatedFinanceReportsRoute =
     path: '/finance/reports',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFinanceTrialBalanceRoute =
+  AuthenticatedFinanceTrialBalanceRouteImport.update({
+    id: '/finance/trial-balance',
+    path: '/finance/trial-balance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInventoryIndexRoute =
   AuthenticatedInventoryIndexRouteImport.update({
     id: '/inventory/',
@@ -210,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/finance/ledger': typeof AuthenticatedFinanceLedgerRoute
   '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
@@ -239,6 +247,7 @@ export interface FileRoutesByTo {
   '/finance/ledger': typeof AuthenticatedFinanceLedgerRoute
   '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
@@ -270,6 +279,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/ledger': typeof AuthenticatedFinanceLedgerRoute
   '/_authenticated/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/_authenticated/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/_authenticated/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/finance/ledger'
     | '/finance/payments'
     | '/finance/reports'
+    | '/finance/trial-balance'
     | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/finance/ledger'
     | '/finance/payments'
     | '/finance/reports'
+    | '/finance/trial-balance'
     | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
@@ -360,6 +372,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/ledger'
     | '/_authenticated/finance/payments'
     | '/_authenticated/finance/reports'
+    | '/_authenticated/finance/trial-balance'
     | '/_authenticated/inventory/$materialId'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
@@ -507,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finance/trial-balance': {
+      id: '/_authenticated/finance/trial-balance'
+      path: '/finance/trial-balance'
+      fullPath: '/finance/trial-balance'
+      preLoaderRoute: typeof AuthenticatedFinanceTrialBalanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inventory/': {
       id: '/_authenticated/inventory/'
       path: '/inventory'
@@ -595,6 +615,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceLedgerRoute: typeof AuthenticatedFinanceLedgerRoute
   AuthenticatedFinancePaymentsRoute: typeof AuthenticatedFinancePaymentsRoute
   AuthenticatedFinanceReportsRoute: typeof AuthenticatedFinanceReportsRoute
+  AuthenticatedFinanceTrialBalanceRoute: typeof AuthenticatedFinanceTrialBalanceRoute
   AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
@@ -623,6 +644,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceLedgerRoute: AuthenticatedFinanceLedgerRoute,
   AuthenticatedFinancePaymentsRoute: AuthenticatedFinancePaymentsRoute,
   AuthenticatedFinanceReportsRoute: AuthenticatedFinanceReportsRoute,
+  AuthenticatedFinanceTrialBalanceRoute: AuthenticatedFinanceTrialBalanceRoute,
   AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,

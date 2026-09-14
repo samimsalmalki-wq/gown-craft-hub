@@ -81,7 +81,7 @@ function AccountsPage() {
     <AppShell
       eyebrow="الماليات"
       title="دليل الحسابات"
-      subtitle="شجرة الحسابات وميزان المراجعة"
+      subtitle="شجرة الحسابات وأرصدتها"
       actions={
         <Chip tone={Math.round(totalDebit) === Math.round(totalCredit) ? "ok" : "late"}>
           {Math.round(totalDebit) === Math.round(totalCredit) ? "الميزان متوازن" : "الميزان غير متوازن"}
@@ -192,16 +192,6 @@ function AccountsPage() {
           );
         })}
 
-        <Card title="ميزان المراجعة">
-          <div className="flex items-center justify-between px-4 py-3 text-[13px]">
-            <span>إجمالي المدين</span>
-            <span className="num">{money(totalDebit)}</span>
-          </div>
-          <div className="flex items-center justify-between border-t border-line px-4 py-3 text-[13px]">
-            <span>إجمالي الدائن</span>
-            <span className="num">{money(totalCredit)}</span>
-          </div>
-        </Card>
       </div>
     </AppShell>
   );

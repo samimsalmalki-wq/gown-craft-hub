@@ -9,6 +9,11 @@ const TABS = [
   { to: "/finance/accounts", label: "الحسابات", perms: ["finance.accounts", "finance.reports"] },
   { to: "/finance/journal", label: "القيود", perms: ["finance.accounts", "finance.reports"] },
   { to: "/finance/ledger", label: "دفتر الأستاذ", perms: ["finance.accounts", "finance.reports"] },
+  {
+    to: "/finance/trial-balance",
+    label: "ميزان المراجعة",
+    perms: ["finance.accounts", "finance.reports"],
+  },
   { to: "/finance/reports", label: "التقارير", perms: ["finance.reports"] },
 ] as const;
 

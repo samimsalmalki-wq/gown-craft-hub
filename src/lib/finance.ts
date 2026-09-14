@@ -125,6 +125,76 @@ export const runningLedger = <T extends { debit: number; credit: number }>(
   });
 };
 
+/* ===== ميزان المراجعة ===== */
+
+export type TrialRow = {
+  id: string;
+  code: string;
+  name: string;
+  type: GlAccountType;
+  debit: number;
+  credit: number;
+  balance: number;
+};
+
+export type TrialGroup = {
+  id: string;
+  code: string;
+  name: string;
+  type: GlAccountType;
+  rows: TrialRow[];
+  debit: number;
+  credit: number;
+  balance: number;
+};
+
+/** يبني ميزان المراجعة: صفوف كل حساب فرعي تحت مجموعته + المجاميع */
+export const buildTrialBalance = (
+  accounts: Pick<GlAccount, "id" | "code" | "name" | "type" | "is_group" | "parent_id">[],
+  totals: Record<string, { debit: number; credit: number }>,
+  hideEmpty: boolean,
+) => {
+  const groups: TrialGroup[] = accounts
+    .filter((a) => a.is_group)
+    .sort((a, b) => a.code.localeCompare(b.code))
+    .map((g) => {
+      const rows: TrialRow[] = accounts
+        .filter((a) => !a.is_group && a.parent_id === g.id)
+        .sort((a, b) => a.code.localeCompare(b.code))
+        .map((a) => {
+          const t = totals[a.id] ?? { debit: 0, credit: 0 };
+          return {
+            id: a.id,
+            code: a.code,
+            name: a.name,
+            type: a.type,
+            debit: t.debit,
+            credit: t.credit,
+            balance: naturalBalance(a.type, t.debit, t.credit),
+          };
+        })
+        .filter((r) => !hideEmpty || r.debit !== 0 || r.credit !== 0);
+
+      return {
+        id: g.id,
+        code: g.code,
+        name: g.name,
+        type: g.type,
+        rows,
+        debit: rows.reduce((s, r) => s + r.debit, 0),
+        credit: rows.reduce((s, r) => s + r.credit, 0),
+        balance: rows.reduce((s, r) => s + r.balance, 0),
+      };
+    })
+    .filter((g) => !hideEmpty || g.rows.length > 0);
+
+  return {
+    groups,
+    totalDebit: groups.reduce((s, g) => s + g.debit, 0),
+    totalCredit: groups.reduce((s, g) => s + g.credit, 0),
+  };
+};
+
 export const agingBucket = (daysLate: number) => {
   if (daysLate <= 0) return "لم يستحق";
   if (daysLate <= 30) return "1 – 30 يومًا";
