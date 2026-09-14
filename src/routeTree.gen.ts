@@ -20,6 +20,8 @@ import { Route as AuthenticatedStagesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedWhatsappRouteImport } from './routes/_authenticated/whatsapp'
 import { Route as AuthenticatedWorkflowRouteImport } from './routes/_authenticated/workflow'
+import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance.index'
+import { Route as AuthenticatedFinancePaymentsRouteImport } from './routes/_authenticated/finance.payments'
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
 import { Route as AuthenticatedInventoryMaterialIdRouteImport } from './routes/_authenticated/inventory.$materialId'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
@@ -84,6 +86,18 @@ const AuthenticatedWorkflowRoute = AuthenticatedWorkflowRouteImport.update({
   path: '/workflow',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFinanceIndexRoute =
+  AuthenticatedFinanceIndexRouteImport.update({
+    id: '/finance/',
+    path: '/finance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancePaymentsRoute =
+  AuthenticatedFinancePaymentsRouteImport.update({
+    id: '/finance/payments',
+    path: '/finance/payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInventoryIndexRoute =
   AuthenticatedInventoryIndexRouteImport.update({
     id: '/inventory/',
@@ -148,11 +162,13 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AuthenticatedTasksRoute
   '/whatsapp': typeof AuthenticatedWhatsappRoute
   '/workflow': typeof AuthenticatedWorkflowRoute
+  '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
   '/rentals/': typeof AuthenticatedRentalsIndexRoute
@@ -169,11 +185,13 @@ export interface FileRoutesByTo {
   '/tasks': typeof AuthenticatedTasksRoute
   '/whatsapp': typeof AuthenticatedWhatsappRoute
   '/workflow': typeof AuthenticatedWorkflowRoute
+  '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/finance': typeof AuthenticatedFinanceIndexRoute
   '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
   '/rentals': typeof AuthenticatedRentalsIndexRoute
@@ -192,11 +210,13 @@ export interface FileRoutesById {
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/whatsapp': typeof AuthenticatedWhatsappRoute
   '/_authenticated/workflow': typeof AuthenticatedWorkflowRoute
+  '/_authenticated/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
   '/_authenticated/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
   '/_authenticated/rentals/': typeof AuthenticatedRentalsIndexRoute
@@ -215,11 +235,13 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/whatsapp'
     | '/workflow'
+    | '/finance/payments'
     | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
     | '/rentals/$dressId'
     | '/staff/$userId'
+    | '/finance/'
     | '/inventory/'
     | '/orders/'
     | '/rentals/'
@@ -236,11 +258,13 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/whatsapp'
     | '/workflow'
+    | '/finance/payments'
     | '/inventory/$materialId'
     | '/orders/$orderId'
     | '/orders/new'
     | '/rentals/$dressId'
     | '/staff/$userId'
+    | '/finance'
     | '/inventory'
     | '/orders'
     | '/rentals'
@@ -258,11 +282,13 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/_authenticated/whatsapp'
     | '/_authenticated/workflow'
+    | '/_authenticated/finance/payments'
     | '/_authenticated/inventory/$materialId'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
     | '/_authenticated/rentals/$dressId'
     | '/_authenticated/staff/$userId'
+    | '/_authenticated/finance/'
     | '/_authenticated/inventory/'
     | '/_authenticated/orders/'
     | '/_authenticated/rentals/'
@@ -354,6 +380,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkflowRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finance/': {
+      id: '/_authenticated/finance/'
+      path: '/finance'
+      fullPath: '/finance/'
+      preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance/payments': {
+      id: '/_authenticated/finance/payments'
+      path: '/finance/payments'
+      fullPath: '/finance/payments'
+      preLoaderRoute: typeof AuthenticatedFinancePaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inventory/': {
       id: '/_authenticated/inventory/'
       path: '/inventory'
@@ -429,11 +469,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedWhatsappRoute: typeof AuthenticatedWhatsappRoute
   AuthenticatedWorkflowRoute: typeof AuthenticatedWorkflowRoute
+  AuthenticatedFinancePaymentsRoute: typeof AuthenticatedFinancePaymentsRoute
   AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
   AuthenticatedRentalsDressIdRoute: typeof AuthenticatedRentalsDressIdRoute
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
+  AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
   AuthenticatedRentalsIndexRoute: typeof AuthenticatedRentalsIndexRoute
@@ -449,11 +491,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedWhatsappRoute: AuthenticatedWhatsappRoute,
   AuthenticatedWorkflowRoute: AuthenticatedWorkflowRoute,
+  AuthenticatedFinancePaymentsRoute: AuthenticatedFinancePaymentsRoute,
   AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
   AuthenticatedRentalsDressIdRoute: AuthenticatedRentalsDressIdRoute,
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
+  AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
   AuthenticatedRentalsIndexRoute: AuthenticatedRentalsIndexRoute,
