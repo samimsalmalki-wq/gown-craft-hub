@@ -109,6 +109,7 @@ function NewOrderPage() {
           model_no: newModel ? null : form.model_no || null,
           is_new_model: newModel,
           embroidery_model: newModel ? form.embroidery_model || null : null,
+          branch_id: writeBranchId,
           created_by: uid,
         })
         .select("id")
