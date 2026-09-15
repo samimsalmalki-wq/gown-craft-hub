@@ -137,10 +137,10 @@ function RequestsPage() {
                 <Chip>{branchLabel(branches, r.to_branch_id)}</Chip>
                 <Chip
                   tone={
-                    r.status === "approved" ? "gold" : r.status === "rejected" ? "late" : undefined
+                    r.status === "approved" ? "gold" : r.status === "rejected" ? "late" : "neutral"
                   }
                 >
-                  {STOCK_REQUEST_LABEL[r.status]}
+                  {STOCK_REQUEST_LABEL[r.status] ?? r.status}
                 </Chip>
                 <span className="text-[12px] text-muted-foreground">
                   {fmtDateTime(r.created_at)}
