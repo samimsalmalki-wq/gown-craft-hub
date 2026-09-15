@@ -118,6 +118,7 @@ function OrdersPage() {
                     <PaymentChip status={o.payment_status} />
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
+                    {o.item_type_id && <span>{itemTypeLabel(o.item_type_id)}</span>}
                     <span dir="ltr">{o.client_phone || "—"}</span>
                     <span className={isLate(o) ? "text-late" : undefined}>
                       التسليم: {fmtDate(o.due_date)}
