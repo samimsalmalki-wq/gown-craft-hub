@@ -108,12 +108,16 @@ function NewOrderPage() {
     try {
       const total = Number(form.total_amount || 0);
       const deposit = Number(form.deposit_amount || 0);
+      const isStock = kind === "rental_stock";
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? null;
       const { data, error } = await supabase
         .from("orders")
         .insert({
-          client_name: form.client_name,
+          order_kind: kind,
+          item_type_id: itemTypeId || null,
+          security_deposit: kind === "rental" ? Number(form.security_deposit || 0) : 0,
+          client_name: isStock ? form.client_name || "مخزون المحل" : form.client_name,
           client_phone: form.client_phone || null,
           client_contact: form.client_contact || null,
           booked_at: form.booked_at,
