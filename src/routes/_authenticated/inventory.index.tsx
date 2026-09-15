@@ -329,7 +329,7 @@ function InventoryPage() {
               hint={
                 move.materialId && move.from
                   ? `المتاح: ${qty(stockOf(stock, move.materialId, move.from).available)}`
-                  : undefined
+                  : ""
               }
             >
               <select
