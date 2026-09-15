@@ -79,11 +79,13 @@ export function useMaterial(id: string) {
 }
 
 export function useMaterialMovements(materialId?: string) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["movements", materialId ?? "all"],
+    queryKey: ["movements", materialId ?? "all", branchId],
     queryFn: async (): Promise<MaterialMovement[]> => {
       let q = supabase.from("material_movements").select("*").order("created_at", { ascending: false });
       if (materialId) q = q.eq("material_id", materialId);
+      if (branchId !== ALL_BRANCHES) q = q.eq("branch_id", branchId);
       const { data, error } = await q.limit(200);
       if (error) throw error;
       return data ?? [];
