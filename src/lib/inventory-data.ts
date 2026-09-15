@@ -214,6 +214,7 @@ export function useOrderMaterials(orderId: string) {
 /** يحجز كمية مادة على طلب: يسجل حركة حجز ويحدّث سجل مواد الطلب */
 export function useReserveMaterial() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({
       orderId,
