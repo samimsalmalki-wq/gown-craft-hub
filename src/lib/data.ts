@@ -472,14 +472,18 @@ export function useSetRole() {
 export type StageWithOrder = OrderStage & { orders: Order | null };
 
 export function useStagesWithOrders() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["stages-with-orders"],
+    queryKey: ["stages-with-orders", branchId],
     queryFn: async (): Promise<StageWithOrder[]> => {
-      const { data, error } = await supabase
-        .from("order_stages")
-        .select("*, orders(*)")
-        .eq("is_required", true)
-        .order("position");
+      const { data, error } = await onBranch(
+        supabase
+          .from("order_stages")
+          .select("*, orders!inner(*)")
+          .eq("is_required", true),
+        branchId,
+        "orders.branch_id",
+      ).order("position");
       if (error) throw error;
       return (data ?? []) as StageWithOrder[];
     },
@@ -487,16 +491,20 @@ export function useStagesWithOrders() {
 }
 
 export function useMyTasks(userId: string | undefined) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["my-tasks", userId],
+    queryKey: ["my-tasks", userId, branchId],
     enabled: Boolean(userId),
     queryFn: async (): Promise<StageWithOrder[]> => {
-      const { data, error } = await supabase
-        .from("order_stages")
-        .select("*, orders(*)")
-        .eq("assignee_id", userId!)
-        .eq("is_required", true)
-        .order("due_at", { nullsFirst: false });
+      const { data, error } = await onBranch(
+        supabase
+          .from("order_stages")
+          .select("*, orders!inner(*)")
+          .eq("assignee_id", userId!)
+          .eq("is_required", true),
+        branchId,
+        "orders.branch_id",
+      ).order("due_at", { nullsFirst: false });
       if (error) throw error;
       return (data ?? []) as StageWithOrder[];
     },
