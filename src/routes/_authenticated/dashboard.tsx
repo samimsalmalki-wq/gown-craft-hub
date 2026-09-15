@@ -24,7 +24,18 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
-type FilterKey = "all" | "new" | "production" | "late" | "soon" | "fitting" | "alterations" | "finance";
+type FilterKey =
+  | "all"
+  | "new"
+  | "production"
+  | "late"
+  | "soon"
+  | "fitting"
+  | "alterations"
+  | "finance"
+  | "own"
+  | "rental"
+  | "rental_stock";
 
 const FILTERS: { key: FilterKey; label: string; test: (o: Order) => boolean }[] = [
   { key: "all", label: "كل الطلبات", test: () => true },
@@ -43,6 +54,9 @@ const FILTERS: { key: FilterKey; label: string; test: (o: Order) => boolean }[] 
     test: (o) => o.state === "active" && o.current_stage === "alterations",
   },
   { key: "finance", label: "غير مكتملة ماليًا", test: (o) => isFinanciallyOpen(o) },
+  { key: "own", label: "تفصيل ملك", test: (o) => o.order_kind === "own" },
+  { key: "rental", label: "تفصيل إيجار", test: (o) => o.order_kind === "rental" },
+  { key: "rental_stock", label: "إنتاج للإيجار", test: (o) => o.order_kind === "rental_stock" },
 ];
 
 function DashboardPage() {
