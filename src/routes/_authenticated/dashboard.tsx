@@ -97,6 +97,10 @@ function DashboardPage() {
         <Stat label="تحتاج تعديلات" value={count("alterations")} onClick={() => setFilter("alterations")} active={filter === "alterations"} />
         <Stat label="غير مكتملة ماليًا" value={count("finance")} tone="gold" onClick={() => setFilter("finance")} active={filter === "finance"} />
         <Stat label="كل الطلبات" value={orders.length} onClick={() => setFilter("all")} active={filter === "all"} />
+        <Stat label="تفصيل ملك" value={count("own")} onClick={() => setFilter("own")} active={filter === "own"} />
+        <Stat label="تفصيل إيجار" value={count("rental")} tone="gold" onClick={() => setFilter("rental")} active={filter === "rental"} />
+        <Stat label="إنتاج للإيجار" value={count("rental_stock")} onClick={() => setFilter("rental_stock")} active={filter === "rental_stock"} />
+        <Stat label="تأمينات لدى المحل" value={money(heldDeposits)} hint="تُرد عند إرجاع الفساتين" />
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[1.6fr_1fr]">
