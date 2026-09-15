@@ -33,6 +33,7 @@ const EMBROIDERY_MODELS = [
 
 function NewOrderPage() {
   const navigate = useNavigate();
+  const { writeBranchId } = useBranchScope();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     client_name: "",
