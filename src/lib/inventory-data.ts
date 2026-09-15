@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { ALL_BRANCHES, useBranchScope } from "./branches";
 import type {
   Material,
   MaterialMovement,
