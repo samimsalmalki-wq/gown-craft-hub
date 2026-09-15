@@ -349,15 +349,19 @@ export function useReleaseMaterial() {
 /* ================= فساتين الإيجار ================= */
 
 export function useRentalDresses() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["rental-dresses"],
+    queryKey: ["rental-dresses", branchId],
     queryFn: async (): Promise<RentalDress[]> => {
-      const { data, error } = await supabase.from("rental_dresses").select("*").order("code");
+      let q = supabase.from("rental_dresses").select("*").order("code");
+      if (branchId !== ALL_BRANCHES) q = q.eq("branch_id", branchId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 }
+
 
 export function useRentalDress(id: string) {
   return useQuery({
