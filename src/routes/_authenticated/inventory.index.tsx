@@ -198,11 +198,9 @@ function InventoryPage() {
                   <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{m.name}</span>
                   <Chip>{categoryLabel(m.category)}</Chip>
                   <span className="num text-[13px]">
-                    متاح {qty(available(m))} {m.unit}
+                    متاح {qty(at(m.id).available)} {m.unit}
                   </span>
-                  {Number(m.qty_reserved) > 0 && (
-                    <Chip tone="gold">محجوز {qty(m.qty_reserved)}</Chip>
-                  )}
+                  {at(m.id).reserved > 0 && <Chip tone="gold">محجوز {qty(at(m.id).reserved)}</Chip>}
                   {isLowStock(m) && <Chip tone="late">تحت الحد</Chip>}
                 </Link>
               </li>
