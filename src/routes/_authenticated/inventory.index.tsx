@@ -305,6 +305,89 @@ function InventoryPage() {
           </Btn>
         </form>
       </Sheet>
+
+      <Sheet open={moveOpen} onClose={() => setMoveOpen(false)} title="نقل كمية بين الفروع">
+        <form onSubmit={submitMove} className="space-y-4 p-4">
+          <Field label="المادة">
+            <select
+              className="field w-full"
+              value={move.materialId}
+              onChange={(e) => setMove({ ...move, materialId: e.target.value })}
+              required
+            >
+              <option value="">اختر المادة</option>
+              {materials.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="من فرع"
+              hint={
+                move.materialId && move.from
+                  ? `المتاح: ${qty(stockOf(stock, move.materialId, move.from).available)}`
+                  : undefined
+              }
+            >
+              <select
+                className="field w-full"
+                value={move.from}
+                onChange={(e) => setMove({ ...move, from: e.target.value })}
+                required
+              >
+                <option value="">اختر الفرع</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="إلى فرع">
+              <select
+                className="field w-full"
+                value={move.to}
+                onChange={(e) => setMove({ ...move, to: e.target.value })}
+                required
+              >
+                <option value="">اختر الفرع</option>
+                {branches
+                  .filter((b) => b.id !== move.from)
+                  .map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+          </div>
+          <Field label="الكمية">
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              className="field w-full"
+              value={move.qty}
+              onChange={(e) => setMove({ ...move, qty: e.target.value })}
+              required
+            />
+          </Field>
+          <Field label="ملاحظات">
+            <textarea
+              className="field w-full"
+              rows={2}
+              value={move.notes}
+              onChange={(e) => setMove({ ...move, notes: e.target.value })}
+            />
+          </Field>
+          <Btn type="submit" disabled={transfer.isPending} className="w-full">
+            {transfer.isPending ? "جاري النقل…" : "تنفيذ النقل"}
+          </Btn>
+        </form>
+      </Sheet>
     </AppShell>
   );
 }
