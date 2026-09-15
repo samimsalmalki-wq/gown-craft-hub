@@ -1,14 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, Sheet, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useMaterials, useSaveMaterial } from "@/lib/inventory-data";
 import {
+  ALL_BRANCHES,
+  useBranchScope,
+  useBranches,
+  useMaterialStock,
+  useTransferMaterial,
+  stockOf,
+} from "@/lib/branches";
+import {
   MATERIAL_CATEGORIES,
   MATERIAL_UNITS,
-  available,
   categoryLabel,
   isLowStock,
   qty,
@@ -19,14 +27,48 @@ export const Route = createFileRoute("/_authenticated/inventory/")({
 });
 
 function InventoryPage() {
-  const { isManager } = useCurrentAccount();
+  const { isManager, can } = useCurrentAccount();
   const { data: materials = [], isLoading } = useMaterials();
+  const { branchId, isAll } = useBranchScope();
+  const { data: branches = [] } = useBranches();
+  const { data: stock = [] } = useMaterialStock(ALL_BRANCHES);
+  const transfer = useTransferMaterial();
   const save = useSaveMaterial();
 
   const [term, setTerm] = useState("");
   const [cat, setCat] = useState("all");
   const [lowOnly, setLowOnly] = useState(false);
   const [open, setOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [move, setMove] = useState({ materialId: "", from: "", to: "", qty: "", notes: "" });
+
+  /** كميات المادة في الفرع المعروض (أو كل الفروع مجتمعة) */
+  const at = (materialId: string) => stockOf(stock, materialId, isAll ? null : branchId);
+
+  const canTransfer = isManager || can("inventory.transfer");
+
+  async function submitMove(e: React.FormEvent) {
+    e.preventDefault();
+    if (!move.materialId || !move.from || !move.to) return;
+    if (move.from === move.to) {
+      toast.error("اختر فرعين مختلفين");
+      return;
+    }
+    try {
+      await transfer.mutateAsync({
+        materialId: move.materialId,
+        fromBranch: move.from,
+        toBranch: move.to,
+        qty: Number(move.qty) || 0,
+        notes: move.notes.trim() || null,
+      });
+      toast.success("تم نقل الكمية");
+      setMoveOpen(false);
+      setMove({ materialId: "", from: "", to: "", qty: "", notes: "" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذر النقل");
+    }
+  }
 
   const [form, setForm] = useState({
     name: "",
@@ -39,6 +81,7 @@ function InventoryPage() {
     opening_qty: "0",
   });
   const [image, setImage] = useState<File | null>(null);
+
 
   const list = useMemo(
     () =>
