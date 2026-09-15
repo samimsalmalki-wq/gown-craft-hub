@@ -204,6 +204,11 @@ function InventoryPage() {
                     متاح {qty(at(m.id).available)} {m.unit}
                   </span>
                   {at(m.id).reserved > 0 && <Chip tone="gold">محجوز {qty(at(m.id).reserved)}</Chip>}
+                  {warehouse && warehouse.id !== branchId && (
+                    <Chip tone="neutral">
+                      بالمخزن {qty(stockOf(stock, m.id, warehouse.id).available)}
+                    </Chip>
+                  )}
                   {isLowStock(m) && <Chip tone="late">تحت الحد</Chip>}
                 </Link>
               </li>
