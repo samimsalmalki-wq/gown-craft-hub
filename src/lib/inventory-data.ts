@@ -454,6 +454,7 @@ export function useSetDressStatus() {
 
 export function useStartRental() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       dress_id: string;
@@ -468,7 +469,7 @@ export function useStartRental() {
       const { data: userData } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("rental_records")
-        .insert({ ...input, created_by: userData.user?.id ?? null });
+        .insert({ ...input, branch_id: writeBranchId, created_by: userData.user?.id ?? null });
       if (error) throw error;
     },
     onSuccess: () => {
