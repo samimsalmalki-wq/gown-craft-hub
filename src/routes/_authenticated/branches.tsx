@@ -94,6 +94,7 @@ function BranchesPage() {
                 <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{b.name}</span>
                 <Chip>{b.code}</Chip>
                 {b.is_main && <Chip tone="gold">الفرع الرئيسي</Chip>}
+                {b.is_warehouse && <Chip tone="gold">المخزن الرئيسي</Chip>}
                 {!b.is_active && <Chip tone="late">معطّل</Chip>}
                 <span className="num text-[12px] text-muted-foreground">
                   {b.order_counter} طلب
