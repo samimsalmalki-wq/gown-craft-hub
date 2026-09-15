@@ -3,24 +3,33 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { isBuiltinRole, roleCatalog, setRoleCatalog, setStageCatalog } from "./atelier";
+import { ALL_BRANCHES, useBranchScope } from "./branches";
 import type { Order, OrderFile, OrderStage, Profile, RoleCatalogRow, StageKey } from "./atelier";
 
 
 export const ordersKey = ["orders"] as const;
 
+/** يضيف شرط الفرع على الاستعلام إن كان فرعًا محددًا */
+const onBranch = <T>(q: T, branchId: string, column = "branch_id"): T =>
+  branchId === ALL_BRANCHES
+    ? q
+    : ((q as { eq: (c: string, v: string) => T }).eq(column, branchId) as T);
+
 export function useOrders() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ordersKey,
+    queryKey: [...ordersKey, branchId],
     queryFn: async (): Promise<Order[]> => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await onBranch(
+        supabase.from("orders").select("*"),
+        branchId,
+      ).order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
 }
+
 
 export function useOrder(orderId: string) {
   return useQuery({
