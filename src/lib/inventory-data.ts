@@ -261,6 +261,7 @@ export function useReserveMaterial() {
         kind: "reserve" as MovementKind,
         qty,
         notes: notes ?? null,
+        branch_id: writeBranchId,
         created_by: uid,
       });
       if (mv.error) throw mv.error;
