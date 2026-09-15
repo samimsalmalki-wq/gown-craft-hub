@@ -108,6 +108,9 @@ function OrderDetailPage() {
       subtitle={`الحجز ${fmtDate(order.booked_at)} · التسليم ${fmtDate(order.due_date)} · ${ORDER_STATE_LABEL[order.state]}`}
       actions={
         <>
+          <Chip tone={order.order_kind === "own" ? "neutral" : "gold"}>
+            {ORDER_KIND_LABEL[order.order_kind]}
+          </Chip>
           <Chip tone="gold">{stageLabel(order.current_stage)}</Chip>
           <WhatsAppButton order={order} />
         </>
