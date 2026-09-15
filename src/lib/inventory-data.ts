@@ -277,6 +277,7 @@ export function useReserveMaterial() {
 /** يصرف كمية محجوزة فعليًا من المخزون */
 export function useIssueMaterial() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({ row, qty }: { row: OrderMaterial; qty: number }) => {
       const { data: userData } = await supabase.auth.getUser();
@@ -297,6 +298,7 @@ export function useIssueMaterial() {
         kind: "out" as MovementKind,
         qty,
         notes: "صرف على الطلب",
+        branch_id: writeBranchId,
         created_by: uid,
       });
       if (mv.error) throw mv.error;
