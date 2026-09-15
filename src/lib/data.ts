@@ -62,16 +62,20 @@ export function useOrderStages(orderId: string) {
 }
 
 export function useAllStages() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["stages", "all"],
+    queryKey: ["stages", "all", branchId],
     queryFn: async (): Promise<OrderStage[]> => {
-      const { data, error } = await supabase
-        .from("order_stages")
-        .select("*")
-        .eq("is_required", true)
-        .order("position");
+      const { data, error } = await onBranch(
+        supabase
+          .from("order_stages")
+          .select("*, orders!inner(branch_id)")
+          .eq("is_required", true),
+        branchId,
+        "orders.branch_id",
+      ).order("position");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as unknown as OrderStage[];
     },
   });
 }
