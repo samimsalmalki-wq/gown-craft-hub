@@ -64,9 +64,10 @@ function NewOrderPage() {
     event_date: "",
     total_amount: "",
     deposit_amount: "",
+    security_deposit: "",
     materials: "",
     notes: "",
-    model_no: "",
+    model_no: search.model ?? "",
     embroidery_model: "",
   });
   const [measures, setMeasures] = useState<Record<string, string>>({});
