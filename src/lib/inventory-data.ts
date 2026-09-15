@@ -425,7 +425,7 @@ export function useSaveDress() {
       }
       const { data, error } = await supabase
         .from("rental_dresses")
-        .insert({ ...payload, created_by: userData.user?.id ?? null })
+        .insert({ ...payload, branch_id: writeBranchId, created_by: userData.user?.id ?? null })
         .select("id")
         .single();
       if (error) throw error;
