@@ -144,6 +144,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_main: boolean
+          is_warehouse: boolean
           name: string
           order_counter: number
           phone: string | null
@@ -158,6 +159,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_main?: boolean
+          is_warehouse?: boolean
           name: string
           order_counter?: number
           phone?: string | null
@@ -172,6 +174,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_main?: boolean
+          is_warehouse?: boolean
           name?: string
           order_counter?: number
           phone?: string | null
@@ -1615,6 +1618,90 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_requests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          from_branch_id: string
+          id: string
+          material_id: string
+          qty: number
+          reason: string | null
+          status: Database["public"]["Enums"]["stock_request_status"]
+          to_branch_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          from_branch_id: string
+          id?: string
+          material_id: string
+          qty: number
+          reason?: string | null
+          status?: Database["public"]["Enums"]["stock_request_status"]
+          to_branch_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          from_branch_id?: string
+          id?: string
+          material_id?: string
+          qty?: number
+          reason?: string | null
+          status?: Database["public"]["Enums"]["stock_request_status"]
+          to_branch_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_requests_from_branch_id_fkey"
+            columns: ["from_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_requests_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_requests_to_branch_id_fkey"
+            columns: ["to_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           created_at: string
@@ -1792,6 +1879,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      decide_stock_request: {
+        Args: { p_approve: boolean; p_id: string; p_note?: string }
+        Returns: undefined
+      }
       reorder_stage_templates: { Args: { p_ids: string[] }; Returns: undefined }
       set_order_stage_scope: {
         Args: { p_order_id: string; p_stages: string[] }
@@ -1857,6 +1948,7 @@ export type Database = {
         | "assigned"
         | "review"
         | "late"
+      stock_request_status: "pending" | "approved" | "rejected"
       task_priority: "low" | "normal" | "high" | "urgent"
     }
     CompositeTypes: {
@@ -2037,6 +2129,7 @@ export const Constants = {
         "review",
         "late",
       ],
+      stock_request_status: ["pending", "approved", "rejected"],
       task_priority: ["low", "normal", "high", "urgent"],
     },
   },

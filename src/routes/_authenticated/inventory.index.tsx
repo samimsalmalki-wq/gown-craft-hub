@@ -13,6 +13,7 @@ import {
   useMaterialStock,
   useTransferMaterial,
   stockOf,
+  warehouseOf,
 } from "@/lib/branches";
 import {
   MATERIAL_CATEGORIES,
@@ -33,6 +34,7 @@ function InventoryPage() {
   const { data: branches = [] } = useBranches();
   const { data: stock = [] } = useMaterialStock(ALL_BRANCHES);
   const transfer = useTransferMaterial();
+  const warehouse = warehouseOf(branches);
   const save = useSaveMaterial();
 
   const [term, setTerm] = useState("");
@@ -136,6 +138,9 @@ function InventoryPage() {
       subtitle="الكميات المتوفرة والمحجوزة وحد التنبيه لكل مادة."
       actions={
         <div className="flex gap-2">
+          <Link to="/inventory/requests" className="btn-quiet">
+            طلبات الصرف
+          </Link>
           {canTransfer && branches.length > 1 && (
             <Btn variant="quiet" onClick={() => setMoveOpen(true)}>
               نقل بين الفروع
@@ -201,6 +206,11 @@ function InventoryPage() {
                     متاح {qty(at(m.id).available)} {m.unit}
                   </span>
                   {at(m.id).reserved > 0 && <Chip tone="gold">محجوز {qty(at(m.id).reserved)}</Chip>}
+                  {warehouse && warehouse.id !== branchId && (
+                    <Chip tone="neutral">
+                      بالمخزن {qty(stockOf(stock, m.id, warehouse.id).available)}
+                    </Chip>
+                  )}
                   {isLowStock(m) && <Chip tone="late">تحت الحد</Chip>}
                 </Link>
               </li>
