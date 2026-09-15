@@ -111,6 +111,9 @@ function OrdersPage() {
                     <span className="min-w-0 flex-1 truncate text-[15px] font-medium">
                       {o.client_name}
                     </span>
+                    {o.order_kind !== "own" && (
+                      <Chip tone="gold">{ORDER_KIND_LABEL[o.order_kind]}</Chip>
+                    )}
                     <Chip>{stageLabel(o.current_stage)}</Chip>
                     <PaymentChip status={o.payment_status} />
                   </div>
