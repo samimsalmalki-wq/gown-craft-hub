@@ -67,13 +67,29 @@ function OrdersPage() {
     >
       <OrdersTabs />
 
-      <div className="mb-4">
+      <div className="mb-4 space-y-3">
         <input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
           className="field w-full max-w-md"
           placeholder="رقم الطلب / اسم العميلة / الجوال"
         />
+        <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-paper p-1">
+          {KIND_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setKind(f.key)}
+              className={`flex-1 rounded-lg px-3 py-2 text-center text-[13px] ${
+                kind === f.key
+                  ? "bg-goldsoft/60 font-medium text-ink ring-1 ring-black/5"
+                  : "text-muted-foreground hover:text-ink"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Card>
