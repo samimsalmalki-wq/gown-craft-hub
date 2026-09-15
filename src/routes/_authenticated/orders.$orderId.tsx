@@ -22,22 +22,30 @@ import {
 } from "@/lib/data";
 import { useCurrentAccount } from "@/hooks/useSession";
 import {
+  useCloseRentalReturn,
+  useDeliverRentalOrder,
+  useDressesOfOrder,
   useIssueMaterial,
   useMaterials,
   useOrderMaterials,
+  useRecordsOfOrder,
   useReleaseMaterial,
 } from "@/lib/inventory-data";
-import { qty } from "@/lib/inventory";
+import { DRESS_STATUS_LABEL, RETURN_CONDITIONS, isOutNow, qty } from "@/lib/inventory";
+import { useItemTypes } from "@/lib/data";
 import {
   ALTERATION_STATUS_LABEL,
+  ORDER_KIND_LABEL,
   ORDER_STATE_LABEL,
   activityLabel,
   fmtDate,
   fmtDateTime,
+  itemTypeLabel,
   money,
   remaining,
   stageLabel,
   type AlterationStatus,
+  type Order,
   type OrderStage,
 } from "@/lib/atelier";
 
