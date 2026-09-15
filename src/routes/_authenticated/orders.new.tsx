@@ -7,6 +7,7 @@ import { Btn, Card, Field } from "@/components/kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
 import { available, qty } from "@/lib/inventory";
+import { useBranchScope } from "@/lib/branches";
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
   component: NewOrderPage,
