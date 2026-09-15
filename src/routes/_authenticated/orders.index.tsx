@@ -5,15 +5,25 @@ import { AppShell } from "@/components/AppShell";
 import { OrdersTabs } from "@/components/OrdersTabs";
 import { Card, Chip, Empty, PaymentChip } from "@/components/kit";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { useOrders } from "@/lib/data";
+import { useItemTypes, useOrders } from "@/lib/data";
 import {
+  ORDER_KIND_LABEL,
   ORDER_STATE_LABEL,
   fmtDate,
   isLate,
+  itemTypeLabel,
   money,
   remaining,
   stageLabel,
+  type OrderKind,
 } from "@/lib/atelier";
+
+const KIND_FILTERS: { key: "all" | OrderKind; label: string }[] = [
+  { key: "all", label: "الكل" },
+  { key: "own", label: ORDER_KIND_LABEL.own },
+  { key: "rental", label: ORDER_KIND_LABEL.rental },
+  { key: "rental_stock", label: ORDER_KIND_LABEL.rental_stock },
+];
 
 export const Route = createFileRoute("/_authenticated/orders/")({
   validateSearch: (search: Record<string, unknown>): { q?: string | undefined } => {
@@ -26,16 +36,20 @@ export const Route = createFileRoute("/_authenticated/orders/")({
 function OrdersPage() {
   const { q } = Route.useSearch();
   const { data: orders = [], isLoading } = useOrders();
+  useItemTypes();
   const [term, setTerm] = useState(q ?? "");
+  const [kind, setKind] = useState<"all" | OrderKind>("all");
 
   const needle = (term || "").trim().toLowerCase();
-  const list = orders.filter((o) =>
-    !needle
-      ? true
-      : [o.order_no, o.client_name, o.client_phone ?? "", o.client_contact ?? ""].some((v) =>
-          v.toLowerCase().includes(needle),
-        ),
-  );
+  const list = orders
+    .filter((o) => kind === "all" || o.order_kind === kind)
+    .filter((o) =>
+      !needle
+        ? true
+        : [o.order_no, o.client_name, o.client_phone ?? "", o.client_contact ?? ""].some((v) =>
+            v.toLowerCase().includes(needle),
+          ),
+    );
 
   return (
     <AppShell
