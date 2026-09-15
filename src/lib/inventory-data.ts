@@ -380,11 +380,13 @@ export function useRentalDress(id: string) {
 }
 
 export function useRentalRecords(dressId?: string) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["rental-records", dressId ?? "all"],
+    queryKey: ["rental-records", dressId ?? "all", branchId],
     queryFn: async (): Promise<RentalRecord[]> => {
       let q = supabase.from("rental_records").select("*").order("out_date", { ascending: false });
       if (dressId) q = q.eq("dress_id", dressId);
+      if (branchId !== ALL_BRANCHES) q = q.eq("branch_id", branchId);
       const { data, error } = await q.limit(300);
       if (error) throw error;
       return data ?? [];
