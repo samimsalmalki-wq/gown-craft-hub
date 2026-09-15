@@ -136,6 +136,9 @@ function InventoryPage() {
       subtitle="الكميات المتوفرة والمحجوزة وحد التنبيه لكل مادة."
       actions={
         <div className="flex gap-2">
+          <Link to="/inventory/requests" className="btn-quiet">
+            طلبات الصرف
+          </Link>
           {canTransfer && branches.length > 1 && (
             <Btn variant="quiet" onClick={() => setMoveOpen(true)}>
               نقل بين الفروع
