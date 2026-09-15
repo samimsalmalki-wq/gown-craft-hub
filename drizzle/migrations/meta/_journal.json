@@ -64,6 +64,13 @@
       "when": 1789430114909,
       "tag": "0008_branches_multi_branch",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789432046451,
+      "tag": "0009_central_warehouse_stock_requests",
+      "breakpoints": true
     }
   ]
 }
