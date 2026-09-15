@@ -68,6 +68,9 @@ function DashboardPage() {
 
   const lowMaterials = materials.filter((m) => m.is_active && isLowStock(m));
   const lateRentals = rentals.filter(isRentalLate);
+  const heldDeposits = rentals
+    .filter((r) => !r.returned_at)
+    .reduce((s, r) => s + Number(r.deposit_amount ?? 0), 0);
 
   const count = (key: FilterKey) =>
     orders.filter(FILTERS.find((f) => f.key === key)!.test).length;
