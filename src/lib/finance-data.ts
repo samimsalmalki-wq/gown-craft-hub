@@ -651,14 +651,19 @@ export function useLedger(accountId: string, from: string, to: string) {
 
 /** مجاميع المدين والدائن لكل حساب داخل فترة — لميزان المراجعة */
 export function useTrialBalance(from: string, to: string) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["trial-balance", from, to],
+    queryKey: ["trial-balance", from, to, branchId],
     queryFn: async (): Promise<Record<string, { debit: number; credit: number }>> => {
-      const { data, error } = await supabase
-        .from("journal_lines")
-        .select("account_id, debit, credit, journal_entries!inner(entry_date)")
-        .gte("journal_entries.entry_date", from)
-        .lte("journal_entries.entry_date", to);
+      const { data, error } = await onBranch(
+        supabase
+          .from("journal_lines")
+          .select("account_id, debit, credit, journal_entries!inner(entry_date, branch_id)")
+          .gte("journal_entries.entry_date", from)
+          .lte("journal_entries.entry_date", to),
+        branchId,
+        "journal_entries.branch_id",
+      );
       if (error) throw error;
 
       const rows = (data ?? []) as unknown as {
