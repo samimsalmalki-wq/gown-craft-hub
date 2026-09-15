@@ -108,6 +108,7 @@ type MaterialInput = {
 
 export function useSaveMaterial() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({ id, ...input }: MaterialInput & { id?: string }) => {
       const { data: userData } = await supabase.auth.getUser();
@@ -143,6 +144,7 @@ export function useSaveMaterial() {
           kind: "in" as MovementKind,
           qty: input.opening_qty,
           notes: "رصيد افتتاحي",
+          branch_id: writeBranchId,
           created_by: uid,
         });
         if (mv.error) throw mv.error;
@@ -153,12 +155,14 @@ export function useSaveMaterial() {
       qc.invalidateQueries({ queryKey: ["materials"] });
       qc.invalidateQueries({ queryKey: ["material"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
+      qc.invalidateQueries({ queryKey: ["material-stock"] });
     },
   });
 }
 
 export function useAddMovement() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       material_id: string;
@@ -174,6 +178,7 @@ export function useAddMovement() {
         qty: input.qty,
         order_id: input.order_id ?? null,
         notes: input.notes ?? null,
+        branch_id: writeBranchId,
         created_by: userData.user?.id ?? null,
       });
       if (error) throw error;
@@ -182,6 +187,7 @@ export function useAddMovement() {
       qc.invalidateQueries({ queryKey: ["materials"] });
       qc.invalidateQueries({ queryKey: ["material"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
+      qc.invalidateQueries({ queryKey: ["material-stock"] });
       qc.invalidateQueries({ queryKey: ["order-materials"] });
     },
   });
