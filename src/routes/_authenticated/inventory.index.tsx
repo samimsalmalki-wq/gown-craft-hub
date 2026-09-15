@@ -134,22 +134,32 @@ function InventoryPage() {
       eyebrow="المخزون"
       title="مخزون المواد"
       subtitle="الكميات المتوفرة والمحجوزة وحد التنبيه لكل مادة."
-      actions={isManager ? <Btn onClick={() => setOpen(true)}>مادة جديدة</Btn> : undefined}
+      actions={
+        <div className="flex gap-2">
+          {canTransfer && branches.length > 1 && (
+            <Btn variant="quiet" onClick={() => setMoveOpen(true)}>
+              نقل بين الفروع
+            </Btn>
+          )}
+          {isManager && <Btn onClick={() => setOpen(true)}>مادة جديدة</Btn>}
+        </div>
+      }
     >
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="عدد المواد" value={materials.length} />
         <Stat label="تحت حد التنبيه" value={low.length} tone="late" onClick={() => setLowOnly(true)} active={lowOnly} />
         <Stat
           label="كميات محجوزة"
-          value={qty(materials.reduce((s, m) => s + Number(m.qty_reserved), 0))}
+          value={qty(materials.reduce((s, m) => s + at(m.id).reserved, 0))}
           tone="gold"
         />
         <Stat
           label="قيمة المخزون"
-          value={qty(materials.reduce((s, m) => s + Number(m.qty_on_hand) * Number(m.unit_cost), 0))}
+          value={qty(materials.reduce((s, m) => s + at(m.id).on_hand * Number(m.unit_cost), 0))}
           hint="بسعر التكلفة"
         />
       </div>
+
 
       <div className="mt-5 flex flex-wrap items-end gap-3">
         <input
