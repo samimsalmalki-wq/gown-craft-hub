@@ -396,6 +396,7 @@ export function useRentalRecords(dressId?: string) {
 
 export function useSaveDress() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({
       id,
