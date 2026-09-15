@@ -140,11 +140,17 @@ function OrderDetailPage() {
 
           <Card title="الموديل">
             <dl className="divide-y divide-line text-[13px]">
+              <Row label="نوع التفصيل" value={ORDER_KIND_LABEL[order.order_kind]} />
+              <Row label="نوع القطعة" value={<ItemTypeValue id={order.item_type_id} />} />
               <Row label="نوع الموديل" value={order.is_new_model ? "موديل جديد" : "موديل موجود"} />
               <Row label="رقم الموديل" value={order.model_no || "—"} />
               <Row label="موديل التطريز" value={order.embroidery_model || "—"} />
             </dl>
           </Card>
+
+          {order.order_kind !== "own" && <RentalOrderCard order={order} canEdit={isManager} />}
+
+
 
 
 
