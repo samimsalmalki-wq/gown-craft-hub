@@ -314,6 +314,7 @@ export function useIssueMaterial() {
 /** يحرّر الحجز المتبقي لمادة على طلب */
 export function useReleaseMaterial() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (row: OrderMaterial) => {
       const amount = Number(row.qty_reserved);
@@ -332,6 +333,7 @@ export function useReleaseMaterial() {
         kind: "release" as MovementKind,
         qty: amount,
         notes: "تحرير حجز",
+        branch_id: writeBranchId,
         created_by: userData.user?.id ?? null,
       });
       if (mv.error) throw mv.error;
