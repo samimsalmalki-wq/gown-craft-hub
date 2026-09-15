@@ -1,17 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { ALL_BRANCHES, useBranchScope } from "./branches";
 import type { Invoice, InvoiceLine, Payment, PaymentMethod, TaxSettings } from "./finance";
+
+/** يضيف شرط الفرع على الاستعلام إن كان فرعًا محددًا */
+const onBranch = <T>(q: T, branchId: string, column = "branch_id"): T =>
+  branchId === ALL_BRANCHES
+    ? q
+    : ((q as { eq: (c: string, v: string) => T }).eq(column, branchId) as T);
 
 /* ===== إعدادات الضريبة ===== */
 
 export function useTaxSettings() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["tax-settings"],
+    queryKey: ["tax-settings", branchId],
     queryFn: async (): Promise<TaxSettings | null> => {
-      const { data, error } = await supabase.from("tax_settings").select("*").limit(1).maybeSingle();
+      const { data, error } = await onBranch(
+        supabase.from("tax_settings").select("*"),
+        branchId,
+      ).limit(1);
       if (error) throw error;
-      return data;
+      return data?.[0] ?? null;
     },
   });
 }
@@ -30,12 +41,11 @@ export function useUpdateTaxSettings() {
 /* ===== الدفعات وسندات القبض ===== */
 
 export function usePayments() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["payments"],
+    queryKey: ["payments", branchId],
     queryFn: async (): Promise<Payment[]> => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select("*")
+      const { data, error } = await onBranch(supabase.from("payments").select("*"), branchId)
         .order("paid_at", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -84,10 +94,12 @@ export type NewPayment = {
   reference?: string | undefined;
   notes?: string | undefined;
   cashAccountId?: string | undefined;
+  branchId?: string | null | undefined;
 };
 
 export function useAddPayment() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: NewPayment) => {
       if (!(input.amount > 0)) throw new Error("اكتب مبلغًا أكبر من صفر");
@@ -104,6 +116,7 @@ export function useAddPayment() {
           reference: input.reference?.trim() || null,
           notes: input.notes?.trim() || null,
           cash_account_id: input.cashAccountId || null,
+          branch_id: input.branchId ?? writeBranchId,
           created_by: auth.user?.id ?? null,
         } as never)
         .select()
@@ -125,13 +138,14 @@ export function useAddPayment() {
 /* ===== الفواتير ===== */
 
 export function useInvoices() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["invoices"],
+    queryKey: ["invoices", branchId],
     queryFn: async (): Promise<Invoice[]> => {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select("*")
-        .order("issue_date", { ascending: false });
+      const { data, error } = await onBranch(
+        supabase.from("invoices").select("*"),
+        branchId,
+      ).order("issue_date", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -170,6 +184,7 @@ export function useInvoiceLines(invoiceId: string) {
 
 export function useCreateInvoice() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       scope?: "order" | "rental";
@@ -179,6 +194,7 @@ export function useCreateInvoice() {
       vatRate: number;
       lines: { description: string; qty: number; unit_price: number }[];
       notes?: string;
+      branchId?: string | null;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const { data: invoice, error } = await supabase
@@ -190,6 +206,7 @@ export function useCreateInvoice() {
           is_taxable: input.isTaxable,
           vat_rate: input.vatRate,
           notes: input.notes?.trim() || null,
+          branch_id: input.branchId ?? writeBranchId,
           created_by: auth.user?.id ?? null,
         } as never)
         .select()
@@ -337,14 +354,14 @@ export function useAddExpenseCategory() {
 }
 
 export function useCashAccounts() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["cash-accounts"],
+    queryKey: ["cash-accounts", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cash_accounts")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at");
+      const { data, error } = await onBranch(
+        supabase.from("cash_accounts").select("*").eq("is_active", true),
+        branchId,
+      ).order("created_at");
       if (error) throw error;
       return data ?? [];
     },
@@ -352,12 +369,15 @@ export function useCashAccounts() {
 }
 
 export function useCashTransactions() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["cash-transactions"],
+    queryKey: ["cash-transactions", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cash_transactions")
-        .select("*")
+      const { data, error } = await onBranch(
+        supabase.from("cash_transactions").select("*, cash_accounts!inner(branch_id)"),
+        branchId,
+        "cash_accounts.branch_id",
+      )
         .order("occurred_at", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -367,13 +387,14 @@ export function useCashTransactions() {
 }
 
 export function useExpenses() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["expenses"],
+    queryKey: ["expenses", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("*")
-        .order("occurred_at", { ascending: false });
+      const { data, error } = await onBranch(
+        supabase.from("expenses").select("*"),
+        branchId,
+      ).order("occurred_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -382,6 +403,7 @@ export function useExpenses() {
 
 export function useAddExpense() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       description: string;
@@ -409,6 +431,7 @@ export function useAddExpense() {
         reference: input.reference?.trim() || null,
         material_id: input.materialId || null,
         material_qty: input.materialQty ?? null,
+        branch_id: writeBranchId,
         created_by: auth.user?.id ?? null,
       } as never);
       if (error) throw error;
@@ -469,12 +492,14 @@ export function useUpdateGlAccount() {
 }
 
 export function useJournalEntries() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["journal-entries"],
+    queryKey: ["journal-entries", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("journal_entries")
-        .select("*")
+      const { data, error } = await onBranch(
+        supabase.from("journal_entries").select("*"),
+        branchId,
+      )
         .order("entry_date", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -484,10 +509,15 @@ export function useJournalEntries() {
 }
 
 export function useJournalLines() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["journal-lines"],
+    queryKey: ["journal-lines", branchId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("journal_lines").select("*");
+      const { data, error } = await onBranch(
+        supabase.from("journal_lines").select("*, journal_entries!inner(branch_id)"),
+        branchId,
+        "journal_entries.branch_id",
+      );
       if (error) throw error;
       return data ?? [];
     },
@@ -551,12 +581,14 @@ type RawLedgerRow = {
   } | null;
 };
 
-const LEDGER_SELECT = "id, entry_id, debit, credit, memo, journal_entries!inner(entry_no, entry_date, memo, source)";
+const LEDGER_SELECT =
+  "id, entry_id, debit, credit, memo, journal_entries!inner(entry_no, entry_date, memo, source, branch_id)";
 
 /** حركات حساب واحد داخل فترة + رصيد ما قبل الفترة */
 export function useLedger(accountId: string, from: string, to: string) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["ledger", accountId, from, to],
+    queryKey: ["ledger", accountId, from, to, branchId],
     enabled: Boolean(accountId),
     queryFn: async (): Promise<{
       rows: LedgerRow[];
@@ -564,18 +596,25 @@ export function useLedger(accountId: string, from: string, to: string) {
       openingCredit: number;
     }> => {
       const [period, before] = await Promise.all([
-        supabase
-          .from("journal_lines")
-          .select(LEDGER_SELECT)
-          .eq("account_id", accountId)
-          .gte("journal_entries.entry_date", from)
-          .lte("journal_entries.entry_date", to)
-          .order("entry_date", { referencedTable: "journal_entries", ascending: true }),
-        supabase
-          .from("journal_lines")
-          .select("debit, credit, journal_entries!inner(entry_date)")
-          .eq("account_id", accountId)
-          .lt("journal_entries.entry_date", from),
+        onBranch(
+          supabase
+            .from("journal_lines")
+            .select(LEDGER_SELECT)
+            .eq("account_id", accountId)
+            .gte("journal_entries.entry_date", from)
+            .lte("journal_entries.entry_date", to),
+          branchId,
+          "journal_entries.branch_id",
+        ).order("entry_date", { referencedTable: "journal_entries", ascending: true }),
+        onBranch(
+          supabase
+            .from("journal_lines")
+            .select("debit, credit, journal_entries!inner(entry_date, branch_id)")
+            .eq("account_id", accountId)
+            .lt("journal_entries.entry_date", from),
+          branchId,
+          "journal_entries.branch_id",
+        ),
       ]);
 
       if (period.error) throw period.error;
@@ -612,14 +651,19 @@ export function useLedger(accountId: string, from: string, to: string) {
 
 /** مجاميع المدين والدائن لكل حساب داخل فترة — لميزان المراجعة */
 export function useTrialBalance(from: string, to: string) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["trial-balance", from, to],
+    queryKey: ["trial-balance", from, to, branchId],
     queryFn: async (): Promise<Record<string, { debit: number; credit: number }>> => {
-      const { data, error } = await supabase
-        .from("journal_lines")
-        .select("account_id, debit, credit, journal_entries!inner(entry_date)")
-        .gte("journal_entries.entry_date", from)
-        .lte("journal_entries.entry_date", to);
+      const { data, error } = await onBranch(
+        supabase
+          .from("journal_lines")
+          .select("account_id, debit, credit, journal_entries!inner(entry_date, branch_id)")
+          .gte("journal_entries.entry_date", from)
+          .lte("journal_entries.entry_date", to),
+        branchId,
+        "journal_entries.branch_id",
+      );
       if (error) throw error;
 
       const rows = (data ?? []) as unknown as {

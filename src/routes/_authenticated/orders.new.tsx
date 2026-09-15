@@ -7,6 +7,7 @@ import { Btn, Card, Field } from "@/components/kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
 import { available, qty } from "@/lib/inventory";
+import { useBranchScope } from "@/lib/branches";
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
   component: NewOrderPage,
@@ -32,6 +33,7 @@ const EMBROIDERY_MODELS = [
 
 function NewOrderPage() {
   const navigate = useNavigate();
+  const { writeBranchId } = useBranchScope();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     client_name: "",
@@ -109,6 +111,7 @@ function NewOrderPage() {
           model_no: newModel ? null : form.model_no || null,
           is_new_model: newModel,
           embroidery_model: newModel ? form.embroidery_model || null : null,
+          branch_id: writeBranchId,
           created_by: uid,
         })
         .select("id")

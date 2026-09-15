@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { ALL_BRANCHES, useBranchScope } from "./branches";
 import type {
   Material,
   MaterialMovement,
@@ -79,11 +80,13 @@ export function useMaterial(id: string) {
 }
 
 export function useMaterialMovements(materialId?: string) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["movements", materialId ?? "all"],
+    queryKey: ["movements", materialId ?? "all", branchId],
     queryFn: async (): Promise<MaterialMovement[]> => {
       let q = supabase.from("material_movements").select("*").order("created_at", { ascending: false });
       if (materialId) q = q.eq("material_id", materialId);
+      if (branchId !== ALL_BRANCHES) q = q.eq("branch_id", branchId);
       const { data, error } = await q.limit(200);
       if (error) throw error;
       return data ?? [];
@@ -105,6 +108,7 @@ type MaterialInput = {
 
 export function useSaveMaterial() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({ id, ...input }: MaterialInput & { id?: string }) => {
       const { data: userData } = await supabase.auth.getUser();
@@ -140,6 +144,7 @@ export function useSaveMaterial() {
           kind: "in" as MovementKind,
           qty: input.opening_qty,
           notes: "رصيد افتتاحي",
+          branch_id: writeBranchId,
           created_by: uid,
         });
         if (mv.error) throw mv.error;
@@ -150,12 +155,14 @@ export function useSaveMaterial() {
       qc.invalidateQueries({ queryKey: ["materials"] });
       qc.invalidateQueries({ queryKey: ["material"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
+      qc.invalidateQueries({ queryKey: ["material-stock"] });
     },
   });
 }
 
 export function useAddMovement() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       material_id: string;
@@ -171,6 +178,7 @@ export function useAddMovement() {
         qty: input.qty,
         order_id: input.order_id ?? null,
         notes: input.notes ?? null,
+        branch_id: writeBranchId,
         created_by: userData.user?.id ?? null,
       });
       if (error) throw error;
@@ -179,6 +187,7 @@ export function useAddMovement() {
       qc.invalidateQueries({ queryKey: ["materials"] });
       qc.invalidateQueries({ queryKey: ["material"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
+      qc.invalidateQueries({ queryKey: ["material-stock"] });
       qc.invalidateQueries({ queryKey: ["order-materials"] });
     },
   });
@@ -205,6 +214,7 @@ export function useOrderMaterials(orderId: string) {
 /** يحجز كمية مادة على طلب: يسجل حركة حجز ويحدّث سجل مواد الطلب */
 export function useReserveMaterial() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({
       orderId,
@@ -251,6 +261,7 @@ export function useReserveMaterial() {
         kind: "reserve" as MovementKind,
         qty,
         notes: notes ?? null,
+        branch_id: writeBranchId,
         created_by: uid,
       });
       if (mv.error) throw mv.error;
@@ -266,6 +277,7 @@ export function useReserveMaterial() {
 /** يصرف كمية محجوزة فعليًا من المخزون */
 export function useIssueMaterial() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({ row, qty }: { row: OrderMaterial; qty: number }) => {
       const { data: userData } = await supabase.auth.getUser();
@@ -286,6 +298,7 @@ export function useIssueMaterial() {
         kind: "out" as MovementKind,
         qty,
         notes: "صرف على الطلب",
+        branch_id: writeBranchId,
         created_by: uid,
       });
       if (mv.error) throw mv.error;
@@ -301,6 +314,7 @@ export function useIssueMaterial() {
 /** يحرّر الحجز المتبقي لمادة على طلب */
 export function useReleaseMaterial() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (row: OrderMaterial) => {
       const amount = Number(row.qty_reserved);
@@ -319,6 +333,7 @@ export function useReleaseMaterial() {
         kind: "release" as MovementKind,
         qty: amount,
         notes: "تحرير حجز",
+        branch_id: writeBranchId,
         created_by: userData.user?.id ?? null,
       });
       if (mv.error) throw mv.error;
@@ -334,15 +349,19 @@ export function useReleaseMaterial() {
 /* ================= فساتين الإيجار ================= */
 
 export function useRentalDresses() {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["rental-dresses"],
+    queryKey: ["rental-dresses", branchId],
     queryFn: async (): Promise<RentalDress[]> => {
-      const { data, error } = await supabase.from("rental_dresses").select("*").order("code");
+      let q = supabase.from("rental_dresses").select("*").order("code");
+      if (branchId !== ALL_BRANCHES) q = q.eq("branch_id", branchId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 }
+
 
 export function useRentalDress(id: string) {
   return useQuery({
@@ -361,11 +380,13 @@ export function useRentalDress(id: string) {
 }
 
 export function useRentalRecords(dressId?: string) {
+  const { branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["rental-records", dressId ?? "all"],
+    queryKey: ["rental-records", dressId ?? "all", branchId],
     queryFn: async (): Promise<RentalRecord[]> => {
       let q = supabase.from("rental_records").select("*").order("out_date", { ascending: false });
       if (dressId) q = q.eq("dress_id", dressId);
+      if (branchId !== ALL_BRANCHES) q = q.eq("branch_id", branchId);
       const { data, error } = await q.limit(300);
       if (error) throw error;
       return data ?? [];
@@ -375,6 +396,7 @@ export function useRentalRecords(dressId?: string) {
 
 export function useSaveDress() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({
       id,
@@ -403,7 +425,7 @@ export function useSaveDress() {
       }
       const { data, error } = await supabase
         .from("rental_dresses")
-        .insert({ ...payload, created_by: userData.user?.id ?? null })
+        .insert({ ...payload, branch_id: writeBranchId, created_by: userData.user?.id ?? null })
         .select("id")
         .single();
       if (error) throw error;
@@ -432,6 +454,7 @@ export function useSetDressStatus() {
 
 export function useStartRental() {
   const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       dress_id: string;
@@ -446,7 +469,7 @@ export function useStartRental() {
       const { data: userData } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("rental_records")
-        .insert({ ...input, created_by: userData.user?.id ?? null });
+        .insert({ ...input, branch_id: writeBranchId, created_by: userData.user?.id ?? null });
       if (error) throw error;
     },
     onSuccess: () => {

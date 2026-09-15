@@ -136,8 +136,54 @@ export type Database = {
           },
         ]
       }
+      branches: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_main: boolean
+          name: string
+          order_counter: number
+          phone: string | null
+          position: number
+          tax_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_main?: boolean
+          name: string
+          order_counter?: number
+          phone?: string | null
+          position?: number
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_main?: boolean
+          name?: string
+          order_counter?: number
+          phone?: string | null
+          position?: number
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cash_accounts: {
         Row: {
+          branch_id: string | null
           created_at: string
           gl_code: string
           id: string
@@ -149,6 +195,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           gl_code?: string
           id?: string
@@ -160,6 +207,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           gl_code?: string
           id?: string
@@ -170,7 +218,15 @@ export type Database = {
           opening_balance?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cash_accounts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cash_transactions: {
         Row: {
@@ -277,6 +333,7 @@ export type Database = {
       expenses: {
         Row: {
           amount: number
+          branch_id: string | null
           cash_account_id: string | null
           category_id: string | null
           created_at: string
@@ -295,6 +352,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          branch_id?: string | null
           cash_account_id?: string | null
           category_id?: string | null
           created_at?: string
@@ -313,6 +371,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          branch_id?: string | null
           cash_account_id?: string | null
           category_id?: string | null
           created_at?: string
@@ -330,6 +389,13 @@ export type Database = {
           vat_amount?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "expenses_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "expenses_cash_account_id_fkey"
             columns: ["cash_account_id"]
@@ -451,6 +517,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          branch_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -469,6 +536,7 @@ export type Database = {
           vat_rate: number
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -487,6 +555,7 @@ export type Database = {
           vat_rate?: number
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -505,6 +574,13 @@ export type Database = {
           vat_rate?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_created_by_fkey"
             columns: ["created_by"]
@@ -530,6 +606,7 @@ export type Database = {
       }
       journal_entries: {
         Row: {
+          branch_id: string | null
           created_at: string
           created_by: string | null
           entry_date: string
@@ -542,6 +619,7 @@ export type Database = {
           source_id: string | null
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           entry_date?: string
@@ -554,6 +632,7 @@ export type Database = {
           source_id?: string | null
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           entry_date?: string
@@ -566,6 +645,13 @@ export type Database = {
           source_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "journal_entries_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "journal_entries_created_by_fkey"
             columns: ["created_by"]
@@ -629,6 +715,7 @@ export type Database = {
       }
       material_movements: {
         Row: {
+          branch_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -639,6 +726,7 @@ export type Database = {
           qty: number
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -649,6 +737,7 @@ export type Database = {
           qty: number
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -659,6 +748,13 @@ export type Database = {
           qty?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "material_movements_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "material_movements_material_id_fkey"
             columns: ["material_id"]
@@ -671,6 +767,51 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_stock: {
+        Row: {
+          branch_id: string
+          id: string
+          material_id: string
+          min_qty: number
+          qty_on_hand: number
+          qty_reserved: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          id?: string
+          material_id: string
+          min_qty?: number
+          qty_on_hand?: number
+          qty_reserved?: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          id?: string
+          material_id?: string
+          min_qty?: number
+          qty_on_hand?: number
+          qty_reserved?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_stock_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_stock_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
             referencedColumns: ["id"]
           },
         ]
@@ -989,6 +1130,7 @@ export type Database = {
       orders: {
         Row: {
           booked_at: string
+          branch_id: string | null
           client_contact: string | null
           client_name: string
           client_phone: string | null
@@ -1017,6 +1159,7 @@ export type Database = {
         }
         Insert: {
           booked_at?: string
+          branch_id?: string | null
           client_contact?: string | null
           client_name: string
           client_phone?: string | null
@@ -1045,6 +1188,7 @@ export type Database = {
         }
         Update: {
           booked_at?: string
+          branch_id?: string | null
           client_contact?: string | null
           client_name?: string
           client_phone?: string | null
@@ -1073,6 +1217,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_scope_set_by_fkey"
             columns: ["scope_set_by"]
             isOneToOne: false
@@ -1084,6 +1235,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          branch_id: string | null
           cash_account_id: string | null
           created_at: string
           created_by: string | null
@@ -1100,6 +1252,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          branch_id?: string | null
           cash_account_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1116,6 +1269,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          branch_id?: string | null
           cash_account_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1131,6 +1285,13 @@ export type Database = {
           scope?: Database["public"]["Enums"]["finance_scope"]
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_cash_account_id_fkey"
             columns: ["cash_account_id"]
@@ -1165,6 +1326,7 @@ export type Database = {
         Row: {
           allowed_stages: string[]
           avatar_url: string | null
+          branch_id: string | null
           created_at: string
           department_id: string | null
           full_name: string
@@ -1177,6 +1339,7 @@ export type Database = {
         Insert: {
           allowed_stages?: string[]
           avatar_url?: string | null
+          branch_id?: string | null
           created_at?: string
           department_id?: string | null
           full_name?: string
@@ -1189,6 +1352,7 @@ export type Database = {
         Update: {
           allowed_stages?: string[]
           avatar_url?: string | null
+          branch_id?: string | null
           created_at?: string
           department_id?: string | null
           full_name?: string
@@ -1199,6 +1363,13 @@ export type Database = {
           role_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_department_id_fkey"
             columns: ["department_id"]
@@ -1217,6 +1388,7 @@ export type Database = {
       }
       rental_dresses: {
         Row: {
+          branch_id: string | null
           code: string
           color: string | null
           created_at: string
@@ -1232,6 +1404,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branch_id?: string | null
           code: string
           color?: string | null
           created_at?: string
@@ -1247,6 +1420,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branch_id?: string | null
           code?: string
           color?: string | null
           created_at?: string
@@ -1261,11 +1435,20 @@ export type Database = {
           status?: Database["public"]["Enums"]["rental_dress_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rental_dresses_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rental_records: {
         Row: {
           amount: number
+          branch_id: string | null
           client_name: string
           client_phone: string | null
           created_at: string
@@ -1282,6 +1465,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          branch_id?: string | null
           client_name: string
           client_phone?: string | null
           created_at?: string
@@ -1298,6 +1482,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          branch_id?: string | null
           client_name?: string
           client_phone?: string | null
           created_at?: string
@@ -1313,6 +1498,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "rental_records_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rental_records_dress_id_fkey"
             columns: ["dress_id"]
@@ -1458,6 +1650,7 @@ export type Database = {
       }
       tax_settings: {
         Row: {
+          branch_id: string | null
           business_address: string | null
           business_name: string
           id: string
@@ -1467,6 +1660,7 @@ export type Database = {
           vat_rate: number
         }
         Insert: {
+          branch_id?: string | null
           business_address?: string | null
           business_name?: string
           id?: string
@@ -1476,6 +1670,7 @@ export type Database = {
           vat_rate?: number
         }
         Update: {
+          branch_id?: string | null
           business_address?: string | null
           business_name?: string
           id?: string
@@ -1484,7 +1679,15 @@ export type Database = {
           vat_enabled?: boolean
           vat_rate?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tax_settings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_permissions: {
         Row: {
@@ -1592,6 +1795,16 @@ export type Database = {
       reorder_stage_templates: { Args: { p_ids: string[] }; Returns: undefined }
       set_order_stage_scope: {
         Args: { p_order_id: string; p_stages: string[] }
+        Returns: undefined
+      }
+      transfer_material: {
+        Args: {
+          p_from_branch: string
+          p_material_id: string
+          p_notes?: string
+          p_qty: number
+          p_to_branch: string
+        }
         Returns: undefined
       }
     }
