@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/rentals/")({
 });
 
 const STATUS_TONE: Record<DressStatus, "ok" | "gold" | "soon" | "late" | "neutral"> = {
+  in_production: "soon",
   available: "ok",
   rented: "gold",
   cleaning: "soon",
