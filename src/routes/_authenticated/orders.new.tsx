@@ -8,8 +8,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
 import { available, qty } from "@/lib/inventory";
 import { useBranchScope } from "@/lib/branches";
+import { useItemTypes } from "@/lib/data";
+import { ORDER_KIND_HINT, ORDER_KIND_LABEL, type OrderKind } from "@/lib/atelier";
+
+const KINDS: OrderKind[] = ["own", "rental", "rental_stock"];
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { kind?: OrderKind | undefined; model?: string | undefined } => {
+    const kind = search["kind"];
+    const model = search["model"];
+    return {
+      kind: KINDS.includes(kind as OrderKind) ? (kind as OrderKind) : undefined,
+      model: typeof model === "string" && model ? model : undefined,
+    };
+  },
   component: NewOrderPage,
 });
 
