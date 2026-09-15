@@ -13,6 +13,7 @@ import {
   useMaterialStock,
   useTransferMaterial,
   stockOf,
+  warehouseOf,
 } from "@/lib/branches";
 import {
   MATERIAL_CATEGORIES,
@@ -33,6 +34,7 @@ function InventoryPage() {
   const { data: branches = [] } = useBranches();
   const { data: stock = [] } = useMaterialStock(ALL_BRANCHES);
   const transfer = useTransferMaterial();
+  const warehouse = warehouseOf(branches);
   const save = useSaveMaterial();
 
   const [term, setTerm] = useState("");
