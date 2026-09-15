@@ -24,7 +24,18 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
-type FilterKey = "all" | "new" | "production" | "late" | "soon" | "fitting" | "alterations" | "finance";
+type FilterKey =
+  | "all"
+  | "new"
+  | "production"
+  | "late"
+  | "soon"
+  | "fitting"
+  | "alterations"
+  | "finance"
+  | "own"
+  | "rental"
+  | "rental_stock";
 
 const FILTERS: { key: FilterKey; label: string; test: (o: Order) => boolean }[] = [
   { key: "all", label: "كل الطلبات", test: () => true },
@@ -43,6 +54,9 @@ const FILTERS: { key: FilterKey; label: string; test: (o: Order) => boolean }[] 
     test: (o) => o.state === "active" && o.current_stage === "alterations",
   },
   { key: "finance", label: "غير مكتملة ماليًا", test: (o) => isFinanciallyOpen(o) },
+  { key: "own", label: "تفصيل ملك", test: (o) => o.order_kind === "own" },
+  { key: "rental", label: "تفصيل إيجار", test: (o) => o.order_kind === "rental" },
+  { key: "rental_stock", label: "إنتاج للإيجار", test: (o) => o.order_kind === "rental_stock" },
 ];
 
 function DashboardPage() {
@@ -54,6 +68,9 @@ function DashboardPage() {
 
   const lowMaterials = materials.filter((m) => m.is_active && isLowStock(m));
   const lateRentals = rentals.filter(isRentalLate);
+  const heldDeposits = rentals
+    .filter((r) => !r.returned_at)
+    .reduce((s, r) => s + Number(r.deposit_amount ?? 0), 0);
 
   const count = (key: FilterKey) =>
     orders.filter(FILTERS.find((f) => f.key === key)!.test).length;
@@ -83,6 +100,10 @@ function DashboardPage() {
         <Stat label="تحتاج تعديلات" value={count("alterations")} onClick={() => setFilter("alterations")} active={filter === "alterations"} />
         <Stat label="غير مكتملة ماليًا" value={count("finance")} tone="gold" onClick={() => setFilter("finance")} active={filter === "finance"} />
         <Stat label="كل الطلبات" value={orders.length} onClick={() => setFilter("all")} active={filter === "all"} />
+        <Stat label="تفصيل ملك" value={count("own")} onClick={() => setFilter("own")} active={filter === "own"} />
+        <Stat label="تفصيل إيجار" value={count("rental")} tone="gold" onClick={() => setFilter("rental")} active={filter === "rental"} />
+        <Stat label="إنتاج للإيجار" value={count("rental_stock")} onClick={() => setFilter("rental_stock")} active={filter === "rental_stock"} />
+        <Stat label="تأمينات لدى المحل" value={money(heldDeposits)} hint="تُرد عند إرجاع الفساتين" />
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[1.6fr_1fr]">

@@ -78,6 +78,20 @@
       "when": 1789432227303,
       "tag": "0010_purchases_into_warehouse",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789465776691,
+      "tag": "0011_order_kinds_item_types_rental_production",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789466133696,
+      "tag": "0012_rental_stock_no_revenue",
+      "breakpoints": true
     }
   ]
 }

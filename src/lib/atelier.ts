@@ -166,6 +166,35 @@ export const ORDER_STATE_LABEL: Record<OrderState, string> = {
 
 export const FITTING_STAGES: StageKey[] = ["fitting1", "fitting2"];
 
+/* ===== نوع الطلب: تفصيل ملك / تفصيل إيجار / إنتاج للإيجار ===== */
+
+export type OrderKind = Database["public"]["Enums"]["order_kind"];
+
+export const ORDER_KIND_LABEL: Record<OrderKind, string> = {
+  own: "تفصيل ملك",
+  rental: "تفصيل إيجار",
+  rental_stock: "إنتاج للإيجار",
+};
+
+export const ORDER_KIND_HINT: Record<OrderKind, string> = {
+  own: "يُسلَّم للعميلة ولا يرجع للمحل",
+  rental: "يرجع للمحل بعد المناسبة وعليه تأمين، ثم يُؤجَّر",
+  rental_stock: "قطعة تُنتج للمخزون بدون عميلة، وتصبح متاحة للإيجار",
+};
+
+export type ItemType = Database["public"]["Tables"]["item_types"]["Row"];
+
+let ITEM_TYPES: ItemType[] = [];
+
+export const setItemTypeCatalog = (rows: ItemType[]) => {
+  ITEM_TYPES = [...rows].sort((a, b) => a.position - b.position);
+};
+
+export const itemTypeCatalog = () => ITEM_TYPES;
+
+export const itemTypeLabel = (id: string | null | undefined) =>
+  (id ? ITEM_TYPES.find((t) => t.id === id)?.name : null) ?? "—";
+
 export const PERMISSIONS: { key: string; label: string; hint: string }[] = [
   { key: "orders.edit", label: "تعديل الطلبات", hint: "إضافة وتعديل بيانات الطلب والعميلة" },
   { key: "stages.edit", label: "تحديث المراحل", hint: "بدء وإنهاء المراحل وإضافة ملاحظات" },

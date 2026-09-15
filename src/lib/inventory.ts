@@ -30,6 +30,7 @@ export const MOVEMENT_LABEL: Record<MovementKind, string> = {
 };
 
 export const DRESS_STATUS_LABEL: Record<DressStatus, string> = {
+  in_production: "قيد التصنيع",
   available: "متاح",
   rented: "مؤجَّر حاليًا",
   cleaning: "في التنظيف",

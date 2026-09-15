@@ -607,6 +607,30 @@ export type Database = {
           },
         ]
       }
+      item_types: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          position?: number
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           branch_id: string | null
@@ -1148,14 +1172,17 @@ export type Database = {
           fitting2_date: string | null
           id: string
           is_new_model: boolean
+          item_type_id: string | null
           materials: string | null
           measurements: Json
           model_no: string | null
           notes: string | null
+          order_kind: Database["public"]["Enums"]["order_kind"]
           order_no: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           scope_set_at: string | null
           scope_set_by: string | null
+          security_deposit: number
           state: Database["public"]["Enums"]["order_state"]
           total_amount: number
           updated_at: string
@@ -1177,14 +1204,17 @@ export type Database = {
           fitting2_date?: string | null
           id?: string
           is_new_model?: boolean
+          item_type_id?: string | null
           materials?: string | null
           measurements?: Json
           model_no?: string | null
           notes?: string | null
+          order_kind?: Database["public"]["Enums"]["order_kind"]
           order_no?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           scope_set_at?: string | null
           scope_set_by?: string | null
+          security_deposit?: number
           state?: Database["public"]["Enums"]["order_state"]
           total_amount?: number
           updated_at?: string
@@ -1206,14 +1236,17 @@ export type Database = {
           fitting2_date?: string | null
           id?: string
           is_new_model?: boolean
+          item_type_id?: string | null
           materials?: string | null
           measurements?: Json
           model_no?: string | null
           notes?: string | null
+          order_kind?: Database["public"]["Enums"]["order_kind"]
           order_no?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           scope_set_at?: string | null
           scope_set_by?: string | null
+          security_deposit?: number
           state?: Database["public"]["Enums"]["order_state"]
           total_amount?: number
           updated_at?: string
@@ -1224,6 +1257,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_item_type_id_fkey"
+            columns: ["item_type_id"]
+            isOneToOne: false
+            referencedRelation: "item_types"
             referencedColumns: ["id"]
           },
           {
@@ -1403,6 +1443,7 @@ export type Database = {
           notes: string | null
           rent_price: number
           size: string | null
+          source_order_id: string | null
           status: Database["public"]["Enums"]["rental_dress_status"]
           updated_at: string
         }
@@ -1419,6 +1460,7 @@ export type Database = {
           notes?: string | null
           rent_price?: number
           size?: string | null
+          source_order_id?: string | null
           status?: Database["public"]["Enums"]["rental_dress_status"]
           updated_at?: string
         }
@@ -1435,6 +1477,7 @@ export type Database = {
           notes?: string | null
           rent_price?: number
           size?: string | null
+          source_order_id?: string | null
           status?: Database["public"]["Enums"]["rental_dress_status"]
           updated_at?: string
         }
@@ -1444,6 +1487,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_dresses_source_order_id_fkey"
+            columns: ["source_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1456,11 +1506,13 @@ export type Database = {
           client_phone: string | null
           created_at: string
           created_by: string | null
+          damage_amount: number
           deposit_amount: number
           dress_id: string
           due_date: string
           id: string
           notes: string | null
+          order_id: string | null
           out_date: string
           return_condition: string | null
           returned_at: string | null
@@ -1473,11 +1525,13 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           created_by?: string | null
+          damage_amount?: number
           deposit_amount?: number
           dress_id: string
           due_date: string
           id?: string
           notes?: string | null
+          order_id?: string | null
           out_date?: string
           return_condition?: string | null
           returned_at?: string | null
@@ -1490,11 +1544,13 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           created_by?: string | null
+          damage_amount?: number
           deposit_amount?: number
           dress_id?: string
           due_date?: string
           id?: string
           notes?: string | null
+          order_id?: string | null
           out_date?: string
           return_condition?: string | null
           returned_at?: string | null
@@ -1513,6 +1569,13 @@ export type Database = {
             columns: ["dress_id"]
             isOneToOne: false
             referencedRelation: "rental_dresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_records_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1879,9 +1942,22 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      close_rental_return: {
+        Args: {
+          p_condition?: string
+          p_damage?: number
+          p_note?: string
+          p_record_id: string
+        }
+        Returns: undefined
+      }
       decide_stock_request: {
         Args: { p_approve: boolean; p_id: string; p_note?: string }
         Returns: undefined
+      }
+      deliver_rental_order: {
+        Args: { p_due_date?: string; p_order_id: string }
+        Returns: string
       }
       reorder_stage_templates: { Args: { p_ids: string[] }; Returns: undefined }
       set_order_stage_scope: {
@@ -1914,6 +1990,7 @@ export type Database = {
         | "expense"
       invoice_status: "draft" | "issued" | "cancelled"
       material_movement_kind: "in" | "out" | "reserve" | "release"
+      order_kind: "own" | "rental" | "rental_stock"
       order_state: "active" | "delivered" | "cancelled"
       payment_method: "cash" | "card" | "transfer" | "other"
       payment_status: "unpaid" | "partial" | "paid"
@@ -1923,6 +2000,7 @@ export type Database = {
         | "cleaning"
         | "repair"
         | "retired"
+        | "in_production"
       stage_key:
         | "booking"
         | "measurements"
@@ -2092,6 +2170,7 @@ export const Constants = {
       ],
       invoice_status: ["draft", "issued", "cancelled"],
       material_movement_kind: ["in", "out", "reserve", "release"],
+      order_kind: ["own", "rental", "rental_stock"],
       order_state: ["active", "delivered", "cancelled"],
       payment_method: ["cash", "card", "transfer", "other"],
       payment_status: ["unpaid", "partial", "paid"],
@@ -2101,6 +2180,7 @@ export const Constants = {
         "cleaning",
         "repair",
         "retired",
+        "in_production",
       ],
       stage_key: [
         "booking",

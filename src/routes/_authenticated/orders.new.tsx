@@ -8,8 +8,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
 import { available, qty } from "@/lib/inventory";
 import { useBranchScope } from "@/lib/branches";
+import { useItemTypes } from "@/lib/data";
+import { ORDER_KIND_HINT, ORDER_KIND_LABEL, type OrderKind } from "@/lib/atelier";
+
+const KINDS: OrderKind[] = ["own", "rental", "rental_stock"];
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { kind?: OrderKind | undefined; model?: string | undefined } => {
+    const kind = search["kind"];
+    const model = search["model"];
+    return {
+      kind: KINDS.includes(kind as OrderKind) ? (kind as OrderKind) : undefined,
+      model: typeof model === "string" && model ? model : undefined,
+    };
+  },
   component: NewOrderPage,
 });
 
@@ -33,8 +47,12 @@ const EMBROIDERY_MODELS = [
 
 function NewOrderPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const { writeBranchId } = useBranchScope();
+  const { data: itemTypes = [] } = useItemTypes();
   const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState<OrderKind>(search.kind ?? "own");
+  const [itemTypeId, setItemTypeId] = useState("");
   const [form, setForm] = useState({
     client_name: "",
     client_phone: "",
@@ -46,9 +64,10 @@ function NewOrderPage() {
     event_date: "",
     total_amount: "",
     deposit_amount: "",
+    security_deposit: "",
     materials: "",
     notes: "",
-    model_no: "",
+    model_no: search.model ?? "",
     embroidery_model: "",
   });
   const [measures, setMeasures] = useState<Record<string, string>>({});
@@ -89,12 +108,16 @@ function NewOrderPage() {
     try {
       const total = Number(form.total_amount || 0);
       const deposit = Number(form.deposit_amount || 0);
+      const isStock = kind === "rental_stock";
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? null;
       const { data, error } = await supabase
         .from("orders")
         .insert({
-          client_name: form.client_name,
+          order_kind: kind,
+          item_type_id: itemTypeId || null,
+          security_deposit: kind === "rental" ? Number(form.security_deposit || 0) : 0,
+          client_name: isStock ? form.client_name || "مخزون المحل" : form.client_name,
           client_phone: form.client_phone || null,
           client_contact: form.client_contact || null,
           booked_at: form.booked_at,
@@ -162,28 +185,69 @@ function NewOrderPage() {
   return (
     <AppShell eyebrow="إضافة" title="طلب جديد" subtitle="رقم الطلب يُنشأ تلقائيًا بعد الحفظ.">
       <form onSubmit={submit} className="grid max-w-3xl gap-5">
-        <Card title="بيانات العميلة">
+        <Card title="نوع الطلب">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-            <Field label="اسم العميلة">
-              <input className="field" value={form.client_name} onChange={set("client_name")} required />
+            <Field label="نوع التفصيل" hint={ORDER_KIND_HINT[kind]}>
+              <select className="field" value={kind} onChange={(e) => setKind(e.target.value as OrderKind)}>
+                {KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {ORDER_KIND_LABEL[k]}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label="رقم الجوال">
-              <input className="field" dir="ltr" value={form.client_phone} onChange={set("client_phone")} />
-            </Field>
-            <Field label="بيانات تواصل أخرى">
-              <input className="field" value={form.client_contact} onChange={set("client_contact")} />
+            <Field label="نوع القطعة">
+              <select className="field" value={itemTypeId} onChange={(e) => setItemTypeId(e.target.value)}>
+                <option value="">اختر نوع القطعة</option>
+                {itemTypes
+                  .filter((t) => t.is_active)
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+              </select>
             </Field>
           </div>
         </Card>
 
+        {kind !== "rental_stock" && (
+          <Card title="بيانات العميلة">
+            <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
+              <Field label="اسم العميلة">
+                <input className="field" value={form.client_name} onChange={set("client_name")} required />
+              </Field>
+              <Field label="رقم الجوال">
+                <input className="field" dir="ltr" value={form.client_phone} onChange={set("client_phone")} />
+              </Field>
+              <Field label="بيانات تواصل أخرى">
+                <input className="field" value={form.client_contact} onChange={set("client_contact")} />
+              </Field>
+            </div>
+          </Card>
+        )}
+
         <Card title="المالية والملاحظات">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-            <Field label="قيمة الفستان">
+            <Field label={kind === "rental_stock" ? "تكلفة القطعة التقديرية" : "قيمة الفستان"}>
               <input className="field" dir="ltr" inputMode="decimal" value={form.total_amount} onChange={set("total_amount")} />
             </Field>
-            <Field label="العربون">
-              <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
-            </Field>
+            {kind !== "rental_stock" && (
+              <Field label="العربون">
+                <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
+              </Field>
+            )}
+            {kind === "rental" && (
+              <Field label="مبلغ التأمين" hint="يُرد للعميلة عند إرجاع الفستان سليمًا">
+                <input
+                  className="field"
+                  dir="ltr"
+                  inputMode="decimal"
+                  value={form.security_deposit}
+                  onChange={set("security_deposit")}
+                />
+              </Field>
+            )}
             <Field label="الخامات المطلوبة">
               <textarea className="field min-h-24" value={form.materials} onChange={set("materials")} />
             </Field>

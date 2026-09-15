@@ -16,6 +16,7 @@ import {
   Boxes,
   MessageCircle,
   ShieldCheck,
+  Shirt,
   Store,
   Wallet,
 
@@ -53,6 +54,7 @@ const NAV: NavItem[] = [
 
   { to: "/reports", label: "تقرير الأداء", icon: BarChart3, managerOnly: true },
   { to: "/workflow", label: "إعداد المراحل", icon: Settings2, adminOnly: true },
+  { to: "/item-types", label: "أنواع القطع", icon: Shirt, managerOnly: true },
   { to: "/whatsapp", label: "رسائل الواتساب", icon: MessageCircle, managerOnly: true },
 ];
 

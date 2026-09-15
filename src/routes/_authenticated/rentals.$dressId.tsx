@@ -160,6 +160,15 @@ function DressPage() {
               </Btn>
             )
           ) : null}
+          {isManager && (
+            <Link
+              to="/orders/new"
+              search={{ kind: "rental_stock", model: dress.model_no ?? undefined }}
+              className="inline-flex min-h-11 items-center rounded-lg border border-line bg-paper px-4 text-sm font-medium"
+            >
+              طلب إنتاج قطعة بديلة
+            </Link>
+          )}
         </>
       }
     >

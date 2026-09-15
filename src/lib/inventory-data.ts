@@ -506,3 +506,87 @@ export function useReturnRental() {
     },
   });
 }
+
+/* ================= طلبات التفصيل للإيجار ================= */
+
+/** يُدخل فستان طلب «تفصيل إيجار» أو «إنتاج للإيجار» إلى مخزون الإيجار */
+export function useDeliverRentalOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { orderId: string; dueDate?: string | null }) => {
+      const { data, error } = await supabase.rpc("deliver_rental_order", {
+        p_order_id: input.orderId,
+        ...(input.dueDate ? { p_due_date: input.dueDate } : {}),
+      });
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rental-dresses"] });
+      qc.invalidateQueries({ queryKey: ["rental-records"] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["order"] });
+      qc.invalidateQueries({ queryKey: ["activity"] });
+    },
+  });
+}
+
+/** إرجاع الفستان ورد التأمين مع خصم التلف إن وُجد */
+export function useCloseRentalReturn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      recordId: string;
+      condition: string;
+      damage?: number;
+      note?: string | null;
+    }) => {
+      const { error } = await supabase.rpc("close_rental_return", {
+        p_record_id: input.recordId,
+        p_condition: input.condition,
+        p_damage: input.damage ?? 0,
+        ...(input.note ? { p_note: input.note } : {}),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rental-records"] });
+      qc.invalidateQueries({ queryKey: ["rental-dresses"] });
+      qc.invalidateQueries({ queryKey: ["rental-dress"] });
+      qc.invalidateQueries({ queryKey: ["order"] });
+    },
+  });
+}
+
+/** فساتين الإيجار المرتبطة بطلب تفصيل */
+export function useDressesOfOrder(orderId: string) {
+  return useQuery({
+    queryKey: ["rental-dresses", "order", orderId],
+    enabled: Boolean(orderId),
+    queryFn: async (): Promise<RentalDress[]> => {
+      const { data, error } = await supabase
+        .from("rental_dresses")
+        .select("*")
+        .eq("source_order_id", orderId);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/** عقود الإيجار المرتبطة بطلب تفصيل */
+export function useRecordsOfOrder(orderId: string) {
+  return useQuery({
+    queryKey: ["rental-records", "order", orderId],
+    enabled: Boolean(orderId),
+    queryFn: async (): Promise<RentalRecord[]> => {
+      const { data, error } = await supabase
+        .from("rental_records")
+        .select("*")
+        .eq("order_id", orderId)
+        .order("out_date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
