@@ -184,6 +184,8 @@ export const PERMISSIONS: { key: string; label: string; hint: string }[] = [
   { key: "branches.all", label: "كل الفروع", hint: "رؤية بيانات جميع الفروع والتبديل بينها" },
   { key: "branches.manage", label: "إدارة الفروع", hint: "إضافة الفروع وتعديل بياناتها" },
   { key: "inventory.transfer", label: "نقل المخزون", hint: "نقل الخامات بين الفروع" },
+  { key: "inventory.request", label: "طلب خامات", hint: "طلب صرف خامات من المخزن الرئيسي" },
+  { key: "inventory.approve", label: "اعتماد طلبات الخامات", hint: "اعتماد أو رفض طلبات الصرف" },
 ];
 
 
