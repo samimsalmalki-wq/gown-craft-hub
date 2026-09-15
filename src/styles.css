@@ -125,6 +125,23 @@
   }
 }
 
+@utility btn-quiet {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-paper);
+  padding-inline: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  &:hover {
+    background-color: var(--color-ivory);
+  }
+}
+
 @utility rise {
   animation: rise 0.5s cubic-bezier(0.2, 0.7, 0, 1) both;
 }
