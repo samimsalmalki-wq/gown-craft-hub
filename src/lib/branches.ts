@@ -133,6 +133,79 @@ export function useTransferMaterial() {
   });
 }
 
+/* ===== المخزن الرئيسي وطلبات الصرف ===== */
+
+export type StockRequest = Database["public"]["Tables"]["stock_requests"]["Row"];
+
+export const STOCK_REQUEST_LABEL: Record<string, string> = {
+  pending: "بانتظار الاعتماد",
+  approved: "معتمد",
+  rejected: "مرفوض",
+};
+
+/** موقع المخزن الرئيسي (إن وُجد) */
+export const warehouseOf = (branches: Branch[]) => branches.find((b) => b.is_warehouse) ?? null;
+
+/** فروع البيع فقط (بدون مواقع المخزون) */
+export const salesBranches = (branches: Branch[]) => branches.filter((b) => !b.is_warehouse);
+
+export function useStockRequests() {
+  return useQuery({
+    queryKey: ["stock-requests"],
+    queryFn: async (): Promise<StockRequest[]> => {
+      const { data, error } = await supabase
+        .from("stock_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useCreateStockRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      fromBranchId: string;
+      toBranchId: string;
+      materialId: string;
+      qty: number;
+      reason?: string | null;
+    }) => {
+      const { error } = await supabase.from("stock_requests").insert({
+        from_branch_id: input.fromBranchId,
+        to_branch_id: input.toBranchId,
+        material_id: input.materialId,
+        qty: input.qty,
+        reason: input.reason ?? null,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["stock-requests"] }),
+  });
+}
+
+export function useDecideStockRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; approve: boolean; note?: string | null }) => {
+      const { error } = await supabase.rpc("decide_stock_request", {
+        p_id: input.id,
+        p_approve: input.approve,
+        ...(input.note ? { p_note: input.note } : {}),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["stock-requests"] });
+      qc.invalidateQueries({ queryKey: ["material-stock"] });
+      qc.invalidateQueries({ queryKey: ["materials"] });
+      qc.invalidateQueries({ queryKey: ["movements"] });
+    },
+  });
+}
+
 /** إجمالي كميات مادة في فرع معيّن */
 export const stockOf = (rows: MaterialStock[], materialId: string, branchId: string | null) => {
   const list = rows.filter(
