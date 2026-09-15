@@ -2,9 +2,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { isBuiltinRole, roleCatalog, setRoleCatalog, setStageCatalog } from "./atelier";
+import {
+  isBuiltinRole,
+  roleCatalog,
+  setItemTypeCatalog,
+  setRoleCatalog,
+  setStageCatalog,
+} from "./atelier";
 import { ALL_BRANCHES, useBranchScope } from "./branches";
-import type { Order, OrderFile, OrderStage, Profile, RoleCatalogRow, StageKey } from "./atelier";
+import type {
+  ItemType,
+  Order,
+  OrderFile,
+  OrderStage,
+  Profile,
+  RoleCatalogRow,
+  StageKey,
+} from "./atelier";
 
 
 export const ordersKey = ["orders"] as const;
@@ -862,4 +876,56 @@ export function useOrderThumbs() {
     if (url) thumbs[orderId] = url;
   });
   return thumbs;
+}
+
+/* ================= أنواع القطع ================= */
+
+export function useItemTypes() {
+  const query = useQuery({
+    queryKey: ["item-types"],
+    queryFn: async (): Promise<ItemType[]> => {
+      const { data, error } = await supabase.from("item_types").select("*").order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (query.data?.length) setItemTypeCatalog(query.data);
+  }, [query.data]);
+
+  return query;
+}
+
+export function useAddItemType() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const clean = name.trim();
+      if (!clean) throw new Error("اكتب اسم النوع");
+      const max = await supabase
+        .from("item_types")
+        .select("position")
+        .order("position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const { error } = await supabase
+        .from("item_types")
+        .insert({ name: clean, position: (max.data?.position ?? 0) + 1 });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["item-types"] }),
+  });
+}
+
+export function useUpdateItemType() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+      const { error } = await supabase.from("item_types").update(patch as never).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["item-types"] }),
+  });
 }
