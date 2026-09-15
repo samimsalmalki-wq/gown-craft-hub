@@ -47,8 +47,12 @@ const EMBROIDERY_MODELS = [
 
 function NewOrderPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const { writeBranchId } = useBranchScope();
+  const { data: itemTypes = [] } = useItemTypes();
   const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState<OrderKind>(search.kind ?? "own");
+  const [itemTypeId, setItemTypeId] = useState("");
   const [form, setForm] = useState({
     client_name: "",
     client_phone: "",
