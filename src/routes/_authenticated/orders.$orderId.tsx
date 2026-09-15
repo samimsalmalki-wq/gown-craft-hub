@@ -437,6 +437,151 @@ function NewAlterationSheet({
   );
 }
 
+function ItemTypeValue({ id }: { id: string | null }) {
+  useItemTypes();
+  return <>{itemTypeLabel(id)}</>;
+}
+
+/** بطاقة الإيجار: إدخال الفستان المخزون بعد التسليم، والإرجاع ورد التأمين */
+function RentalOrderCard({ order, canEdit }: { order: Order; canEdit: boolean }) {
+  const { data: dresses = [] } = useDressesOfOrder(order.id);
+  const { data: records = [] } = useRecordsOfOrder(order.id);
+  const deliver = useDeliverRentalOrder();
+  const close = useCloseRentalReturn();
+  const [dueDate, setDueDate] = useState("");
+  const [retOpen, setRetOpen] = useState(false);
+  const [condition, setCondition] = useState("ok");
+  const [damage, setDamage] = useState("");
+  const [note, setNote] = useState("");
+
+  const dress = dresses[0] ?? null;
+  const openRecord = records.find((r) => !r.returned_at && isOutNow(r)) ?? null;
+  const isStock = order.order_kind === "rental_stock";
+
+  return (
+    <Card
+      title={isStock ? "قطعة للمخزون" : "الإيجار والتأمين"}
+      action={
+        dress ? (
+          <Chip tone={dress.status === "rented" ? "gold" : "ok"}>{DRESS_STATUS_LABEL[dress.status]}</Chip>
+        ) : undefined
+      }
+    >
+      <dl className="divide-y divide-line text-[13px]">
+        {!isStock && (
+          <Row label="مبلغ التأمين" value={<span className="num">{money(order.security_deposit)}</span>} />
+        )}
+        <Row
+          label="فستان المخزون"
+          value={
+            dress ? (
+              <a className="text-gold" href={`/rentals/${dress.id}`}>
+                {dress.code}
+              </a>
+            ) : (
+              "لم يدخل المخزون بعد"
+            )
+          }
+        />
+        {openRecord && (
+          <Row label="موعد رجوع الفستان" value={fmtDate(openRecord.due_date)} />
+        )}
+      </dl>
+
+      {canEdit && (
+        <div className="space-y-3 border-t border-line px-4 py-3">
+          {!dress && (
+            <>
+              {!isStock && (
+                <Field label="موعد رجوع الفستان من العميلة">
+                  <input
+                    className="field"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </Field>
+              )}
+              <Btn
+                variant="gold"
+                disabled={deliver.isPending}
+                onClick={() =>
+                  deliver
+                    .mutateAsync({ orderId: order.id, dueDate: dueDate || null })
+                    .then(() =>
+                      toast.success(isStock ? "دخلت القطعة مخزون الإيجار" : "تم التسليم وسُجل خروج الفستان"),
+                    )
+                    .catch((err: Error) => toast.error(err.message))
+                }
+              >
+                {isStock ? "إدخال القطعة للمخزون" : "تسليم العميلة وتسجيل الخروج"}
+              </Btn>
+            </>
+          )}
+
+          {openRecord && !retOpen && (
+            <Btn onClick={() => setRetOpen(true)}>تسجيل إرجاع الفستان</Btn>
+          )}
+
+          {openRecord && retOpen && (
+            <div className="space-y-3">
+              <Field label="حالة الفستان عند الإرجاع">
+                <select className="field" value={condition} onChange={(e) => setCondition(e.target.value)}>
+                  {RETURN_CONDITIONS.map((c) => (
+                    <option key={c.key} value={c.key}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field
+                label="خصم تلف أو تنظيف"
+                hint={`يُخصم من التأمين ${money(openRecord.deposit_amount)}`}
+              >
+                <input
+                  className="field"
+                  dir="ltr"
+                  inputMode="decimal"
+                  value={damage}
+                  onChange={(e) => setDamage(e.target.value)}
+                />
+              </Field>
+              <Field label="ملاحظة">
+                <input className="field" value={note} onChange={(e) => setNote(e.target.value)} />
+              </Field>
+              <div className="flex gap-2">
+                <Btn
+                  variant="gold"
+                  disabled={close.isPending}
+                  onClick={() =>
+                    close
+                      .mutateAsync({
+                        recordId: openRecord.id,
+                        condition,
+                        damage: Number(damage || 0),
+                        note: note || null,
+                      })
+                      .then(() => {
+                        toast.success("تم الإرجاع ورد التأمين");
+                        setRetOpen(false);
+                      })
+                      .catch((err: Error) => toast.error(err.message))
+                  }
+                >
+                  تأكيد الإرجاع
+                </Btn>
+                <Btn variant="quiet" onClick={() => setRetOpen(false)}>
+                  إلغاء
+                </Btn>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3 px-4 py-2.5">
