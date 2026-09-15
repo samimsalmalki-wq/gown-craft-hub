@@ -134,22 +134,32 @@ function InventoryPage() {
       eyebrow="المخزون"
       title="مخزون المواد"
       subtitle="الكميات المتوفرة والمحجوزة وحد التنبيه لكل مادة."
-      actions={isManager ? <Btn onClick={() => setOpen(true)}>مادة جديدة</Btn> : undefined}
+      actions={
+        <div className="flex gap-2">
+          {canTransfer && branches.length > 1 && (
+            <Btn variant="quiet" onClick={() => setMoveOpen(true)}>
+              نقل بين الفروع
+            </Btn>
+          )}
+          {isManager && <Btn onClick={() => setOpen(true)}>مادة جديدة</Btn>}
+        </div>
+      }
     >
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="عدد المواد" value={materials.length} />
         <Stat label="تحت حد التنبيه" value={low.length} tone="late" onClick={() => setLowOnly(true)} active={lowOnly} />
         <Stat
           label="كميات محجوزة"
-          value={qty(materials.reduce((s, m) => s + Number(m.qty_reserved), 0))}
+          value={qty(materials.reduce((s, m) => s + at(m.id).reserved, 0))}
           tone="gold"
         />
         <Stat
           label="قيمة المخزون"
-          value={qty(materials.reduce((s, m) => s + Number(m.qty_on_hand) * Number(m.unit_cost), 0))}
+          value={qty(materials.reduce((s, m) => s + at(m.id).on_hand * Number(m.unit_cost), 0))}
           hint="بسعر التكلفة"
         />
       </div>
+
 
       <div className="mt-5 flex flex-wrap items-end gap-3">
         <input
@@ -188,11 +198,9 @@ function InventoryPage() {
                   <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{m.name}</span>
                   <Chip>{categoryLabel(m.category)}</Chip>
                   <span className="num text-[13px]">
-                    متاح {qty(available(m))} {m.unit}
+                    متاح {qty(at(m.id).available)} {m.unit}
                   </span>
-                  {Number(m.qty_reserved) > 0 && (
-                    <Chip tone="gold">محجوز {qty(m.qty_reserved)}</Chip>
-                  )}
+                  {at(m.id).reserved > 0 && <Chip tone="gold">محجوز {qty(at(m.id).reserved)}</Chip>}
                   {isLowStock(m) && <Chip tone="late">تحت الحد</Chip>}
                 </Link>
               </li>
@@ -294,6 +302,89 @@ function InventoryPage() {
           </Field>
           <Btn type="submit" disabled={save.isPending} className="w-full">
             {save.isPending ? "جاري الحفظ…" : "حفظ المادة"}
+          </Btn>
+        </form>
+      </Sheet>
+
+      <Sheet open={moveOpen} onClose={() => setMoveOpen(false)} title="نقل كمية بين الفروع">
+        <form onSubmit={submitMove} className="space-y-4 p-4">
+          <Field label="المادة">
+            <select
+              className="field w-full"
+              value={move.materialId}
+              onChange={(e) => setMove({ ...move, materialId: e.target.value })}
+              required
+            >
+              <option value="">اختر المادة</option>
+              {materials.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="من فرع"
+              hint={
+                move.materialId && move.from
+                  ? `المتاح: ${qty(stockOf(stock, move.materialId, move.from).available)}`
+                  : ""
+              }
+            >
+              <select
+                className="field w-full"
+                value={move.from}
+                onChange={(e) => setMove({ ...move, from: e.target.value })}
+                required
+              >
+                <option value="">اختر الفرع</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="إلى فرع">
+              <select
+                className="field w-full"
+                value={move.to}
+                onChange={(e) => setMove({ ...move, to: e.target.value })}
+                required
+              >
+                <option value="">اختر الفرع</option>
+                {branches
+                  .filter((b) => b.id !== move.from)
+                  .map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+          </div>
+          <Field label="الكمية">
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              className="field w-full"
+              value={move.qty}
+              onChange={(e) => setMove({ ...move, qty: e.target.value })}
+              required
+            />
+          </Field>
+          <Field label="ملاحظات">
+            <textarea
+              className="field w-full"
+              rows={2}
+              value={move.notes}
+              onChange={(e) => setMove({ ...move, notes: e.target.value })}
+            />
+          </Field>
+          <Btn type="submit" disabled={transfer.isPending} className="w-full">
+            {transfer.isPending ? "جاري النقل…" : "تنفيذ النقل"}
           </Btn>
         </form>
       </Sheet>
