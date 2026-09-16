@@ -16,6 +16,7 @@ import {
   warehouseOf,
 } from "@/lib/branches";
 import { MATERIAL_UNITS, categoryLabel, qty } from "@/lib/inventory";
+import { useMaterialCategories } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/inventory/")({
   component: InventoryPage,
@@ -23,6 +24,8 @@ export const Route = createFileRoute("/_authenticated/inventory/")({
 
 function InventoryPage() {
   const { isManager, can } = useCurrentAccount();
+  const { data: catRows = [] } = useMaterialCategories();
+  const matCats = catRows.filter((c) => c.is_active);
   const { data: materials = [], isLoading } = useMaterials();
   const { branchId, isAll } = useBranchScope();
   const { data: branches = [] } = useBranches();

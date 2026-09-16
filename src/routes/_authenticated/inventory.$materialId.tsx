@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, Sheet } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
+import { useMaterialCategories } from "@/lib/data";
 import { fmtDateTime, money } from "@/lib/atelier";
 import {
   MATERIAL_UNITS,
@@ -28,6 +29,8 @@ export const Route = createFileRoute("/_authenticated/inventory/$materialId")({
 function MaterialPage() {
   const { materialId } = Route.useParams();
   const { isManager } = useCurrentAccount();
+  const { data: catRows = [] } = useMaterialCategories();
+  const matCats = catRows.filter((c) => c.is_active);
   const { data: material, isLoading } = useMaterial(materialId);
   const { data: movements = [] } = useMaterialMovements(materialId);
   const addMovement = useAddMovement();
