@@ -14,6 +14,10 @@ export const MATERIAL_CATEGORIES: { key: string; label: string }[] = [
   { key: "beads", label: "خرز وترتر" },
   { key: "lace", label: "دانتيل" },
   { key: "accessory", label: "إكسسوار" },
+  { key: "trim", label: "خرز وترتر" },
+  { key: "thread", label: "خيوط" },
+  { key: "notion", label: "مستلزمات خياطة" },
+  { key: "packaging", label: "تغليف" },
   { key: "other", label: "أخرى" },
 ];
 
