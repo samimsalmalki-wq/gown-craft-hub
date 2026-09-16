@@ -57,8 +57,10 @@ export function useBranchScope() {
       opsBranchId,
       opsIsAll: opsBranchId === ALL_BRANCHES,
       selectedIsWarehouse,
-      /** معرّف الفرع للكتابة: عند «الكل» أو المخزن يستخدم فرع المستخدم إن وُجد */
-      writeBranchId:
+      /** معرّف الموقع للكتابة (مخزون): عند «الكل» يستخدم فرع المستخدم إن وُجد */
+      writeBranchId: branchId === ALL_BRANCHES ? (profile?.branch_id ?? null) : branchId,
+      /** معرّف فرع البيع للكتابة (طلبات وماليات): يتجاهل المخزن الرئيسي */
+      opsWriteBranchId:
         opsBranchId === ALL_BRANCHES ? (profile?.branch_id ?? null) : opsBranchId,
       setBranch: setSelectedBranch,
     };
