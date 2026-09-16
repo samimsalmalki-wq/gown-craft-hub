@@ -31,7 +31,7 @@ const onBranch = <T>(q: T, branchId: string, column = "branch_id"): T =>
     : ((q as { eq: (c: string, v: string) => T }).eq(column, branchId) as T);
 
 export function useOrders() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: [...ordersKey, branchId],
     queryFn: async (): Promise<Order[]> => {
@@ -77,7 +77,7 @@ export function useOrderStages(orderId: string) {
 }
 
 export function useAllStages() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["stages", "all", branchId],
     queryFn: async (): Promise<OrderStage[]> => {
@@ -578,7 +578,7 @@ export function useSetRole() {
 export type StageWithOrder = OrderStage & { orders: Order | null };
 
 export function useStagesWithOrders() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["stages-with-orders", branchId],
     queryFn: async (): Promise<StageWithOrder[]> => {
@@ -597,7 +597,7 @@ export function useStagesWithOrders() {
 }
 
 export function useMyTasks(userId: string | undefined) {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["my-tasks", userId, branchId],
     enabled: Boolean(userId),
