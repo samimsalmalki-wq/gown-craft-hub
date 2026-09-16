@@ -740,6 +740,33 @@ export type Database = {
           },
         ]
       }
+      material_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          key: string
+          label: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key: string
+          label: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          label?: string
+          position?: number
+        }
+        Relationships: []
+      }
       material_movements: {
         Row: {
           branch_id: string | null

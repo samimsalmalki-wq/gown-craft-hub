@@ -8,21 +8,36 @@ export type RentalRecord = Database["public"]["Tables"]["rental_records"]["Row"]
 export type MovementKind = Database["public"]["Enums"]["material_movement_kind"];
 export type DressStatus = Database["public"]["Enums"]["rental_dress_status"];
 
-export const MATERIAL_CATEGORIES: { key: string; label: string }[] = [
+export type MaterialCategory = Database["public"]["Tables"]["material_categories"]["Row"];
+
+/** التصنيفات الافتراضية قبل تحميل الكتالوج من قاعدة البيانات */
+const FALLBACK_CATEGORIES: { key: string; label: string }[] = [
   { key: "fabric", label: "قماش" },
-  { key: "embroidery", label: "قطع تطريز" },
-  { key: "beads", label: "خرز وترتر" },
   { key: "lace", label: "دانتيل" },
-  { key: "accessory", label: "إكسسوار" },
+  { key: "embroidery", label: "قطع تطريز" },
   { key: "trim", label: "خرز وترتر" },
   { key: "thread", label: "خيوط" },
   { key: "notion", label: "مستلزمات خياطة" },
+  { key: "accessory", label: "إكسسوار" },
   { key: "packaging", label: "تغليف" },
   { key: "other", label: "أخرى" },
 ];
 
+let CATEGORIES: { key: string; label: string; is_active: boolean }[] = FALLBACK_CATEGORIES.map(
+  (c) => ({ ...c, is_active: true }),
+);
+
+export const setMaterialCategoryCatalog = (rows: MaterialCategory[]) => {
+  CATEGORIES = [...rows]
+    .sort((a, b) => a.position - b.position)
+    .map((r) => ({ key: r.key, label: r.label, is_active: r.is_active }));
+};
+
+/** التصنيفات المُفعّلة للاختيار في النماذج */
+export const materialCategoryList = () => CATEGORIES.filter((c) => c.is_active);
+
 export const categoryLabel = (key: string) =>
-  MATERIAL_CATEGORIES.find((c) => c.key === key)?.label ?? key;
+  CATEGORIES.find((c) => c.key === key)?.label ?? key;
 
 export const MATERIAL_UNITS = ["متر", "حبة", "لفة", "كيس", "علبة"] as const;
 

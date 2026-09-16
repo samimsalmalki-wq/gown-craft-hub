@@ -4,9 +4,9 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, Sheet } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
+import { useMaterialCategories } from "@/lib/data";
 import { fmtDateTime, money } from "@/lib/atelier";
 import {
-  MATERIAL_CATEGORIES,
   MATERIAL_UNITS,
   MOVEMENT_LABEL,
   available,
@@ -29,6 +29,8 @@ export const Route = createFileRoute("/_authenticated/inventory/$materialId")({
 function MaterialPage() {
   const { materialId } = Route.useParams();
   const { isManager } = useCurrentAccount();
+  const { data: catRows = [] } = useMaterialCategories();
+  const matCats = catRows.filter((c) => c.is_active);
   const { data: material, isLoading } = useMaterial(materialId);
   const { data: movements = [] } = useMaterialMovements(materialId);
   const addMovement = useAddMovement();
@@ -237,6 +239,8 @@ function EditSheet({
     notes: material.notes ?? "",
   });
   const [image, setImage] = useState<File | null>(null);
+  const { data: catRows = [] } = useMaterialCategories();
+  const matCats = catRows.filter((c) => c.is_active);
 
   return (
     <Sheet open={open} onClose={onClose} title="تعديل المادة">
@@ -271,7 +275,7 @@ function EditSheet({
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
             >
-              {MATERIAL_CATEGORIES.map((c) => (
+              {matCats.map((c) => (
                 <option key={c.key} value={c.key}>
                   {c.label}
                 </option>

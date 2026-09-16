@@ -38,6 +38,14 @@ import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
 import { Route as AuthenticatedRentalsIndexRouteImport } from './routes/_authenticated/rentals.index'
 import { Route as AuthenticatedRentalsDressIdRouteImport } from './routes/_authenticated/rentals.$dressId'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
+import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings.account'
+import { Route as AuthenticatedSettingsCashAccountsRouteImport } from './routes/_authenticated/settings.cash-accounts'
+import { Route as AuthenticatedSettingsDepartmentsRouteImport } from './routes/_authenticated/settings.departments'
+import { Route as AuthenticatedSettingsExpenseCategoriesRouteImport } from './routes/_authenticated/settings.expense-categories'
+import { Route as AuthenticatedSettingsMaterialCategoriesRouteImport } from './routes/_authenticated/settings.material-categories'
+import { Route as AuthenticatedSettingsSuppliersRouteImport } from './routes/_authenticated/settings.suppliers'
+import { Route as AuthenticatedSettingsTaxRouteImport } from './routes/_authenticated/settings.tax'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff.index'
 import { Route as AuthenticatedStaffUserIdRouteImport } from './routes/_authenticated/staff.$userId'
 import { Route as AuthenticatedFinanceInvoicesInvoiceIdRouteImport } from './routes/_authenticated/finance.invoices.$invoiceId'
@@ -201,6 +209,54 @@ const AuthenticatedRentalsDressIdRoute =
     path: '/rentals/$dressId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsAccountRoute =
+  AuthenticatedSettingsAccountRouteImport.update({
+    id: '/settings/account',
+    path: '/settings/account',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsCashAccountsRoute =
+  AuthenticatedSettingsCashAccountsRouteImport.update({
+    id: '/settings/cash-accounts',
+    path: '/settings/cash-accounts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsDepartmentsRoute =
+  AuthenticatedSettingsDepartmentsRouteImport.update({
+    id: '/settings/departments',
+    path: '/settings/departments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsExpenseCategoriesRoute =
+  AuthenticatedSettingsExpenseCategoriesRouteImport.update({
+    id: '/settings/expense-categories',
+    path: '/settings/expense-categories',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsMaterialCategoriesRoute =
+  AuthenticatedSettingsMaterialCategoriesRouteImport.update({
+    id: '/settings/material-categories',
+    path: '/settings/material-categories',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsSuppliersRoute =
+  AuthenticatedSettingsSuppliersRouteImport.update({
+    id: '/settings/suppliers',
+    path: '/settings/suppliers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsTaxRoute =
+  AuthenticatedSettingsTaxRouteImport.update({
+    id: '/settings/tax',
+    path: '/settings/tax',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   id: '/staff/',
   path: '/staff/',
@@ -244,11 +300,19 @@ export interface FileRoutesByFullPath {
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
+  '/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/settings/cash-accounts': typeof AuthenticatedSettingsCashAccountsRoute
+  '/settings/departments': typeof AuthenticatedSettingsDepartmentsRoute
+  '/settings/expense-categories': typeof AuthenticatedSettingsExpenseCategoriesRoute
+  '/settings/material-categories': typeof AuthenticatedSettingsMaterialCategoriesRoute
+  '/settings/suppliers': typeof AuthenticatedSettingsSuppliersRoute
+  '/settings/tax': typeof AuthenticatedSettingsTaxRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
   '/rentals/': typeof AuthenticatedRentalsIndexRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
   '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
@@ -277,11 +341,19 @@ export interface FileRoutesByTo {
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
+  '/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/settings/cash-accounts': typeof AuthenticatedSettingsCashAccountsRoute
+  '/settings/departments': typeof AuthenticatedSettingsDepartmentsRoute
+  '/settings/expense-categories': typeof AuthenticatedSettingsExpenseCategoriesRoute
+  '/settings/material-categories': typeof AuthenticatedSettingsMaterialCategoriesRoute
+  '/settings/suppliers': typeof AuthenticatedSettingsSuppliersRoute
+  '/settings/tax': typeof AuthenticatedSettingsTaxRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
   '/rentals': typeof AuthenticatedRentalsIndexRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
   '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
@@ -312,11 +384,19 @@ export interface FileRoutesById {
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
   '/_authenticated/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
+  '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/_authenticated/settings/cash-accounts': typeof AuthenticatedSettingsCashAccountsRoute
+  '/_authenticated/settings/departments': typeof AuthenticatedSettingsDepartmentsRoute
+  '/_authenticated/settings/expense-categories': typeof AuthenticatedSettingsExpenseCategoriesRoute
+  '/_authenticated/settings/material-categories': typeof AuthenticatedSettingsMaterialCategoriesRoute
+  '/_authenticated/settings/suppliers': typeof AuthenticatedSettingsSuppliersRoute
+  '/_authenticated/settings/tax': typeof AuthenticatedSettingsTaxRoute
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
   '/_authenticated/rentals/': typeof AuthenticatedRentalsIndexRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
   '/_authenticated/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
@@ -347,11 +427,19 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/orders/new'
     | '/rentals/$dressId'
+    | '/settings/account'
+    | '/settings/cash-accounts'
+    | '/settings/departments'
+    | '/settings/expense-categories'
+    | '/settings/material-categories'
+    | '/settings/suppliers'
+    | '/settings/tax'
     | '/staff/$userId'
     | '/finance/'
     | '/inventory/'
     | '/orders/'
     | '/rentals/'
+    | '/settings/'
     | '/staff/'
     | '/finance/invoices/$invoiceId'
   fileRoutesByTo: FileRoutesByTo
@@ -380,11 +468,19 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/orders/new'
     | '/rentals/$dressId'
+    | '/settings/account'
+    | '/settings/cash-accounts'
+    | '/settings/departments'
+    | '/settings/expense-categories'
+    | '/settings/material-categories'
+    | '/settings/suppliers'
+    | '/settings/tax'
     | '/staff/$userId'
     | '/finance'
     | '/inventory'
     | '/orders'
     | '/rentals'
+    | '/settings'
     | '/staff'
     | '/finance/invoices/$invoiceId'
   id:
@@ -414,11 +510,19 @@ export interface FileRouteTypes {
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
     | '/_authenticated/rentals/$dressId'
+    | '/_authenticated/settings/account'
+    | '/_authenticated/settings/cash-accounts'
+    | '/_authenticated/settings/departments'
+    | '/_authenticated/settings/expense-categories'
+    | '/_authenticated/settings/material-categories'
+    | '/_authenticated/settings/suppliers'
+    | '/_authenticated/settings/tax'
     | '/_authenticated/staff/$userId'
     | '/_authenticated/finance/'
     | '/_authenticated/inventory/'
     | '/_authenticated/orders/'
     | '/_authenticated/rentals/'
+    | '/_authenticated/settings/'
     | '/_authenticated/staff/'
     | '/_authenticated/finance/invoices/$invoiceId'
   fileRoutesById: FileRoutesById
@@ -634,6 +738,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRentalsDressIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/account': {
+      id: '/_authenticated/settings/account'
+      path: '/settings/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/cash-accounts': {
+      id: '/_authenticated/settings/cash-accounts'
+      path: '/settings/cash-accounts'
+      fullPath: '/settings/cash-accounts'
+      preLoaderRoute: typeof AuthenticatedSettingsCashAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/departments': {
+      id: '/_authenticated/settings/departments'
+      path: '/settings/departments'
+      fullPath: '/settings/departments'
+      preLoaderRoute: typeof AuthenticatedSettingsDepartmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/expense-categories': {
+      id: '/_authenticated/settings/expense-categories'
+      path: '/settings/expense-categories'
+      fullPath: '/settings/expense-categories'
+      preLoaderRoute: typeof AuthenticatedSettingsExpenseCategoriesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/material-categories': {
+      id: '/_authenticated/settings/material-categories'
+      path: '/settings/material-categories'
+      fullPath: '/settings/material-categories'
+      preLoaderRoute: typeof AuthenticatedSettingsMaterialCategoriesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/suppliers': {
+      id: '/_authenticated/settings/suppliers'
+      path: '/settings/suppliers'
+      fullPath: '/settings/suppliers'
+      preLoaderRoute: typeof AuthenticatedSettingsSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/tax': {
+      id: '/_authenticated/settings/tax'
+      path: '/settings/tax'
+      fullPath: '/settings/tax'
+      preLoaderRoute: typeof AuthenticatedSettingsTaxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/staff/': {
       id: '/_authenticated/staff/'
       path: '/staff'
@@ -681,11 +841,19 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
   AuthenticatedRentalsDressIdRoute: typeof AuthenticatedRentalsDressIdRoute
+  AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
+  AuthenticatedSettingsCashAccountsRoute: typeof AuthenticatedSettingsCashAccountsRoute
+  AuthenticatedSettingsDepartmentsRoute: typeof AuthenticatedSettingsDepartmentsRoute
+  AuthenticatedSettingsExpenseCategoriesRoute: typeof AuthenticatedSettingsExpenseCategoriesRoute
+  AuthenticatedSettingsMaterialCategoriesRoute: typeof AuthenticatedSettingsMaterialCategoriesRoute
+  AuthenticatedSettingsSuppliersRoute: typeof AuthenticatedSettingsSuppliersRoute
+  AuthenticatedSettingsTaxRoute: typeof AuthenticatedSettingsTaxRoute
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
   AuthenticatedRentalsIndexRoute: typeof AuthenticatedRentalsIndexRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
   AuthenticatedFinanceInvoicesInvoiceIdRoute: typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
@@ -713,11 +881,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
   AuthenticatedRentalsDressIdRoute: AuthenticatedRentalsDressIdRoute,
+  AuthenticatedSettingsAccountRoute: AuthenticatedSettingsAccountRoute,
+  AuthenticatedSettingsCashAccountsRoute:
+    AuthenticatedSettingsCashAccountsRoute,
+  AuthenticatedSettingsDepartmentsRoute: AuthenticatedSettingsDepartmentsRoute,
+  AuthenticatedSettingsExpenseCategoriesRoute:
+    AuthenticatedSettingsExpenseCategoriesRoute,
+  AuthenticatedSettingsMaterialCategoriesRoute:
+    AuthenticatedSettingsMaterialCategoriesRoute,
+  AuthenticatedSettingsSuppliersRoute: AuthenticatedSettingsSuppliersRoute,
+  AuthenticatedSettingsTaxRoute: AuthenticatedSettingsTaxRoute,
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
   AuthenticatedRentalsIndexRoute: AuthenticatedRentalsIndexRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
   AuthenticatedFinanceInvoicesInvoiceIdRoute:
     AuthenticatedFinanceInvoicesInvoiceIdRoute,
