@@ -194,15 +194,19 @@ function InventoryPage() {
                   <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{m.name}</span>
                   <Chip>{categoryLabel(m.category)}</Chip>
                   <span className="num text-[13px]">
-                    متاح {qty(at(m.id).available)} {m.unit}
+                    متاح {qty(Math.max(0, at(m.id).available))} {m.unit}
                   </span>
                   {at(m.id).reserved > 0 && <Chip tone="gold">محجوز {qty(at(m.id).reserved)}</Chip>}
                   {warehouse && warehouse.id !== branchId && (
                     <Chip tone="neutral">
-                      بالمخزن {qty(stockOf(stock, m.id, warehouse.id).available)}
+                      بالمخزن الرئيسي {qty(stockOf(stock, m.id, warehouse.id).available)}
                     </Chip>
                   )}
-                  {isLowStock(m) && <Chip tone="late">تحت الحد</Chip>}
+                  {at(m.id).overReserved ? (
+                    <Chip tone="late">تجاوز حجز {qty(-at(m.id).available)}</Chip>
+                  ) : (
+                    at(m.id).isLow && <Chip tone="late">تحت الحد</Chip>
+                  )}
                 </Link>
               </li>
             ))}
