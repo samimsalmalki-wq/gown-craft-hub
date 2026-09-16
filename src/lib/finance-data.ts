@@ -317,6 +317,97 @@ export function useAddSupplier() {
   });
 }
 
+export function useUpdateSupplier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+      const { error } = await supabase.from("suppliers").update(patch as never).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["suppliers"] }),
+  });
+}
+
+/** كل تصنيفات المصروفات بما فيها المعطّلة — لشاشة الإعدادات */
+export function useAllExpenseCategories() {
+  return useQuery({
+    queryKey: ["expense-categories", "all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("expense_categories")
+        .select("*")
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useUpdateExpenseCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+      const { error } = await supabase
+        .from("expense_categories")
+        .update(patch as never)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["expense-categories"] }),
+  });
+}
+
+/** كل الصناديق بما فيها المعطّلة — لشاشة الإعدادات */
+export function useAllCashAccounts() {
+  const { branchId } = useBranchScope();
+  return useQuery({
+    queryKey: ["cash-accounts", "all", branchId],
+    queryFn: async () => {
+      const { data, error } = await onBranch(
+        supabase.from("cash_accounts").select("*"),
+        branchId,
+      ).order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useSaveCashAccount() {
+  const qc = useQueryClient();
+  const { writeBranchId } = useBranchScope();
+  return useMutation({
+    mutationFn: async (input: {
+      id?: string;
+      name: string;
+      kind: "cash" | "card" | "bank";
+      gl_code: string;
+      opening_balance: number;
+      branch_id?: string | null;
+      notes?: string | null;
+      is_active?: boolean;
+    }) => {
+      const { id, ...rest } = input;
+      if (!rest.name.trim()) throw new Error("اسم الصندوق مطلوب");
+      if (id) {
+        const { error } = await supabase
+          .from("cash_accounts")
+          .update({ ...rest, name: rest.name.trim() } as never)
+          .eq("id", id);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.from("cash_accounts").insert({
+        ...rest,
+        name: rest.name.trim(),
+        branch_id: rest.branch_id ?? writeBranchId,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cash-accounts"] }),
+  });
+}
+
 export function useExpenseCategories() {
   return useQuery({
     queryKey: ["expense-categories"],
