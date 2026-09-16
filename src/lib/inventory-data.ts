@@ -104,6 +104,8 @@ type MaterialInput = {
   notes: string | null;
   image?: File | null;
   opening_qty?: number;
+  /** موقع الرصيد الافتتاحي (المخزن الرئيسي افتراضيًا) */
+  opening_branch_id?: string | null;
 };
 
 export function useSaveMaterial() {
@@ -128,6 +130,12 @@ export function useSaveMaterial() {
       if (id) {
         const { error } = await supabase.from("materials").update(payload).eq("id", id);
         if (error) throw error;
+        // حد التنبيه يُطبَّق على مواقع هذه المادة
+        const target = input.opening_branch_id;
+        let up = supabase.from("material_stock").update({ min_qty: input.min_qty }).eq("material_id", id);
+        if (target) up = up.eq("branch_id", target);
+        const { error: msErr } = await up;
+        if (msErr) throw msErr;
         return id;
       }
 
@@ -144,7 +152,7 @@ export function useSaveMaterial() {
           kind: "in" as MovementKind,
           qty: input.opening_qty,
           notes: "رصيد افتتاحي",
-          branch_id: writeBranchId,
+          branch_id: input.opening_branch_id ?? writeBranchId,
           created_by: uid,
         });
         if (mv.error) throw mv.error;

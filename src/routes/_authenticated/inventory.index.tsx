@@ -15,13 +15,7 @@ import {
   stockOf,
   warehouseOf,
 } from "@/lib/branches";
-import {
-  MATERIAL_CATEGORIES,
-  MATERIAL_UNITS,
-  categoryLabel,
-  isLowStock,
-  qty,
-} from "@/lib/inventory";
+import { MATERIAL_CATEGORIES, MATERIAL_UNITS, categoryLabel, qty } from "@/lib/inventory";
 
 export const Route = createFileRoute("/_authenticated/inventory/")({
   component: InventoryPage,
@@ -72,7 +66,7 @@ function InventoryPage() {
     }
   }
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     name: "",
     category: "fabric",
     unit: "متر",
@@ -81,15 +75,19 @@ function InventoryPage() {
     supplier: "",
     notes: "",
     opening_qty: "0",
-  });
+    opening_branch_id: "",
+  };
+  const [form, setForm] = useState(emptyForm);
   const [image, setImage] = useState<File | null>(null);
 
+  /** الموقع المقترح للرصيد الافتتاحي: المخزن الرئيسي */
+  const openingBranch = form.opening_branch_id || warehouse?.id || branchId;
 
   const list = useMemo(
     () =>
       materials.filter((m) => {
         if (cat !== "all" && m.category !== cat) return false;
-        if (lowOnly && !isLowStock(m)) return false;
+        if (lowOnly && !at(m.id).isLow) return false;
         const t = term.trim();
         if (!t) return true;
         return (
@@ -98,10 +96,11 @@ function InventoryPage() {
           categoryLabel(m.category).includes(t)
         );
       }),
-    [materials, term, cat, lowOnly],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [materials, term, cat, lowOnly, stock, branchId, isAll],
   );
 
-  const low = materials.filter((m) => m.is_active && isLowStock(m));
+  const low = materials.filter((m) => m.is_active && at(m.id).isLow);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -115,20 +114,12 @@ function InventoryPage() {
       supplier: form.supplier.trim() || null,
       notes: form.notes.trim() || null,
       opening_qty: Number(form.opening_qty) || 0,
+      opening_branch_id: openingBranch || null,
       image,
     });
     setOpen(false);
     setImage(null);
-    setForm({
-      name: "",
-      category: "fabric",
-      unit: "متر",
-      min_qty: "0",
-      unit_cost: "0",
-      supplier: "",
-      notes: "",
-      opening_qty: "0",
-    });
+    setForm(emptyForm);
   }
 
   return (
@@ -203,15 +194,19 @@ function InventoryPage() {
                   <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{m.name}</span>
                   <Chip>{categoryLabel(m.category)}</Chip>
                   <span className="num text-[13px]">
-                    متاح {qty(at(m.id).available)} {m.unit}
+                    متاح {qty(Math.max(0, at(m.id).available))} {m.unit}
                   </span>
                   {at(m.id).reserved > 0 && <Chip tone="gold">محجوز {qty(at(m.id).reserved)}</Chip>}
                   {warehouse && warehouse.id !== branchId && (
                     <Chip tone="neutral">
-                      بالمخزن {qty(stockOf(stock, m.id, warehouse.id).available)}
+                      بالمخزن الرئيسي {qty(stockOf(stock, m.id, warehouse.id).available)}
                     </Chip>
                   )}
-                  {isLowStock(m) && <Chip tone="late">تحت الحد</Chip>}
+                  {at(m.id).overReserved ? (
+                    <Chip tone="late">تجاوز حجز {qty(-at(m.id).available)}</Chip>
+                  ) : (
+                    at(m.id).isLow && <Chip tone="late">تحت الحد</Chip>
+                  )}
                 </Link>
               </li>
             ))}
@@ -266,7 +261,23 @@ function InventoryPage() {
                 onChange={(e) => setForm({ ...form, opening_qty: e.target.value })}
               />
             </Field>
-            <Field label="حد التنبيه" hint="ينبّهك النظام عند وصول المتاح لهذا الحد">
+            <Field label="موقع الرصيد الافتتاحي" hint="تُسجَّل الكمية في هذا الموقع">
+              <select
+                className="field w-full"
+                value={openingBranch}
+                onChange={(e) => setForm({ ...form, opening_branch_id: e.target.value })}
+              >
+                {branches
+                  .filter((b) => b.is_active)
+                  .map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                      {b.is_warehouse ? " (المخزن الرئيسي)" : ""}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+            <Field label="حد التنبيه" hint="ينبّهك النظام عند وصول متاح الموقع لهذا الحد">
               <input
                 type="number"
                 min="0"

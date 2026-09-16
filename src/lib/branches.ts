@@ -206,12 +206,23 @@ export function useDecideStockRequest() {
   });
 }
 
-/** إجمالي كميات مادة في فرع معيّن */
+/** إجمالي كميات مادة في فرع معيّن (مع حد التنبيه الخاص بالموقع) */
 export const stockOf = (rows: MaterialStock[], materialId: string, branchId: string | null) => {
   const list = rows.filter(
     (r) => r.material_id === materialId && (!branchId || r.branch_id === branchId),
   );
   const on_hand = list.reduce((s, r) => s + Number(r.qty_on_hand), 0);
   const reserved = list.reduce((s, r) => s + Number(r.qty_reserved), 0);
-  return { on_hand, reserved, available: on_hand - reserved };
+  const min_qty = list.reduce((s, r) => s + Number(r.min_qty), 0);
+  const available = on_hand - reserved;
+  return {
+    on_hand,
+    reserved,
+    available,
+    min_qty,
+    /** تحت حد التنبيه في هذا الموقع */
+    isLow: min_qty > 0 && available <= min_qty,
+    /** المحجوز أكبر من الموجود — خطأ يحتاج تصحيح */
+    overReserved: available < 0,
+  };
 };
