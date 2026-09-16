@@ -30,6 +30,7 @@ export function setSelectedBranch(value: string) {
 export function useBranchScope() {
   const { profile, isAdmin, can } = useCurrentAccount();
   const [tick, setTick] = useState(0);
+  const { data: branches } = useBranches();
 
   useEffect(() => {
     const fn = () => setTick((v) => v + 1);
@@ -40,19 +41,28 @@ export function useBranchScope() {
   }, []);
 
   const canAll = isAdmin || can("branches.all") || !profile?.branch_id;
+  const warehouseIds = (branches ?? []).filter((b) => b.is_warehouse).map((b) => b.id).join(",");
 
   return useMemo(() => {
     void tick;
     const branchId = canAll ? selected : (profile?.branch_id ?? ALL_BRANCHES);
+    const selectedIsWarehouse =
+      branchId !== ALL_BRANCHES && warehouseIds.split(",").includes(branchId);
+    /** نطاق العمليات (طلبات وماليات): المخزن الرئيسي ليس فرع بيع، فيُعرض الكل */
+    const opsBranchId = selectedIsWarehouse ? ALL_BRANCHES : branchId;
     return {
       canAll,
       branchId,
       isAll: branchId === ALL_BRANCHES,
-      /** معرّف الفرع للكتابة: عند «الكل» يستخدم فرع المستخدم إن وُجد */
-      writeBranchId: branchId === ALL_BRANCHES ? (profile?.branch_id ?? null) : branchId,
+      opsBranchId,
+      opsIsAll: opsBranchId === ALL_BRANCHES,
+      selectedIsWarehouse,
+      /** معرّف الفرع للكتابة: عند «الكل» أو المخزن يستخدم فرع المستخدم إن وُجد */
+      writeBranchId:
+        opsBranchId === ALL_BRANCHES ? (profile?.branch_id ?? null) : opsBranchId,
       setBranch: setSelectedBranch,
     };
-  }, [tick, canAll, profile?.branch_id]);
+  }, [tick, canAll, profile?.branch_id, warehouseIds]);
 }
 
 export function useBranches() {
