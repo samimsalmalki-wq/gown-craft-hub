@@ -10,6 +10,7 @@ import {
   setStageCatalog,
 } from "./atelier";
 import { ALL_BRANCHES, useBranchScope } from "./branches";
+import { setMaterialCategoryCatalog, type MaterialCategory } from "./inventory";
 import type {
   ItemType,
   Order,
