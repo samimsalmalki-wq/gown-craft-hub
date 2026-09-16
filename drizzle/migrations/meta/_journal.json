@@ -92,6 +92,13 @@
       "when": 1789466133696,
       "tag": "0012_rental_stock_no_revenue",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789560816634,
+      "tag": "0013_stock_guard_and_branch_min_qty",
+      "breakpoints": true
     }
   ]
 }
