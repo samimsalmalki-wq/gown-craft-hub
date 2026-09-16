@@ -261,7 +261,23 @@ function InventoryPage() {
                 onChange={(e) => setForm({ ...form, opening_qty: e.target.value })}
               />
             </Field>
-            <Field label="حد التنبيه" hint="ينبّهك النظام عند وصول المتاح لهذا الحد">
+            <Field label="موقع الرصيد الافتتاحي" hint="تُسجَّل الكمية في هذا الموقع">
+              <select
+                className="field w-full"
+                value={openingBranch}
+                onChange={(e) => setForm({ ...form, opening_branch_id: e.target.value })}
+              >
+                {branches
+                  .filter((b) => b.is_active)
+                  .map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                      {b.is_warehouse ? " (المخزن الرئيسي)" : ""}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+            <Field label="حد التنبيه" hint="ينبّهك النظام عند وصول متاح الموقع لهذا الحد">
               <input
                 type="number"
                 min="0"
