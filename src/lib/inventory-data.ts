@@ -130,6 +130,12 @@ export function useSaveMaterial() {
       if (id) {
         const { error } = await supabase.from("materials").update(payload).eq("id", id);
         if (error) throw error;
+        // حد التنبيه يُطبَّق على مواقع هذه المادة
+        const target = input.opening_branch_id;
+        let up = supabase.from("material_stock").update({ min_qty: input.min_qty }).eq("material_id", id);
+        if (target) up = up.eq("branch_id", target);
+        const { error: msErr } = await up;
+        if (msErr) throw msErr;
         return id;
       }
 
