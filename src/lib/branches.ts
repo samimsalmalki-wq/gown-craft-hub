@@ -12,6 +12,7 @@ export type MaterialStock = Database["public"]["Tables"]["material_stock"]["Row"
 export const ALL_BRANCHES = "all";
 
 const STORE_KEY = "atelier.branch";
+const RESET_KEY = "atelier.branch.warehouseReset";
 
 let selected: string = ALL_BRANCHES;
 const listeners = new Set<() => void>();
@@ -42,6 +43,14 @@ export function useBranchScope() {
 
   const canAll = isAdmin || can("branches.all") || !profile?.branch_id;
   const warehouseIds = (branches ?? []).filter((b) => b.is_warehouse).map((b) => b.id).join(",");
+
+  // إصلاح لمرة واحدة: اختيار محفوظ على المخزن الرئيسي كان يفرّغ شاشات الطلبات
+  useEffect(() => {
+    if (typeof window === "undefined" || !warehouseIds) return;
+    if (window.localStorage.getItem(RESET_KEY)) return;
+    window.localStorage.setItem(RESET_KEY, "1");
+    if (warehouseIds.split(",").includes(selected)) setSelectedBranch(ALL_BRANCHES);
+  }, [warehouseIds]);
 
   return useMemo(() => {
     void tick;
