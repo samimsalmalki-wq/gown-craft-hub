@@ -49,13 +49,8 @@ const NAV: NavItem[] = [
   { to: "/finance", label: "الماليات", icon: Wallet, financeOnly: true },
   { to: "/inventory", label: "مخزون المواد", icon: Boxes },
   { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
-  { to: "/roles", label: "الأدوار والصلاحيات", icon: ShieldCheck, adminOnly: true },
-  { to: "/branches", label: "الفروع", icon: Store, adminOnly: true },
-
   { to: "/reports", label: "تقرير الأداء", icon: BarChart3, managerOnly: true },
-  { to: "/workflow", label: "إعداد المراحل", icon: Settings2, adminOnly: true },
-  { to: "/item-types", label: "أنواع القطع", icon: Shirt, managerOnly: true },
-  { to: "/whatsapp", label: "رسائل الواتساب", icon: MessageCircle, managerOnly: true },
+  { to: "/settings", label: "الإعدادات", icon: Settings2 },
 ];
 
 export function AppShell({
