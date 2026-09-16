@@ -13,7 +13,7 @@ const onBranch = <T>(q: T, branchId: string, column = "branch_id"): T =>
 /* ===== إعدادات الضريبة ===== */
 
 export function useTaxSettings() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["tax-settings", branchId],
     queryFn: async (): Promise<TaxSettings | null> => {
@@ -41,7 +41,7 @@ export function useUpdateTaxSettings() {
 /* ===== الدفعات وسندات القبض ===== */
 
 export function usePayments() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["payments", branchId],
     queryFn: async (): Promise<Payment[]> => {
@@ -99,7 +99,7 @@ export type NewPayment = {
 
 export function useAddPayment() {
   const qc = useQueryClient();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: NewPayment) => {
       if (!(input.amount > 0)) throw new Error("اكتب مبلغًا أكبر من صفر");
@@ -138,7 +138,7 @@ export function useAddPayment() {
 /* ===== الفواتير ===== */
 
 export function useInvoices() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["invoices", branchId],
     queryFn: async (): Promise<Invoice[]> => {
@@ -184,7 +184,7 @@ export function useInvoiceLines(invoiceId: string) {
 
 export function useCreateInvoice() {
   const qc = useQueryClient();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       scope?: "order" | "rental";
@@ -359,7 +359,7 @@ export function useUpdateExpenseCategory() {
 
 /** كل الصناديق بما فيها المعطّلة — لشاشة الإعدادات */
 export function useAllCashAccounts() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["cash-accounts", "all", branchId],
     queryFn: async () => {
@@ -375,7 +375,7 @@ export function useAllCashAccounts() {
 
 export function useSaveCashAccount() {
   const qc = useQueryClient();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       id?: string;
@@ -445,7 +445,7 @@ export function useAddExpenseCategory() {
 }
 
 export function useCashAccounts() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["cash-accounts", branchId],
     queryFn: async () => {
@@ -460,7 +460,7 @@ export function useCashAccounts() {
 }
 
 export function useCashTransactions() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["cash-transactions", branchId],
     queryFn: async () => {
@@ -478,7 +478,7 @@ export function useCashTransactions() {
 }
 
 export function useExpenses() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["expenses", branchId],
     queryFn: async () => {
@@ -494,7 +494,7 @@ export function useExpenses() {
 
 export function useAddExpense() {
   const qc = useQueryClient();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       description: string;
@@ -583,7 +583,7 @@ export function useUpdateGlAccount() {
 }
 
 export function useJournalEntries() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["journal-entries", branchId],
     queryFn: async () => {
@@ -600,7 +600,7 @@ export function useJournalEntries() {
 }
 
 export function useJournalLines() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["journal-lines", branchId],
     queryFn: async () => {
@@ -677,7 +677,7 @@ const LEDGER_SELECT =
 
 /** حركات حساب واحد داخل فترة + رصيد ما قبل الفترة */
 export function useLedger(accountId: string, from: string, to: string) {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["ledger", accountId, from, to, branchId],
     enabled: Boolean(accountId),
@@ -742,7 +742,7 @@ export function useLedger(accountId: string, from: string, to: string) {
 
 /** مجاميع المدين والدائن لكل حساب داخل فترة — لميزان المراجعة */
 export function useTrialBalance(from: string, to: string) {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["trial-balance", from, to, branchId],
     queryFn: async (): Promise<Record<string, { debit: number; credit: number }>> => {

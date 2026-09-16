@@ -357,7 +357,7 @@ export function useReleaseMaterial() {
 /* ================= فساتين الإيجار ================= */
 
 export function useRentalDresses() {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["rental-dresses", branchId],
     queryFn: async (): Promise<RentalDress[]> => {
@@ -388,7 +388,7 @@ export function useRentalDress(id: string) {
 }
 
 export function useRentalRecords(dressId?: string) {
-  const { branchId } = useBranchScope();
+  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["rental-records", dressId ?? "all", branchId],
     queryFn: async (): Promise<RentalRecord[]> => {
@@ -404,7 +404,7 @@ export function useRentalRecords(dressId?: string) {
 
 export function useSaveDress() {
   const qc = useQueryClient();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({
       id,
@@ -462,7 +462,7 @@ export function useSetDressStatus() {
 
 export function useStartRental() {
   const qc = useQueryClient();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       dress_id: string;

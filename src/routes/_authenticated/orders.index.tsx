@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
+import { WarehouseScopeNote } from "@/components/WarehouseScopeNote";
 import { OrdersTabs } from "@/components/OrdersTabs";
 import { Card, Chip, Empty, PaymentChip } from "@/components/kit";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -66,6 +67,7 @@ function OrdersPage() {
       }
     >
       <OrdersTabs />
+      <WarehouseScopeNote />
 
       <div className="mb-4 space-y-3">
         <input
