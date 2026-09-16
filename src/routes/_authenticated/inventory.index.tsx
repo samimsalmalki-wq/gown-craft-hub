@@ -15,7 +15,7 @@ import {
   stockOf,
   warehouseOf,
 } from "@/lib/branches";
-import { MATERIAL_CATEGORIES, MATERIAL_UNITS, categoryLabel, qty } from "@/lib/inventory";
+import { MATERIAL_UNITS, categoryLabel, qty } from "@/lib/inventory";
 
 export const Route = createFileRoute("/_authenticated/inventory/")({
   component: InventoryPage,
@@ -166,7 +166,7 @@ function InventoryPage() {
         />
         <select value={cat} onChange={(e) => setCat(e.target.value)} className="field w-full sm:w-44">
           <option value="all">كل التصنيفات</option>
-          {MATERIAL_CATEGORIES.map((c) => (
+          {matCats.map((c) => (
             <option key={c.key} value={c.key}>
               {c.label}
             </option>
@@ -231,7 +231,7 @@ function InventoryPage() {
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               >
-                {MATERIAL_CATEGORIES.map((c) => (
+                {matCats.map((c) => (
                   <option key={c.key} value={c.key}>
                     {c.label}
                   </option>

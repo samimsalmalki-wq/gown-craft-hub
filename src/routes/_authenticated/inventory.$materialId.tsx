@@ -6,7 +6,6 @@ import { Btn, Card, Chip, Empty, Field, Sheet } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDateTime, money } from "@/lib/atelier";
 import {
-  MATERIAL_CATEGORIES,
   MATERIAL_UNITS,
   MOVEMENT_LABEL,
   available,
@@ -271,7 +270,7 @@ function EditSheet({
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
             >
-              {MATERIAL_CATEGORIES.map((c) => (
+              {matCats.map((c) => (
                 <option key={c.key} value={c.key}>
                   {c.label}
                 </option>
