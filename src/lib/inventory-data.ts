@@ -404,7 +404,7 @@ export function useRentalRecords(dressId?: string) {
 
 export function useSaveDress() {
   const qc = useQueryClient();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async ({
       id,
@@ -462,7 +462,7 @@ export function useSetDressStatus() {
 
 export function useStartRental() {
   const qc = useQueryClient();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       dress_id: string;
