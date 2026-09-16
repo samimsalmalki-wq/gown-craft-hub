@@ -146,7 +146,7 @@ export function useSaveMaterial() {
           kind: "in" as MovementKind,
           qty: input.opening_qty,
           notes: "رصيد افتتاحي",
-          branch_id: writeBranchId,
+          branch_id: input.opening_branch_id ?? writeBranchId,
           created_by: uid,
         });
         if (mv.error) throw mv.error;
