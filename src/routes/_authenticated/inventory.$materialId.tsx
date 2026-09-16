@@ -239,6 +239,8 @@ function EditSheet({
     notes: material.notes ?? "",
   });
   const [image, setImage] = useState<File | null>(null);
+  const { data: catRows = [] } = useMaterialCategories();
+  const matCats = catRows.filter((c) => c.is_active);
 
   return (
     <Sheet open={open} onClose={onClose} title="تعديل المادة">
