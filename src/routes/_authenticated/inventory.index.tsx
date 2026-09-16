@@ -66,7 +66,7 @@ function InventoryPage() {
     }
   }
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     name: "",
     category: "fabric",
     unit: "متر",
@@ -75,15 +75,19 @@ function InventoryPage() {
     supplier: "",
     notes: "",
     opening_qty: "0",
-  });
+    opening_branch_id: "",
+  };
+  const [form, setForm] = useState(emptyForm);
   const [image, setImage] = useState<File | null>(null);
 
+  /** الموقع المقترح للرصيد الافتتاحي: المخزن الرئيسي */
+  const openingBranch = form.opening_branch_id || warehouse?.id || branchId;
 
   const list = useMemo(
     () =>
       materials.filter((m) => {
         if (cat !== "all" && m.category !== cat) return false;
-        if (lowOnly && !isLowStock(m)) return false;
+        if (lowOnly && !at(m.id).isLow) return false;
         const t = term.trim();
         if (!t) return true;
         return (
@@ -92,10 +96,11 @@ function InventoryPage() {
           categoryLabel(m.category).includes(t)
         );
       }),
-    [materials, term, cat, lowOnly],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [materials, term, cat, lowOnly, stock, branchId, isAll],
   );
 
-  const low = materials.filter((m) => m.is_active && isLowStock(m));
+  const low = materials.filter((m) => m.is_active && at(m.id).isLow);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,20 +114,12 @@ function InventoryPage() {
       supplier: form.supplier.trim() || null,
       notes: form.notes.trim() || null,
       opening_qty: Number(form.opening_qty) || 0,
+      opening_branch_id: openingBranch || null,
       image,
     });
     setOpen(false);
     setImage(null);
-    setForm({
-      name: "",
-      category: "fabric",
-      unit: "متر",
-      min_qty: "0",
-      unit_cost: "0",
-      supplier: "",
-      notes: "",
-      opening_qty: "0",
-    });
+    setForm(emptyForm);
   }
 
   return (
