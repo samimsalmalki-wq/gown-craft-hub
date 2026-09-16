@@ -15,13 +15,7 @@ import {
   stockOf,
   warehouseOf,
 } from "@/lib/branches";
-import {
-  MATERIAL_CATEGORIES,
-  MATERIAL_UNITS,
-  categoryLabel,
-  isLowStock,
-  qty,
-} from "@/lib/inventory";
+import { MATERIAL_CATEGORIES, MATERIAL_UNITS, categoryLabel, qty } from "@/lib/inventory";
 
 export const Route = createFileRoute("/_authenticated/inventory/")({
   component: InventoryPage,
