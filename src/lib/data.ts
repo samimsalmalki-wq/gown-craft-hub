@@ -254,6 +254,97 @@ export function useDepartments() {
   });
 }
 
+export function useAddDepartment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const clean = name.trim();
+      if (!clean) throw new Error("اكتب اسم القسم");
+      const max = await supabase
+        .from("departments")
+        .select("position")
+        .order("position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const { error } = await supabase
+        .from("departments")
+        .insert({ name: clean, position: (max.data?.position ?? 0) + 1 } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["departments"] }),
+  });
+}
+
+export function useUpdateDepartment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+      const { error } = await supabase.from("departments").update(patch as never).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["departments"] }),
+  });
+}
+
+/* ================= تصنيفات الخامات ================= */
+
+export function useMaterialCategories() {
+  const query = useQuery({
+    queryKey: ["material-categories"],
+    queryFn: async (): Promise<MaterialCategory[]> => {
+      const { data, error } = await supabase
+        .from("material_categories")
+        .select("*")
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (query.data?.length) setMaterialCategoryCatalog(query.data);
+  }, [query.data]);
+
+  return query;
+}
+
+export function useAddMaterialCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (label: string) => {
+      const clean = label.trim();
+      if (!clean) throw new Error("اكتب اسم التصنيف");
+      const max = await supabase
+        .from("material_categories")
+        .select("position")
+        .order("position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const key = `cat_${Date.now().toString(36)}`;
+      const { error } = await supabase
+        .from("material_categories")
+        .insert({ key, label: clean, position: (max.data?.position ?? 0) + 1 } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["material-categories"] }),
+  });
+}
+
+export function useUpdateMaterialCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+      const { error } = await supabase
+        .from("material_categories")
+        .update(patch as never)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["material-categories"] }),
+  });
+}
+
 export function useStageTemplates() {
   return useQuery({
     queryKey: ["stage-templates"],
