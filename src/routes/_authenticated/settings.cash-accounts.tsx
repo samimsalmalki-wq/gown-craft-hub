@@ -43,7 +43,7 @@ function CashAccountsPage() {
   const allowed = isAdmin || can("finance.expenses");
   const { data: rows = [] } = useAllCashAccounts();
   const { data: branches = [] } = useBranches();
-  const { writeBranchId } = useBranchScope();
+  const { opsWriteBranchId: writeBranchId } = useBranchScope();
   const save = useSaveCashAccount();
 
   const [open, setOpen] = useState(false);

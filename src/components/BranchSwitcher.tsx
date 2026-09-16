@@ -19,13 +19,15 @@ export function BranchSwitcher() {
       className="field w-40"
     >
       <option value={ALL_BRANCHES}>كل الفروع</option>
+      <optgroup label="فروع البيع">
       {sales.map((b) => (
         <option key={b.id} value={b.id}>
           {b.name}
         </option>
       ))}
+      </optgroup>
       {stores.length > 0 && (
-        <optgroup label="مواقع المخزون">
+        <optgroup label="مواقع المخزون (خامات فقط)">
           {stores.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
