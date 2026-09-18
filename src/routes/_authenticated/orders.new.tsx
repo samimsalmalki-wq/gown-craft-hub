@@ -15,6 +15,12 @@ import { ORDER_KIND_HINT, ORDER_KIND_LABEL, money, type OrderKind } from "@/lib/
 
 const KINDS: OrderKind[] = ["own", "rental", "rental_stock"];
 const METHODS: PaymentMethod[] = ["cash", "card", "transfer", "other"];
+const METHOD_ACCOUNT_KIND: Record<PaymentMethod, "cash" | "card" | "bank" | null> = {
+  cash: "cash",
+  card: "card",
+  transfer: "bank",
+  other: null,
+};
 
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
