@@ -6,9 +6,10 @@ import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Field } from "@/components/kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
-import { available, qty } from "@/lib/inventory";
-import { useBranchScope } from "@/lib/branches";
-import { useItemTypes } from "@/lib/data";
+import { qty } from "@/lib/inventory";
+import { useBranchScope, useMaterialStock, stockOf } from "@/lib/branches";
+import { useItemTypes, useMaterialCategories } from "@/lib/data";
+import { useModelMaterials, useModels } from "@/lib/models-data";
 import { useAddPayment, useCashAccounts } from "@/lib/finance-data";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/finance";
 import { ORDER_KIND_HINT, ORDER_KIND_LABEL, money, type OrderKind } from "@/lib/atelier";
@@ -48,15 +49,6 @@ const MEASURES = [
   ["length", "طول الفستان"],
 ] as const;
 
-const EMBROIDERY_MODELS = [
-  "تطريز خرز",
-  "تطريز ترتر",
-  "تطريز كريستال",
-  "تطريز خيوط حرير",
-  "دانتيل مطرز",
-  "تطريز مشجر ثلاثي الأبعاد",
-] as const;
-
 function NewOrderPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
@@ -89,6 +81,11 @@ function NewOrderPage() {
   const [newModel, setNewModel] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: materials = [] } = useMaterials();
+  const { data: models = [] } = useModels();
+  const { data: categories = [] } = useMaterialCategories();
+  const { data: stock = [] } = useMaterialStock();
+  const [modelId, setModelId] = useState("");
+  const { data: modelMaterials = [] } = useModelMaterials(newModel ? null : modelId);
   const { data: cashAccounts = [] } = useCashAccounts();
   const addPayment = useAddPayment();
   const reserve = useReserveMaterial();
@@ -106,24 +103,28 @@ function NewOrderPage() {
   }, [cashAccounts, method, writeBranchId]);
 
 
-  // عند اختيار موديل تطريز لموديل جديد: نحجز قطع التطريز المطابقة تلقائيًا
+  // ربط رقم الموديل القادم من صفحة الفستان بالموديل المسجّل
   useEffect(() => {
-    if (!newModel || !form.embroidery_model) return;
-    const match = materials.filter(
-      (m) =>
-        m.is_active &&
-        (m.category === "embroidery" || m.category === "beads") &&
-        (form.embroidery_model.includes(m.name) || m.name.includes(form.embroidery_model.replace("تطريز ", ""))),
-    );
-    if (match.length === 0) return;
-    setPicked((p) => {
-      const next = { ...p };
-      match.forEach((m) => {
-        if (!next[m.id]) next[m.id] = "1";
-      });
-      return next;
-    });
-  }, [newModel, form.embroidery_model, materials]);
+    if (modelId || !form.model_no || models.length === 0) return;
+    const hit = models.find((m) => m.code === form.model_no);
+    if (hit) setModelId(hit.id);
+  }, [models, form.model_no, modelId]);
+
+  const selectedModel = models.find((m) => m.id === modelId) ?? null;
+  const shortMaterials = modelMaterials.filter(
+    (r) => stockOf(stock, r.material_id, writeBranchId).available < Number(r.qty),
+  );
+  const activeMaterials = materials.filter((m) => m.is_active);
+  const groups = [
+    ...categories
+      .filter((c) => c.is_active)
+      .map((c) => ({ key: c.key, label: c.label, rows: activeMaterials.filter((m) => m.category === c.key) })),
+    {
+      key: "__rest",
+      label: "مواد أخرى",
+      rows: activeMaterials.filter((m) => !categories.some((c) => c.is_active && c.key === m.category)),
+    },
+  ].filter((g) => g.rows.length > 0);
 
   const set =
     (k: keyof typeof form) =>
@@ -160,9 +161,10 @@ function NewOrderPage() {
           materials: form.materials || null,
           notes: form.notes || null,
           measurements: measures,
-          model_no: newModel ? null : form.model_no || null,
+          model_no: newModel ? null : (selectedModel?.code ?? (form.model_no || null)),
+          model_id: newModel ? null : modelId || null,
           is_new_model: newModel,
-          embroidery_model: newModel ? form.embroidery_model || null : null,
+          embroidery_model: null,
           branch_id: writeBranchId,
           created_by: uid,
         })
@@ -211,9 +213,12 @@ function NewOrderPage() {
         }
       }
 
-      const wanted = Object.entries(picked)
-        .map(([materialId, value]) => ({ materialId, amount: Number(value) }))
-        .filter((r) => r.amount > 0);
+      const wanted =
+        !newModel && modelId
+          ? modelMaterials.map((r) => ({ materialId: r.material_id, amount: Number(r.qty) }))
+          : Object.entries(picked)
+              .map(([materialId, value]) => ({ materialId, amount: Number(value) }))
+              .filter((r) => r.amount > 0);
       if (wanted.length) {
         try {
           for (const row of wanted) {
@@ -361,7 +366,7 @@ function NewOrderPage() {
           </div>
         </Card>
 
-        <Card title="الموديل">
+        <Card title="الموديل والمواد">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
             <Field label="نوع الموديل">
               <select
@@ -373,52 +378,103 @@ function NewOrderPage() {
                 <option value="new">موديل جديد</option>
               </select>
             </Field>
-            {newModel ? (
-              <Field label="موديل التطريز المطلوب" hint="اختياري للموديل الجديد">
-                <select className="field" value={form.embroidery_model} onChange={set("embroidery_model")}>
-                  <option value="">اختر موديل التطريز</option>
-                  {EMBROIDERY_MODELS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
+            {!newModel && (
+              <Field label="رقم الموديل" hint="مواد الموديل تُحجز تلقائيًا بعد الحفظ">
+                <select className="field" value={modelId} onChange={(e) => setModelId(e.target.value)}>
+                  <option value="">اختر الموديل</option>
+                  {models
+                    .filter((m) => m.is_active)
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.code} — {m.name}
+                      </option>
+                    ))}
                 </select>
-              </Field>
-            ) : (
-              <Field label="رقم الموديل المطلوب">
-                <input className="field" dir="ltr" value={form.model_no} onChange={set("model_no")} />
               </Field>
             )}
           </div>
-        </Card>
 
-        <Card title="المواد المطلوبة" action={<span className="text-[12px] text-muted-foreground">تُحجز من المخزون بعد الحفظ</span>}>
-          {materials.length === 0 ? (
-            <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">
-              لا توجد مواد في المخزون بعد.
-            </p>
-          ) : (
-            <ul className="divide-y divide-black/5">
-              {materials
-                .filter((m) => m.is_active)
-                .map((m) => (
-                  <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                    <span className="min-w-0 flex-1 truncate text-[14px]">{m.name}</span>
-                    <span className="num text-[12px] text-muted-foreground">
-                      متاح {qty(available(m))} {m.unit}
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      className="field w-24"
-                      placeholder="0"
-                      value={picked[m.id] ?? ""}
-                      onChange={(e) => setPicked((p) => ({ ...p, [m.id]: e.target.value }))}
-                    />
-                  </li>
-                ))}
-            </ul>
+          {!newModel &&
+            (modelId ? (
+              modelMaterials.length === 0 ? (
+                <p className="border-t border-black/5 px-4 py-4 text-[13px] text-muted-foreground">
+                  لم تُسجَّل مواد لهذا الموديل — أضِفها من صفحة الموديل.
+                </p>
+              ) : (
+                <div className="border-t border-black/5">
+                  <p className="px-4 pt-3 text-[12px] text-muted-foreground">
+                    مواد الموديل (كمياتها ثابتة كما في الموديل)
+                  </p>
+                  <ul className="divide-y divide-black/5">
+                    {modelMaterials.map((r) => {
+                      const mat = materials.find((m) => m.id === r.material_id);
+                      const s2 = stockOf(stock, r.material_id, writeBranchId);
+                      const short = s2.available < Number(r.qty);
+                      return (
+                        <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                          <span className="min-w-0 flex-1 truncate text-[14px]">{mat?.name ?? "—"}</span>
+                          <span className="num text-[13px]">
+                            {qty(r.qty)} {mat?.unit ?? ""}
+                          </span>
+                          <span className={short ? "num text-[12px] text-late" : "num text-[12px] text-muted-foreground"}>
+                            متاح {qty(s2.available)}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {shortMaterials.length > 0 && (
+                    <p className="border-t border-black/5 px-4 py-3 text-[13px] text-late">
+                      بعض مواد الموديل غير كافية في هذا الفرع — اطلبها من المخزن الرئيسي.
+                    </p>
+                  )}
+                </div>
+              )
+            ) : (
+              <p className="border-t border-black/5 px-4 py-4 text-[13px] text-muted-foreground">
+                اختر الموديل لتظهر مواده المستخدمة.
+              </p>
+            ))}
+
+          {newModel && (
+            <div className="border-t border-black/5">
+              <p className="px-4 pt-3 text-[12px] text-muted-foreground">
+                اختر القماش والدانتيل والتطريز وبقية المواد بكمياتها — تُحجز من مخزون فرعك بعد الحفظ.
+              </p>
+              {groups.length === 0 ? (
+                <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">
+                  لا توجد مواد في المخزون بعد.
+                </p>
+              ) : (
+                groups.map((g) => (
+                  <div key={g.key}>
+                    <p className="bg-ivory px-4 py-2 text-[12px] font-medium">{g.label}</p>
+                    <ul className="divide-y divide-black/5">
+                      {g.rows.map((m) => {
+                        const s2 = stockOf(stock, m.id, writeBranchId);
+                        return (
+                          <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                            <span className="min-w-0 flex-1 truncate text-[14px]">{m.name}</span>
+                            <span className="num text-[12px] text-muted-foreground">
+                              متاح {qty(s2.available)} {m.unit}
+                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              className="field w-24"
+                              placeholder="0"
+                              value={picked[m.id] ?? ""}
+                              onChange={(e) => setPicked((p) => ({ ...p, [m.id]: e.target.value }))}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </Card>
 

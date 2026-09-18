@@ -33,6 +33,8 @@ import { Route as AuthenticatedFinanceTrialBalanceRouteImport } from './routes/_
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
 import { Route as AuthenticatedInventoryMaterialIdRouteImport } from './routes/_authenticated/inventory.$materialId'
 import { Route as AuthenticatedInventoryRequestsRouteImport } from './routes/_authenticated/inventory.requests'
+import { Route as AuthenticatedModelsIndexRouteImport } from './routes/_authenticated/models.index'
+import { Route as AuthenticatedModelsModelIdRouteImport } from './routes/_authenticated/models.$modelId'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
@@ -180,6 +182,18 @@ const AuthenticatedInventoryRequestsRoute =
     path: '/inventory/requests',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedModelsIndexRoute =
+  AuthenticatedModelsIndexRouteImport.update({
+    id: '/models/',
+    path: '/models/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedModelsModelIdRoute =
+  AuthenticatedModelsModelIdRouteImport.update({
+    id: '/models/$modelId',
+    path: '/models/$modelId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdersIndexRoute =
   AuthenticatedOrdersIndexRouteImport.update({
     id: '/orders/',
@@ -297,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/inventory/requests': typeof AuthenticatedInventoryRequestsRoute
+  '/models/$modelId': typeof AuthenticatedModelsModelIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
@@ -310,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
+  '/models/': typeof AuthenticatedModelsIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
   '/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
@@ -338,6 +354,7 @@ export interface FileRoutesByTo {
   '/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/inventory/requests': typeof AuthenticatedInventoryRequestsRoute
+  '/models/$modelId': typeof AuthenticatedModelsModelIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
@@ -351,6 +368,7 @@ export interface FileRoutesByTo {
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/inventory': typeof AuthenticatedInventoryIndexRoute
+  '/models': typeof AuthenticatedModelsIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
   '/rentals': typeof AuthenticatedRentalsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
@@ -381,6 +399,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/_authenticated/inventory/requests': typeof AuthenticatedInventoryRequestsRoute
+  '/_authenticated/models/$modelId': typeof AuthenticatedModelsModelIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
   '/_authenticated/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
@@ -394,6 +413,7 @@ export interface FileRoutesById {
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
+  '/_authenticated/models/': typeof AuthenticatedModelsIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
   '/_authenticated/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
@@ -424,6 +444,7 @@ export interface FileRouteTypes {
     | '/finance/trial-balance'
     | '/inventory/$materialId'
     | '/inventory/requests'
+    | '/models/$modelId'
     | '/orders/$orderId'
     | '/orders/new'
     | '/rentals/$dressId'
@@ -437,6 +458,7 @@ export interface FileRouteTypes {
     | '/staff/$userId'
     | '/finance/'
     | '/inventory/'
+    | '/models/'
     | '/orders/'
     | '/rentals/'
     | '/settings/'
@@ -465,6 +487,7 @@ export interface FileRouteTypes {
     | '/finance/trial-balance'
     | '/inventory/$materialId'
     | '/inventory/requests'
+    | '/models/$modelId'
     | '/orders/$orderId'
     | '/orders/new'
     | '/rentals/$dressId'
@@ -478,6 +501,7 @@ export interface FileRouteTypes {
     | '/staff/$userId'
     | '/finance'
     | '/inventory'
+    | '/models'
     | '/orders'
     | '/rentals'
     | '/settings'
@@ -507,6 +531,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/trial-balance'
     | '/_authenticated/inventory/$materialId'
     | '/_authenticated/inventory/requests'
+    | '/_authenticated/models/$modelId'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
     | '/_authenticated/rentals/$dressId'
@@ -520,6 +545,7 @@ export interface FileRouteTypes {
     | '/_authenticated/staff/$userId'
     | '/_authenticated/finance/'
     | '/_authenticated/inventory/'
+    | '/_authenticated/models/'
     | '/_authenticated/orders/'
     | '/_authenticated/rentals/'
     | '/_authenticated/settings/'
@@ -703,6 +729,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryRequestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/models/': {
+      id: '/_authenticated/models/'
+      path: '/models'
+      fullPath: '/models/'
+      preLoaderRoute: typeof AuthenticatedModelsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/models/$modelId': {
+      id: '/_authenticated/models/$modelId'
+      path: '/models/$modelId'
+      fullPath: '/models/$modelId'
+      preLoaderRoute: typeof AuthenticatedModelsModelIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders/': {
       id: '/_authenticated/orders/'
       path: '/orders'
@@ -838,6 +878,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceTrialBalanceRoute: typeof AuthenticatedFinanceTrialBalanceRoute
   AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
   AuthenticatedInventoryRequestsRoute: typeof AuthenticatedInventoryRequestsRoute
+  AuthenticatedModelsModelIdRoute: typeof AuthenticatedModelsModelIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
   AuthenticatedRentalsDressIdRoute: typeof AuthenticatedRentalsDressIdRoute
@@ -851,6 +892,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
+  AuthenticatedModelsIndexRoute: typeof AuthenticatedModelsIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
   AuthenticatedRentalsIndexRoute: typeof AuthenticatedRentalsIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
@@ -878,6 +920,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceTrialBalanceRoute: AuthenticatedFinanceTrialBalanceRoute,
   AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
   AuthenticatedInventoryRequestsRoute: AuthenticatedInventoryRequestsRoute,
+  AuthenticatedModelsModelIdRoute: AuthenticatedModelsModelIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
   AuthenticatedRentalsDressIdRoute: AuthenticatedRentalsDressIdRoute,
@@ -894,6 +937,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
+  AuthenticatedModelsIndexRoute: AuthenticatedModelsIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
   AuthenticatedRentalsIndexRoute: AuthenticatedRentalsIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
