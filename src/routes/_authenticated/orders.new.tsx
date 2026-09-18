@@ -175,7 +175,7 @@ function NewOrderPage() {
             method,
             paidAt: form.booked_at,
             cashAccountId: cashAccountId || undefined,
-            isDeposit: true,
+            notes: "دفعة عند إنشاء الطلب",
           });
         } catch {
           toast.error("تم حفظ الطلب لكن تعذر تسجيل سند القبض — سجّله من صفحة الطلب");
