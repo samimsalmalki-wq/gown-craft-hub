@@ -113,6 +113,13 @@
       "when": 1789759304568,
       "tag": "0015_order_external_invoice_no",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789764086196,
+      "tag": "0016_models_catalog",
+      "breakpoints": true
     }
   ]
 }

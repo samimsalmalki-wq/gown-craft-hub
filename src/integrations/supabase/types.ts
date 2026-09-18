@@ -924,6 +924,121 @@ export type Database = {
         }
         Relationships: []
       }
+      model_images: {
+        Row: {
+          created_at: string
+          id: string
+          model_id: string
+          position: number
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_id: string
+          position?: number
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_id?: string
+          position?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_images_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_materials: {
+        Row: {
+          id: string
+          material_id: string
+          model_id: string
+          qty: number
+        }
+        Insert: {
+          id?: string
+          material_id: string
+          model_id: string
+          qty: number
+        }
+        Update: {
+          id?: string
+          material_id?: string
+          model_id?: string
+          qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_materials_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_materials_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      models: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          est_price: number
+          id: string
+          is_active: boolean
+          item_type_id: string | null
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          est_price?: number
+          id?: string
+          is_active?: boolean
+          item_type_id?: string | null
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          est_price?: number
+          id?: string
+          is_active?: boolean
+          item_type_id?: string | null
+          name?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "models_item_type_id_fkey"
+            columns: ["item_type_id"]
+            isOneToOne: false
+            referencedRelation: "item_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1203,6 +1318,7 @@ export type Database = {
           item_type_id: string | null
           materials: string | null
           measurements: Json
+          model_id: string | null
           model_no: string | null
           notes: string | null
           order_kind: Database["public"]["Enums"]["order_kind"]
@@ -1236,6 +1352,7 @@ export type Database = {
           item_type_id?: string | null
           materials?: string | null
           measurements?: Json
+          model_id?: string | null
           model_no?: string | null
           notes?: string | null
           order_kind?: Database["public"]["Enums"]["order_kind"]
@@ -1269,6 +1386,7 @@ export type Database = {
           item_type_id?: string | null
           materials?: string | null
           measurements?: Json
+          model_id?: string | null
           model_no?: string | null
           notes?: string | null
           order_kind?: Database["public"]["Enums"]["order_kind"]
@@ -1294,6 +1412,13 @@ export type Database = {
             columns: ["item_type_id"]
             isOneToOne: false
             referencedRelation: "item_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
             referencedColumns: ["id"]
           },
           {
