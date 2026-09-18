@@ -283,21 +283,20 @@ function NewOrderPage() {
                 <Field label="المدفوع" hint="يُسجَّل سند قبض تلقائيًا بهذا المبلغ">
                   <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
                 </Field>
-                <Field label="طريقة الدفع">
+                <Field
+                  label="طريقة الدفع"
+                  hint={
+                    autoAccount
+                      ? `يُسجَّل في: ${autoAccount.name}`
+                      : method === "other"
+                        ? "يُسجَّل بدون صندوق"
+                        : "لا يوجد صندوق مناسب لهذه الطريقة — أضِفه من الإعدادات › الصناديق"
+                  }
+                >
                   <select className="field" value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
                     {METHODS.map((m) => (
                       <option key={m} value={m}>
                         {PAYMENT_METHOD_LABEL[m]}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="الصندوق" hint="المبلغ يدخل هذا الصندوق">
-                  <select className="field" value={cashAccountId} onChange={(e) => setCashAccountId(e.target.value)}>
-                    <option value="">بدون صندوق</option>
-                    {cashAccounts.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
                       </option>
                     ))}
                   </select>
