@@ -181,7 +181,7 @@ function NewOrderPage() {
             amount: paid,
             method,
             paidAt: form.booked_at,
-            cashAccountId: cashAccountId || undefined,
+            cashAccountId: autoAccount?.id ?? undefined,
             notes: "دفعة عند إنشاء الطلب",
           });
         } catch {
