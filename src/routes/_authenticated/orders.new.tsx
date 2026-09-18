@@ -259,7 +259,7 @@ function NewOrderPage() {
             )}
             <Field label="نوع التفصيل" hint={ORDER_KIND_HINT[kind]}>
               <select className="field" value={kind} onChange={(e) => setKind(e.target.value as OrderKind)}>
-                {KINDS.map((k) => (
+                {(kind === "rental_stock" ? KINDS : SELECTABLE_KINDS).map((k) => (
                   <option key={k} value={k}>
                     {ORDER_KIND_LABEL[k]}
                   </option>
