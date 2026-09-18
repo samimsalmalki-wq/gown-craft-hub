@@ -236,6 +236,25 @@ function NewOrderPage() {
       <form onSubmit={submit} className="grid max-w-3xl gap-5">
         <Card title="بيانات العميلة">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
+            <Field label="رقم الفاتورة من نظام المبيعات" hint="إلزامي — لا يتكرر بين الطلبات">
+              <input
+                className="field"
+                dir="ltr"
+                value={form.external_invoice_no}
+                onChange={set("external_invoice_no")}
+                required
+              />
+            </Field>
+            {kind !== "rental_stock" && (
+              <>
+                <Field label="اسم العميلة">
+                  <input className="field" value={form.client_name} onChange={set("client_name")} required />
+                </Field>
+                <Field label="رقم الجوال">
+                  <input className="field" dir="ltr" value={form.client_phone} onChange={set("client_phone")} />
+                </Field>
+              </>
+            )}
             <Field label="نوع التفصيل" hint={ORDER_KIND_HINT[kind]}>
               <select className="field" value={kind} onChange={(e) => setKind(e.target.value as OrderKind)}>
                 {KINDS.map((k) => (
@@ -256,28 +275,6 @@ function NewOrderPage() {
                     </option>
                   ))}
               </select>
-            </Field>
-            {kind !== "rental_stock" && (
-              <>
-                <Field label="اسم العميلة">
-                  <input className="field" value={form.client_name} onChange={set("client_name")} required />
-                </Field>
-                <Field label="رقم الجوال">
-                  <input className="field" dir="ltr" value={form.client_phone} onChange={set("client_phone")} />
-                </Field>
-                <Field label="بيانات تواصل أخرى">
-                  <input className="field" value={form.client_contact} onChange={set("client_contact")} />
-                </Field>
-              </>
-            )}
-            <Field label="رقم الفاتورة من نظام المبيعات" hint="إلزامي — لا يتكرر بين الطلبات">
-              <input
-                className="field"
-                dir="ltr"
-                value={form.external_invoice_no}
-                onChange={set("external_invoice_no")}
-                required
-              />
             </Field>
             <Field label="ملاحظات العمل">
               <textarea className="field min-h-24" value={form.notes} onChange={set("notes")} />
