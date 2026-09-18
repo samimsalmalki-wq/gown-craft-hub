@@ -14,6 +14,8 @@ import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/finance";
 import { ORDER_KIND_HINT, ORDER_KIND_LABEL, money, type OrderKind } from "@/lib/atelier";
 
 const KINDS: OrderKind[] = ["own", "rental", "rental_stock"];
+// إنتاج للإيجار يُفتح من شاشة فساتين الإيجار فقط
+const SELECTABLE_KINDS: OrderKind[] = ["own", "rental"];
 const METHODS: PaymentMethod[] = ["cash", "card", "transfer", "other"];
 const METHOD_ACCOUNT_KIND: Record<PaymentMethod, "cash" | "card" | "bank" | null> = {
   cash: "cash",
@@ -257,7 +259,7 @@ function NewOrderPage() {
             )}
             <Field label="نوع التفصيل" hint={ORDER_KIND_HINT[kind]}>
               <select className="field" value={kind} onChange={(e) => setKind(e.target.value as OrderKind)}>
-                {KINDS.map((k) => (
+                {(kind === "rental_stock" ? KINDS : SELECTABLE_KINDS).map((k) => (
                   <option key={k} value={k}>
                     {ORDER_KIND_LABEL[k]}
                   </option>
