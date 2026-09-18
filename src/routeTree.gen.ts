@@ -34,6 +34,7 @@ import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedInventoryMaterialIdRouteImport } from './routes/_authenticated/inventory.$materialId'
 import { Route as AuthenticatedInventoryRequestsRouteImport } from './routes/_authenticated/inventory.requests'
 import { Route as AuthenticatedModelsIndexRouteImport } from './routes/_authenticated/models.index'
+import { Route as AuthenticatedModelsModelIdRouteImport } from './routes/_authenticated/models.$modelId'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as AuthenticatedOrdersNewRouteImport } from './routes/_authenticated/orders.new'
@@ -187,6 +188,12 @@ const AuthenticatedModelsIndexRoute =
     path: '/models/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedModelsModelIdRoute =
+  AuthenticatedModelsModelIdRouteImport.update({
+    id: '/models/$modelId',
+    path: '/models/$modelId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdersIndexRoute =
   AuthenticatedOrdersIndexRouteImport.update({
     id: '/orders/',
@@ -304,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/inventory/requests': typeof AuthenticatedInventoryRequestsRoute
+  '/models/$modelId': typeof AuthenticatedModelsModelIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
@@ -346,6 +354,7 @@ export interface FileRoutesByTo {
   '/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/inventory/requests': typeof AuthenticatedInventoryRequestsRoute
+  '/models/$modelId': typeof AuthenticatedModelsModelIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/orders/new': typeof AuthenticatedOrdersNewRoute
   '/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
@@ -390,6 +399,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/trial-balance': typeof AuthenticatedFinanceTrialBalanceRoute
   '/_authenticated/inventory/$materialId': typeof AuthenticatedInventoryMaterialIdRoute
   '/_authenticated/inventory/requests': typeof AuthenticatedInventoryRequestsRoute
+  '/_authenticated/models/$modelId': typeof AuthenticatedModelsModelIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/orders/new': typeof AuthenticatedOrdersNewRoute
   '/_authenticated/rentals/$dressId': typeof AuthenticatedRentalsDressIdRoute
@@ -434,6 +444,7 @@ export interface FileRouteTypes {
     | '/finance/trial-balance'
     | '/inventory/$materialId'
     | '/inventory/requests'
+    | '/models/$modelId'
     | '/orders/$orderId'
     | '/orders/new'
     | '/rentals/$dressId'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/finance/trial-balance'
     | '/inventory/$materialId'
     | '/inventory/requests'
+    | '/models/$modelId'
     | '/orders/$orderId'
     | '/orders/new'
     | '/rentals/$dressId'
@@ -519,6 +531,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/trial-balance'
     | '/_authenticated/inventory/$materialId'
     | '/_authenticated/inventory/requests'
+    | '/_authenticated/models/$modelId'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/orders/new'
     | '/_authenticated/rentals/$dressId'
@@ -723,6 +736,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModelsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/models/$modelId': {
+      id: '/_authenticated/models/$modelId'
+      path: '/models/$modelId'
+      fullPath: '/models/$modelId'
+      preLoaderRoute: typeof AuthenticatedModelsModelIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders/': {
       id: '/_authenticated/orders/'
       path: '/orders'
@@ -858,6 +878,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceTrialBalanceRoute: typeof AuthenticatedFinanceTrialBalanceRoute
   AuthenticatedInventoryMaterialIdRoute: typeof AuthenticatedInventoryMaterialIdRoute
   AuthenticatedInventoryRequestsRoute: typeof AuthenticatedInventoryRequestsRoute
+  AuthenticatedModelsModelIdRoute: typeof AuthenticatedModelsModelIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
   AuthenticatedRentalsDressIdRoute: typeof AuthenticatedRentalsDressIdRoute
@@ -899,6 +920,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceTrialBalanceRoute: AuthenticatedFinanceTrialBalanceRoute,
   AuthenticatedInventoryMaterialIdRoute: AuthenticatedInventoryMaterialIdRoute,
   AuthenticatedInventoryRequestsRoute: AuthenticatedInventoryRequestsRoute,
+  AuthenticatedModelsModelIdRoute: AuthenticatedModelsModelIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
   AuthenticatedRentalsDressIdRoute: AuthenticatedRentalsDressIdRoute,
