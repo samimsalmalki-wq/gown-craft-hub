@@ -48,6 +48,7 @@ const NAV: NavItem[] = [
   { to: "/late", label: "المتأخرات", icon: AlarmClock },
   { to: "/finance", label: "الماليات", icon: Wallet, financeOnly: true },
   { to: "/inventory", label: "مخزون المواد", icon: Boxes },
+  { to: "/models", label: "الموديلات", icon: Shirt },
   { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
   { to: "/reports", label: "تقرير الأداء", icon: BarChart3, managerOnly: true },
   { to: "/settings", label: "الإعدادات", icon: Settings2 },
