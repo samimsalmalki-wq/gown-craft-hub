@@ -121,6 +121,11 @@ function OrderDetailPage() {
           <Card title="بيانات العميلة">
             <dl className="divide-y divide-line text-[13px]">
               <Row label="رقم الطلب" value={<span className="num text-gold">{order.order_no}</span>} />
+              <Row
+                label="رقم الفاتورة الخارجي"
+                value={<span className="num" dir="ltr">{order.external_invoice_no || "—"}</span>}
+              />
+
               <Row label="الاسم" value={order.client_name} />
               <Row label="الجوال" value={<span dir="ltr">{order.client_phone || "—"}</span>} />
               <Row label="تواصل" value={order.client_contact || "—"} />
