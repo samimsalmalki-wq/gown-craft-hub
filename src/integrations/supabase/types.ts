@@ -1195,6 +1195,7 @@ export type Database = {
           due_date: string | null
           embroidery_model: string | null
           event_date: string | null
+          external_invoice_no: string | null
           fitting1_date: string | null
           fitting2_date: string | null
           id: string
@@ -1227,6 +1228,7 @@ export type Database = {
           due_date?: string | null
           embroidery_model?: string | null
           event_date?: string | null
+          external_invoice_no?: string | null
           fitting1_date?: string | null
           fitting2_date?: string | null
           id?: string
@@ -1259,6 +1261,7 @@ export type Database = {
           due_date?: string | null
           embroidery_model?: string | null
           event_date?: string | null
+          external_invoice_no?: string | null
           fitting1_date?: string | null
           fitting2_date?: string | null
           id?: string

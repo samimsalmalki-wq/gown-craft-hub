@@ -9,9 +9,13 @@ import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
 import { available, qty } from "@/lib/inventory";
 import { useBranchScope } from "@/lib/branches";
 import { useItemTypes } from "@/lib/data";
-import { ORDER_KIND_HINT, ORDER_KIND_LABEL, type OrderKind } from "@/lib/atelier";
+import { useAddPayment, useCashAccounts } from "@/lib/finance-data";
+import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/finance";
+import { ORDER_KIND_HINT, ORDER_KIND_LABEL, money, type OrderKind } from "@/lib/atelier";
 
 const KINDS: OrderKind[] = ["own", "rental", "rental_stock"];
+const METHODS: PaymentMethod[] = ["cash", "card", "transfer", "other"];
+
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
   validateSearch: (
@@ -65,18 +69,33 @@ function NewOrderPage() {
     total_amount: "",
     deposit_amount: "",
     security_deposit: "",
+    external_invoice_no: "",
     materials: "",
     notes: "",
     model_no: search.model ?? "",
     embroidery_model: "",
   });
+  const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [cashAccountId, setCashAccountId] = useState("");
   const [measures, setMeasures] = useState<Record<string, string>>({});
   const [secondFitting, setSecondFitting] = useState(false);
   const [newModel, setNewModel] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: materials = [] } = useMaterials();
+  const { data: cashAccounts = [] } = useCashAccounts();
+  const addPayment = useAddPayment();
   const reserve = useReserveMaterial();
   const [picked, setPicked] = useState<Record<string, string>>({});
+
+  const paidNow = Number(form.deposit_amount || 0);
+  const remaining = Number(form.total_amount || 0) - paidNow;
+
+  useEffect(() => {
+    if (cashAccountId || cashAccounts.length === 0) return;
+    const preferred = cashAccounts.find((a) => a.kind === "cash") ?? cashAccounts[0];
+    if (preferred) setCashAccountId(preferred.id);
+  }, [cashAccounts, cashAccountId]);
+
 
   // عند اختيار موديل تطريز لموديل جديد: نحجز قطع التطريز المطابقة تلقائيًا
   useEffect(() => {
@@ -107,7 +126,7 @@ function NewOrderPage() {
     setBusy(true);
     try {
       const total = Number(form.total_amount || 0);
-      const deposit = Number(form.deposit_amount || 0);
+      const paid = Number(form.deposit_amount || 0);
       const isStock = kind === "rental_stock";
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? null;
@@ -117,6 +136,7 @@ function NewOrderPage() {
           order_kind: kind,
           item_type_id: itemTypeId || null,
           security_deposit: kind === "rental" ? Number(form.security_deposit || 0) : 0,
+          external_invoice_no: form.external_invoice_no.trim() || null,
           client_name: isStock ? form.client_name || "مخزون المحل" : form.client_name,
           client_phone: form.client_phone || null,
           client_contact: form.client_contact || null,
@@ -126,8 +146,8 @@ function NewOrderPage() {
           due_date: form.due_date || null,
           event_date: form.event_date || null,
           total_amount: total,
-          deposit_amount: deposit,
-          payment_status: deposit <= 0 ? "unpaid" : deposit >= total ? "paid" : "partial",
+          deposit_amount: 0,
+          payment_status: "unpaid",
           materials: form.materials || null,
           notes: form.notes || null,
           measurements: measures,
@@ -139,7 +159,29 @@ function NewOrderPage() {
         })
         .select("id")
         .single();
-      if (error) throw error;
+      if (error) {
+        if (error.code === "23505" && String(error.message).includes("external_invoice_no")) {
+          throw new Error("رقم الفاتورة الخارجي مستخدم في طلب آخر");
+        }
+        throw error;
+      }
+
+      if (paid > 0) {
+        try {
+          await addPayment.mutateAsync({
+            scope: "order",
+            orderId: data.id,
+            amount: paid,
+            method,
+            paidAt: form.booked_at,
+            cashAccountId: cashAccountId || undefined,
+            notes: "دفعة عند إنشاء الطلب",
+          });
+        } catch {
+          toast.error("تم حفظ الطلب لكن تعذر تسجيل سند القبض — سجّله من صفحة الطلب");
+        }
+      }
+
 
       if (attachments.length) {
         try {
@@ -185,7 +227,7 @@ function NewOrderPage() {
   return (
     <AppShell eyebrow="إضافة" title="طلب جديد" subtitle="رقم الطلب يُنشأ تلقائيًا بعد الحفظ.">
       <form onSubmit={submit} className="grid max-w-3xl gap-5">
-        <Card title="نوع الطلب">
+        <Card title="بيانات العميلة">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
             <Field label="نوع التفصيل" hint={ORDER_KIND_HINT[kind]}>
               <select className="field" value={kind} onChange={(e) => setKind(e.target.value as OrderKind)}>
@@ -208,37 +250,58 @@ function NewOrderPage() {
                   ))}
               </select>
             </Field>
+            {kind !== "rental_stock" && (
+              <>
+                <Field label="اسم العميلة">
+                  <input className="field" value={form.client_name} onChange={set("client_name")} required />
+                </Field>
+                <Field label="رقم الجوال">
+                  <input className="field" dir="ltr" value={form.client_phone} onChange={set("client_phone")} />
+                </Field>
+                <Field label="بيانات تواصل أخرى">
+                  <input className="field" value={form.client_contact} onChange={set("client_contact")} />
+                </Field>
+              </>
+            )}
           </div>
         </Card>
 
-        {kind !== "rental_stock" && (
-          <Card title="بيانات العميلة">
-            <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-              <Field label="اسم العميلة">
-                <input className="field" value={form.client_name} onChange={set("client_name")} required />
-              </Field>
-              <Field label="رقم الجوال">
-                <input className="field" dir="ltr" value={form.client_phone} onChange={set("client_phone")} />
-              </Field>
-              <Field label="بيانات تواصل أخرى">
-                <input className="field" value={form.client_contact} onChange={set("client_contact")} />
-              </Field>
-            </div>
-          </Card>
-        )}
-
-        <Card title="المالية والملاحظات">
+        <Card title="المالية">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-            <Field label={kind === "rental_stock" ? "تكلفة القطعة التقديرية" : "قيمة الفستان"}>
+            <Field label={kind === "rental_stock" ? "تكلفة القطعة التقديرية" : "قيمة الطلب"}>
               <input className="field" dir="ltr" inputMode="decimal" value={form.total_amount} onChange={set("total_amount")} />
             </Field>
             {kind !== "rental_stock" && (
-              <Field label="العربون">
-                <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
-              </Field>
+              <>
+                <Field label="المدفوع" hint="يُسجَّل سند قبض تلقائيًا بهذا المبلغ">
+                  <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
+                </Field>
+                <Field label="طريقة الدفع">
+                  <select className="field" value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
+                    {METHODS.map((m) => (
+                      <option key={m} value={m}>
+                        {PAYMENT_METHOD_LABEL[m]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="الصندوق" hint="المبلغ يدخل هذا الصندوق">
+                  <select className="field" value={cashAccountId} onChange={(e) => setCashAccountId(e.target.value)}>
+                    <option value="">بدون صندوق</option>
+                    {cashAccounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="المتبقي" hint="يُحسب تلقائيًا">
+                  <input className="field num" dir="ltr" value={money(remaining)} readOnly disabled />
+                </Field>
+              </>
             )}
             {kind === "rental" && (
-              <Field label="مبلغ التأمين" hint="يُرد للعميلة عند إرجاع الفستان سليمًا">
+              <Field label="مبلغ التأمين" hint="يُحصَّل عند التسليم ويُرد عند إرجاع الفستان سليمًا">
                 <input
                   className="field"
                   dir="ltr"
@@ -248,6 +311,14 @@ function NewOrderPage() {
                 />
               </Field>
             )}
+            <Field label="رقم الفاتورة الخارجي" hint="اختياري — لا يتكرر بين الطلبات">
+              <input
+                className="field"
+                dir="ltr"
+                value={form.external_invoice_no}
+                onChange={set("external_invoice_no")}
+              />
+            </Field>
             <Field label="الخامات المطلوبة">
               <textarea className="field min-h-24" value={form.materials} onChange={set("materials")} />
             </Field>
@@ -256,6 +327,7 @@ function NewOrderPage() {
             </Field>
           </div>
         </Card>
+
 
         <Card title="المواعيد">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">

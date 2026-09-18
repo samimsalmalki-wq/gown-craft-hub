@@ -47,7 +47,13 @@ function OrdersPage() {
     .filter((o) =>
       !needle
         ? true
-        : [o.order_no, o.client_name, o.client_phone ?? "", o.client_contact ?? ""].some((v) =>
+        : [
+            o.order_no,
+            o.external_invoice_no ?? "",
+            o.client_name,
+            o.client_phone ?? "",
+            o.client_contact ?? "",
+          ].some((v) =>
             v.toLowerCase().includes(needle),
           ),
     );
