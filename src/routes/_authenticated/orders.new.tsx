@@ -10,8 +10,8 @@ import { available, qty } from "@/lib/inventory";
 import { useBranchScope } from "@/lib/branches";
 import { useItemTypes } from "@/lib/data";
 import { useAddPayment, useCashAccounts } from "@/lib/finance-data";
-import { PAYMENT_METHOD_LABEL, money, type PaymentMethod } from "@/lib/finance";
-import { ORDER_KIND_HINT, ORDER_KIND_LABEL, type OrderKind } from "@/lib/atelier";
+import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/finance";
+import { ORDER_KIND_HINT, ORDER_KIND_LABEL, money, type OrderKind } from "@/lib/atelier";
 
 const KINDS: OrderKind[] = ["own", "rental", "rental_stock"];
 const METHODS: PaymentMethod[] = ["cash", "card", "transfer", "other"];
