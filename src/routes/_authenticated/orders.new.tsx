@@ -161,7 +161,7 @@ function NewOrderPage() {
           materials: form.materials || null,
           notes: form.notes || null,
           measurements: measures,
-          model_no: newModel ? null : (selectedModel?.code ?? form.model_no || null),
+          model_no: newModel ? null : (selectedModel?.code ?? (form.model_no || null)),
           model_id: newModel ? null : modelId || null,
           is_new_model: newModel,
           embroidery_model: null,
