@@ -148,7 +148,10 @@ function OrderDetailPage() {
               <Row label="نوع التفصيل" value={ORDER_KIND_LABEL[order.order_kind]} />
               <Row label="نوع القطعة" value={<ItemTypeValue id={order.item_type_id} />} />
               <Row label="نوع الموديل" value={order.is_new_model ? "موديل جديد" : "موديل موجود"} />
-              <Row label="رقم الموديل" value={order.model_no || "—"} />
+              <Row
+                label="رقم الموديل"
+                value={<ModelValue modelId={order.model_id} fallback={order.model_no} />}
+              />
               <Row label="موديل التطريز" value={order.embroidery_model || "—"} />
             </dl>
           </Card>
