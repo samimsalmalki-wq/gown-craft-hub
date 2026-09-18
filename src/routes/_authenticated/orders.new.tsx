@@ -89,11 +89,13 @@ function NewOrderPage() {
   const paidNow = Number(form.deposit_amount || 0);
   const remaining = Number(form.total_amount || 0) - paidNow;
 
-  useEffect(() => {
-    if (cashAccountId || cashAccounts.length === 0) return;
-    const preferred = cashAccounts.find((a) => a.kind === "cash") ?? cashAccounts[0];
-    if (preferred) setCashAccountId(preferred.id);
-  }, [cashAccounts, cashAccountId]);
+  // الصندوق يُشتق تلقائيًا من طريقة الدفع وفرع الطلب
+  const autoAccount = useMemo(() => {
+    const wanted = METHOD_ACCOUNT_KIND[method];
+    if (!wanted) return null;
+    const same = cashAccounts.filter((a) => a.kind === wanted);
+    return same.find((a) => a.branch_id === writeBranchId) ?? same[0] ?? null;
+  }, [cashAccounts, method, writeBranchId]);
 
 
   // عند اختيار موديل تطريز لموديل جديد: نحجز قطع التطريز المطابقة تلقائيًا
