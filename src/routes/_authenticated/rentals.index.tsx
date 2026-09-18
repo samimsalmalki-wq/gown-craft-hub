@@ -96,7 +96,16 @@ function RentalsPage() {
       eyebrow="الطلبات"
       title="فساتين الإيجار"
       subtitle="حالة كل فستان وسجل إيجاراته ومواعيد الإرجاع."
-      actions={isManager ? <Btn onClick={() => setOpen(true)}>فستان جديد</Btn> : undefined}
+      actions={
+        isManager ? (
+          <div className="flex flex-wrap gap-2">
+            <Btn onClick={() => setOpen(true)}>فستان جديد</Btn>
+            <Link to="/orders/new" search={{ kind: "rental_stock" }}>
+              <Btn variant="quiet">طلب إنتاج قطعة للإيجار</Btn>
+            </Link>
+          </div>
+        ) : undefined
+      }
     >
       <OrdersTabs />
 
