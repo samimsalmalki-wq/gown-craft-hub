@@ -76,7 +76,6 @@ function NewOrderPage() {
     embroidery_model: "",
   });
   const [method, setMethod] = useState<PaymentMethod>("cash");
-  const [cashAccountId, setCashAccountId] = useState("");
   const [measures, setMeasures] = useState<Record<string, string>>({});
   const [secondFitting, setSecondFitting] = useState(false);
   const [newModel, setNewModel] = useState(false);
