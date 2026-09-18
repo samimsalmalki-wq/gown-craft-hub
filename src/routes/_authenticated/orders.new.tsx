@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -15,6 +15,12 @@ import { ORDER_KIND_HINT, ORDER_KIND_LABEL, money, type OrderKind } from "@/lib/
 
 const KINDS: OrderKind[] = ["own", "rental", "rental_stock"];
 const METHODS: PaymentMethod[] = ["cash", "card", "transfer", "other"];
+const METHOD_ACCOUNT_KIND: Record<PaymentMethod, "cash" | "card" | "bank" | null> = {
+  cash: "cash",
+  card: "card",
+  transfer: "bank",
+  other: null,
+};
 
 
 export const Route = createFileRoute("/_authenticated/orders/new")({
@@ -76,7 +82,6 @@ function NewOrderPage() {
     embroidery_model: "",
   });
   const [method, setMethod] = useState<PaymentMethod>("cash");
-  const [cashAccountId, setCashAccountId] = useState("");
   const [measures, setMeasures] = useState<Record<string, string>>({});
   const [secondFitting, setSecondFitting] = useState(false);
   const [newModel, setNewModel] = useState(false);
@@ -90,11 +95,13 @@ function NewOrderPage() {
   const paidNow = Number(form.deposit_amount || 0);
   const remaining = Number(form.total_amount || 0) - paidNow;
 
-  useEffect(() => {
-    if (cashAccountId || cashAccounts.length === 0) return;
-    const preferred = cashAccounts.find((a) => a.kind === "cash") ?? cashAccounts[0];
-    if (preferred) setCashAccountId(preferred.id);
-  }, [cashAccounts, cashAccountId]);
+  // الصندوق يُشتق تلقائيًا من طريقة الدفع وفرع الطلب
+  const autoAccount = useMemo(() => {
+    const wanted = METHOD_ACCOUNT_KIND[method];
+    if (!wanted) return null;
+    const same = cashAccounts.filter((a) => a.kind === wanted);
+    return same.find((a) => a.branch_id === writeBranchId) ?? same[0] ?? null;
+  }, [cashAccounts, method, writeBranchId]);
 
 
   // عند اختيار موديل تطريز لموديل جديد: نحجز قطع التطريز المطابقة تلقائيًا
@@ -174,7 +181,7 @@ function NewOrderPage() {
             amount: paid,
             method,
             paidAt: form.booked_at,
-            cashAccountId: cashAccountId || undefined,
+            cashAccountId: autoAccount?.id ?? undefined,
             notes: "دفعة عند إنشاء الطلب",
           });
         } catch {
@@ -276,21 +283,20 @@ function NewOrderPage() {
                 <Field label="المدفوع" hint="يُسجَّل سند قبض تلقائيًا بهذا المبلغ">
                   <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
                 </Field>
-                <Field label="طريقة الدفع">
+                <Field
+                  label="طريقة الدفع"
+                  hint={
+                    autoAccount
+                      ? `يُسجَّل في: ${autoAccount.name}`
+                      : method === "other"
+                        ? "يُسجَّل بدون صندوق"
+                        : "لا يوجد صندوق مناسب لهذه الطريقة — أضِفه من الإعدادات › الصناديق"
+                  }
+                >
                   <select className="field" value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
                     {METHODS.map((m) => (
                       <option key={m} value={m}>
                         {PAYMENT_METHOD_LABEL[m]}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="الصندوق" hint="المبلغ يدخل هذا الصندوق">
-                  <select className="field" value={cashAccountId} onChange={(e) => setCashAccountId(e.target.value)}>
-                    <option value="">بدون صندوق</option>
-                    {cashAccounts.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
                       </option>
                     ))}
                   </select>
