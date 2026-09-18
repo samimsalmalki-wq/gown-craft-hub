@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ import {
 } from "@/lib/inventory-data";
 import { DRESS_STATUS_LABEL, RETURN_CONDITIONS, isOutNow, qty } from "@/lib/inventory";
 import { useItemTypes } from "@/lib/data";
+import { useModel } from "@/lib/models-data";
 import {
   ALTERATION_STATUS_LABEL,
   ORDER_KIND_LABEL,
@@ -443,6 +444,18 @@ function NewAlterationSheet({
       </div>
     </Sheet>
   );
+}
+
+function ModelValue({ modelId, fallback }: { modelId: string | null; fallback: string | null }) {
+  const { data: model } = useModel(modelId ?? "");
+  if (model) {
+    return (
+      <Link to="/models/$modelId" params={{ modelId: model.id }} className="text-gold hover:underline">
+        {model.code} — {model.name}
+      </Link>
+    );
+  }
+  return <>{fallback || "—"}</>;
 }
 
 function ItemTypeValue({ id }: { id: string | null }) {
