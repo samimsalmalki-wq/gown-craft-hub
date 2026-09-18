@@ -227,7 +227,7 @@ function NewOrderPage() {
   return (
     <AppShell eyebrow="إضافة" title="طلب جديد" subtitle="رقم الطلب يُنشأ تلقائيًا بعد الحفظ.">
       <form onSubmit={submit} className="grid max-w-3xl gap-5">
-        <Card title="نوع الطلب">
+        <Card title="بيانات العميلة">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
             <Field label="نوع التفصيل" hint={ORDER_KIND_HINT[kind]}>
               <select className="field" value={kind} onChange={(e) => setKind(e.target.value as OrderKind)}>
@@ -250,37 +250,58 @@ function NewOrderPage() {
                   ))}
               </select>
             </Field>
+            {kind !== "rental_stock" && (
+              <>
+                <Field label="اسم العميلة">
+                  <input className="field" value={form.client_name} onChange={set("client_name")} required />
+                </Field>
+                <Field label="رقم الجوال">
+                  <input className="field" dir="ltr" value={form.client_phone} onChange={set("client_phone")} />
+                </Field>
+                <Field label="بيانات تواصل أخرى">
+                  <input className="field" value={form.client_contact} onChange={set("client_contact")} />
+                </Field>
+              </>
+            )}
           </div>
         </Card>
 
-        {kind !== "rental_stock" && (
-          <Card title="بيانات العميلة">
-            <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-              <Field label="اسم العميلة">
-                <input className="field" value={form.client_name} onChange={set("client_name")} required />
-              </Field>
-              <Field label="رقم الجوال">
-                <input className="field" dir="ltr" value={form.client_phone} onChange={set("client_phone")} />
-              </Field>
-              <Field label="بيانات تواصل أخرى">
-                <input className="field" value={form.client_contact} onChange={set("client_contact")} />
-              </Field>
-            </div>
-          </Card>
-        )}
-
-        <Card title="المالية والملاحظات">
+        <Card title="المالية">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-            <Field label={kind === "rental_stock" ? "تكلفة القطعة التقديرية" : "قيمة الفستان"}>
+            <Field label={kind === "rental_stock" ? "تكلفة القطعة التقديرية" : "قيمة الطلب"}>
               <input className="field" dir="ltr" inputMode="decimal" value={form.total_amount} onChange={set("total_amount")} />
             </Field>
             {kind !== "rental_stock" && (
-              <Field label="العربون">
-                <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
-              </Field>
+              <>
+                <Field label="المدفوع" hint="يُسجَّل سند قبض تلقائيًا بهذا المبلغ">
+                  <input className="field" dir="ltr" inputMode="decimal" value={form.deposit_amount} onChange={set("deposit_amount")} />
+                </Field>
+                <Field label="طريقة الدفع">
+                  <select className="field" value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
+                    {METHODS.map((m) => (
+                      <option key={m} value={m}>
+                        {PAYMENT_METHOD_LABEL[m]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="الصندوق" hint="المبلغ يدخل هذا الصندوق">
+                  <select className="field" value={cashAccountId} onChange={(e) => setCashAccountId(e.target.value)}>
+                    <option value="">بدون صندوق</option>
+                    {cashAccounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="المتبقي" hint="يُحسب تلقائيًا">
+                  <input className="field num" dir="ltr" value={money(remaining)} readOnly disabled />
+                </Field>
+              </>
             )}
             {kind === "rental" && (
-              <Field label="مبلغ التأمين" hint="يُرد للعميلة عند إرجاع الفستان سليمًا">
+              <Field label="مبلغ التأمين" hint="يُحصَّل عند التسليم ويُرد عند إرجاع الفستان سليمًا">
                 <input
                   className="field"
                   dir="ltr"
@@ -290,6 +311,14 @@ function NewOrderPage() {
                 />
               </Field>
             )}
+            <Field label="رقم الفاتورة الخارجي" hint="اختياري — لا يتكرر بين الطلبات">
+              <input
+                className="field"
+                dir="ltr"
+                value={form.external_invoice_no}
+                onChange={set("external_invoice_no")}
+              />
+            </Field>
             <Field label="الخامات المطلوبة">
               <textarea className="field min-h-24" value={form.materials} onChange={set("materials")} />
             </Field>
@@ -298,6 +327,7 @@ function NewOrderPage() {
             </Field>
           </div>
         </Card>
+
 
         <Card title="المواعيد">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
