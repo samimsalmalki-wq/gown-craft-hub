@@ -69,18 +69,33 @@ function NewOrderPage() {
     total_amount: "",
     deposit_amount: "",
     security_deposit: "",
+    external_invoice_no: "",
     materials: "",
     notes: "",
     model_no: search.model ?? "",
     embroidery_model: "",
   });
+  const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [cashAccountId, setCashAccountId] = useState("");
   const [measures, setMeasures] = useState<Record<string, string>>({});
   const [secondFitting, setSecondFitting] = useState(false);
   const [newModel, setNewModel] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: materials = [] } = useMaterials();
+  const { data: cashAccounts = [] } = useCashAccounts();
+  const addPayment = useAddPayment();
   const reserve = useReserveMaterial();
   const [picked, setPicked] = useState<Record<string, string>>({});
+
+  const paidNow = Number(form.deposit_amount || 0);
+  const remaining = Number(form.total_amount || 0) - paidNow;
+
+  useEffect(() => {
+    if (cashAccountId || cashAccounts.length === 0) return;
+    const preferred = cashAccounts.find((a) => a.kind === "cash") ?? cashAccounts[0];
+    if (preferred) setCashAccountId(preferred.id);
+  }, [cashAccounts, cashAccountId]);
+
 
   // عند اختيار موديل تطريز لموديل جديد: نحجز قطع التطريز المطابقة تلقائيًا
   useEffect(() => {
