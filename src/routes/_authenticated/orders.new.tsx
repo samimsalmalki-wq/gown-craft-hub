@@ -74,6 +74,7 @@ function NewOrderPage() {
     notes: "",
     model_no: search.model ?? "",
     embroidery_model: "",
+    model_notes: "",
   });
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [measures, setMeasures] = useState<Record<string, string>>({});
@@ -154,7 +155,10 @@ function NewOrderPage() {
           materials: newModel
             ? [...fabricIds, ...laceIds].map(nameOf).filter(Boolean).join(", ") || null
             : form.materials || null,
-          notes: form.notes || null,
+          notes:
+            [form.notes.trim(), form.model_notes.trim() && `ملاحظات الموديل: ${form.model_notes.trim()}`]
+              .filter(Boolean)
+              .join("\n") || null,
           measurements: measures,
           model_no: newModel ? null : (selectedModel?.code ?? (form.model_no || null)),
           model_id: newModel ? null : modelId || null,
@@ -414,6 +418,12 @@ function NewOrderPage() {
               <MultiPick label="نوع الدانتيل" options={laceOptions} value={laceIds} onChange={setLaceIds} />
             </div>
           )}
+
+          <div className="border-t border-black/5 px-4 py-4">
+            <Field label="ملاحظات الموديل" hint="تفاصيل التصنيع أو طلبات خاصة على الموديل">
+              <textarea className="field min-h-20" value={form.model_notes} onChange={set("model_notes")} />
+            </Field>
+          </div>
         </Card>
 
         <Card title="المقاسات (سم)">
