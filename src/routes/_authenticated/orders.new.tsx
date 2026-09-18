@@ -317,20 +317,6 @@ function NewOrderPage() {
                 />
               </Field>
             )}
-            <Field label="رقم الفاتورة الخارجي" hint="اختياري — لا يتكرر بين الطلبات">
-              <input
-                className="field"
-                dir="ltr"
-                value={form.external_invoice_no}
-                onChange={set("external_invoice_no")}
-              />
-            </Field>
-            <Field label="الخامات المطلوبة">
-              <textarea className="field min-h-24" value={form.materials} onChange={set("materials")} />
-            </Field>
-            <Field label="ملاحظات العميلة">
-              <textarea className="field min-h-24" value={form.notes} onChange={set("notes")} />
-            </Field>
           </div>
         </Card>
 
