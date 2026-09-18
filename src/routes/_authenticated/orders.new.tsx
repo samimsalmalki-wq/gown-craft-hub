@@ -126,7 +126,7 @@ function NewOrderPage() {
     setBusy(true);
     try {
       const total = Number(form.total_amount || 0);
-      const deposit = Number(form.deposit_amount || 0);
+      const paid = Number(form.deposit_amount || 0);
       const isStock = kind === "rental_stock";
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? null;
@@ -136,6 +136,7 @@ function NewOrderPage() {
           order_kind: kind,
           item_type_id: itemTypeId || null,
           security_deposit: kind === "rental" ? Number(form.security_deposit || 0) : 0,
+          external_invoice_no: form.external_invoice_no.trim() || null,
           client_name: isStock ? form.client_name || "مخزون المحل" : form.client_name,
           client_phone: form.client_phone || null,
           client_contact: form.client_contact || null,
@@ -145,8 +146,8 @@ function NewOrderPage() {
           due_date: form.due_date || null,
           event_date: form.event_date || null,
           total_amount: total,
-          deposit_amount: deposit,
-          payment_status: deposit <= 0 ? "unpaid" : deposit >= total ? "paid" : "partial",
+          deposit_amount: 0,
+          payment_status: "unpaid",
           materials: form.materials || null,
           notes: form.notes || null,
           measurements: measures,
@@ -158,7 +159,29 @@ function NewOrderPage() {
         })
         .select("id")
         .single();
-      if (error) throw error;
+      if (error) {
+        if (error.code === "23505" && String(error.message).includes("external_invoice_no")) {
+          throw new Error("رقم الفاتورة الخارجي مستخدم في طلب آخر");
+        }
+        throw error;
+      }
+
+      if (paid > 0) {
+        try {
+          await addPayment.mutateAsync({
+            scope: "order",
+            orderId: data.id,
+            amount: paid,
+            method,
+            paidAt: form.booked_at,
+            cashAccountId: cashAccountId || undefined,
+            isDeposit: true,
+          });
+        } catch {
+          toast.error("تم حفظ الطلب لكن تعذر تسجيل سند القبض — سجّله من صفحة الطلب");
+        }
+      }
+
 
       if (attachments.length) {
         try {
