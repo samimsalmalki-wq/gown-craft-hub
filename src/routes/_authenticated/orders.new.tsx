@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
 import { qty } from "@/lib/inventory";
 import { useBranchScope, useMaterialStock, stockOf } from "@/lib/branches";
-import { useItemTypes, useMaterialCategories } from "@/lib/data";
+import { useItemTypes } from "@/lib/data";
 import { useModelMaterials, useModels } from "@/lib/models-data";
 import { useAddPayment, useCashAccounts } from "@/lib/finance-data";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/finance";
@@ -82,14 +82,14 @@ function NewOrderPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: materials = [] } = useMaterials();
   const { data: models = [] } = useModels();
-  const { data: categories = [] } = useMaterialCategories();
   const { data: stock = [] } = useMaterialStock();
   const [modelId, setModelId] = useState("");
   const { data: modelMaterials = [] } = useModelMaterials(newModel ? null : modelId);
   const { data: cashAccounts = [] } = useCashAccounts();
   const addPayment = useAddPayment();
   const reserve = useReserveMaterial();
-  const [picked, setPicked] = useState<Record<string, string>>({});
+  const [fabricIds, setFabricIds] = useState<string[]>([]);
+  const [laceIds, setLaceIds] = useState<string[]>([]);
 
   const paidNow = Number(form.deposit_amount || 0);
   const remaining = Number(form.total_amount || 0) - paidNow;
@@ -115,16 +115,9 @@ function NewOrderPage() {
     (r) => stockOf(stock, r.material_id, writeBranchId).available < Number(r.qty),
   );
   const activeMaterials = materials.filter((m) => m.is_active);
-  const groups = [
-    ...categories
-      .filter((c) => c.is_active)
-      .map((c) => ({ key: c.key, label: c.label, rows: activeMaterials.filter((m) => m.category === c.key) })),
-    {
-      key: "__rest",
-      label: "مواد أخرى",
-      rows: activeMaterials.filter((m) => !categories.some((c) => c.is_active && c.key === m.category)),
-    },
-  ].filter((g) => g.rows.length > 0);
+  const fabricOptions = activeMaterials.filter((m) => m.category === "fabric");
+  const laceOptions = activeMaterials.filter((m) => m.category === "lace");
+  const nameOf = (id: string) => materials.find((m) => m.id === id)?.name ?? "";
 
   const set =
     (k: keyof typeof form) =>
@@ -158,7 +151,9 @@ function NewOrderPage() {
           total_amount: total,
           deposit_amount: 0,
           payment_status: "unpaid",
-          materials: form.materials || null,
+          materials: newModel
+            ? [...fabricIds, ...laceIds].map(nameOf).filter(Boolean).join(", ") || null
+            : form.materials || null,
           notes: form.notes || null,
           measurements: measures,
           model_no: newModel ? null : (selectedModel?.code ?? (form.model_no || null)),
@@ -216,9 +211,7 @@ function NewOrderPage() {
       const wanted =
         !newModel && modelId
           ? modelMaterials.map((r) => ({ materialId: r.material_id, amount: Number(r.qty) }))
-          : Object.entries(picked)
-              .map(([materialId, value]) => ({ materialId, amount: Number(value) }))
-              .filter((r) => r.amount > 0);
+          : [];
       if (wanted.length) {
         try {
           for (const row of wanted) {
@@ -396,84 +389,29 @@ function NewOrderPage() {
 
           {!newModel &&
             (modelId ? (
-              modelMaterials.length === 0 ? (
-                <p className="border-t border-black/5 px-4 py-4 text-[13px] text-muted-foreground">
-                  لم تُسجَّل مواد لهذا الموديل — أضِفها من صفحة الموديل.
-                </p>
-              ) : (
-                <div className="border-t border-black/5">
-                  <p className="px-4 pt-3 text-[12px] text-muted-foreground">
-                    مواد الموديل (كمياتها ثابتة كما في الموديل)
+              <div className="border-t border-black/5 px-4 py-3">
+                <p className="text-[12px] text-muted-foreground">مواد الموديل تُحجز تلقائيًا بعد الحفظ</p>
+                {shortMaterials.length > 0 && (
+                  <p className="mt-2 text-[13px] text-late">
+                    بعض مواد الموديل غير كافية في هذا الفرع — اطلبها من المخزن الرئيسي.
                   </p>
-                  <ul className="divide-y divide-black/5">
-                    {modelMaterials.map((r) => {
-                      const mat = materials.find((m) => m.id === r.material_id);
-                      const s2 = stockOf(stock, r.material_id, writeBranchId);
-                      const short = s2.available < Number(r.qty);
-                      return (
-                        <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                          <span className="min-w-0 flex-1 truncate text-[14px]">{mat?.name ?? "—"}</span>
-                          <span className="num text-[13px]">
-                            {qty(r.qty)} {mat?.unit ?? ""}
-                          </span>
-                          <span className={short ? "num text-[12px] text-late" : "num text-[12px] text-muted-foreground"}>
-                            متاح {qty(s2.available)}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  {shortMaterials.length > 0 && (
-                    <p className="border-t border-black/5 px-4 py-3 text-[13px] text-late">
-                      بعض مواد الموديل غير كافية في هذا الفرع — اطلبها من المخزن الرئيسي.
-                    </p>
-                  )}
-                </div>
-              )
+                )}
+              </div>
             ) : (
               <p className="border-t border-black/5 px-4 py-4 text-[13px] text-muted-foreground">
-                اختر الموديل لتظهر مواده المستخدمة.
+                اختر الموديل لتُحجز مواده تلقائيًا بعد الحفظ.
               </p>
             ))}
 
           {newModel && (
-            <div className="border-t border-black/5">
-              <p className="px-4 pt-3 text-[12px] text-muted-foreground">
-                اختر القماش والدانتيل والتطريز وبقية المواد بكمياتها — تُحجز من مخزون فرعك بعد الحفظ.
-              </p>
-              {groups.length === 0 ? (
-                <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">
-                  لا توجد مواد في المخزون بعد.
-                </p>
-              ) : (
-                groups.map((g) => (
-                  <div key={g.key}>
-                    <p className="bg-ivory px-4 py-2 text-[12px] font-medium">{g.label}</p>
-                    <ul className="divide-y divide-black/5">
-                      {g.rows.map((m) => {
-                        const s2 = stockOf(stock, m.id, writeBranchId);
-                        return (
-                          <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                            <span className="min-w-0 flex-1 truncate text-[14px]">{m.name}</span>
-                            <span className="num text-[12px] text-muted-foreground">
-                              متاح {qty(s2.available)} {m.unit}
-                            </span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              className="field w-24"
-                              placeholder="0"
-                              value={picked[m.id] ?? ""}
-                              onChange={(e) => setPicked((p) => ({ ...p, [m.id]: e.target.value }))}
-                            />
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))
-              )}
+            <div className="grid gap-4 border-t border-black/5 px-4 py-4 sm:grid-cols-2">
+              <MultiPick
+                label="نوع القماش"
+                options={fabricOptions}
+                value={fabricIds}
+                onChange={setFabricIds}
+              />
+              <MultiPick label="نوع الدانتيل" options={laceOptions} value={laceIds} onChange={setLaceIds} />
             </div>
           )}
         </Card>
@@ -518,5 +456,54 @@ function NewOrderPage() {
         </div>
       </form>
     </AppShell>
+  );
+}
+
+/** خانة تقبل أكثر من صنف: اختيار من القائمة ثم عرض المختار كوسوم قابلة للحذف */
+function MultiPick({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { id: string; name: string }[];
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  return (
+    <Field label={label} hint="يمكن اختيار أكثر من صنف">
+      <select
+        className="field"
+        value=""
+        onChange={(e) => {
+          const id = e.target.value;
+          if (id && !value.includes(id)) onChange([...value, id]);
+        }}
+      >
+        <option value="">أضف صنفًا</option>
+        {options
+          .filter((o) => !value.includes(o.id))
+          .map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.name}
+            </option>
+          ))}
+      </select>
+      {value.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {value.map((id) => (
+            <button
+              key={id}
+              type="button"
+              className="rounded-full bg-ivory px-3 py-1 text-[12px]"
+              onClick={() => onChange(value.filter((v) => v !== id))}
+            >
+              {options.find((o) => o.id === id)?.name ?? "—"} ×
+            </button>
+          ))}
+        </div>
+      )}
+    </Field>
   );
 }
