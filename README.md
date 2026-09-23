@@ -1,14 +1,128 @@
-# Welcome to your Lovable project
+# Dream Dress Studio
+
+أريد بناء نظام إدارة وتشغيل كامل لمحل تفصيل فساتين زواج، وليس مجرد نموذج أو صفحة تجريبية.
+
+أريد أن يكون النظام Web App متجاوبًا ويعمل بشكل ممتاز على الجوال والآيباد والكمبيوتر.
+
+النظام يعتمد على أن كل فستان له رقم طلب/فاتورة واحد، ومن خلال رقم الطلب أستطيع الوصول إلى جميع معلومات الفستان والعميلة ومراحل العمل.
+
+البيانات الأساسية لكل طلب:
+
+1. رقم الطلب
+
+2. تاريخ الحجز
+
+3. تاريخ التسليم المتوقع
+
+4. اسم العميلة
+
+5. رقم الجوال
+
+6. بيانات التواصل
+
+7. صور الفستان والتصميم
+
+8. المقاسات
+
+9. الخامات المطلوبة
+
+10. قيمة الفستان
+
+11. العربون
+
+12. المبلغ المتبقي
+
+13. حالة الدفع
+
+14. ملاحظات العميلة
+
+مراحل تنفيذ الفستان:
+
+* حجز
+
+* أخذ المقاسات
+
+* التصميم
+
+* تجهيز الخامات
+
+* القص
+
+* الخياطة
+
+* التشطيب
+
+* البروفة الأولى
+
+* التعديلات
+
+* البروفة الثانية
+
+* الجودة
+
+* التجهيز للتسليم
+
+* التسليم
+
+أريد أن يكون لكل مرحلة:
+
+* الموظف المسؤول
+
+* تاريخ ووقت بدء المرحلة
+
+* تاريخ ووقت الانتهاء
+
+* حالة المرحلة
+
+* ملاحظات
+
+* صور أو ملفات
+
+المستخدمون والصلاحيات:
+
+أريد نظام مستخدمين وصلاحيات، بحيث يكون لكل موظف حساب خاص به، ويمكن للمدير تحديد ما يستطيع الموظف رؤيته وتعديله.
+
+لوحة التحكم:
+
+أريد Dashboard تعرض:
+
+* الطلبات الجديدة
+
+* الطلبات قيد التصنيع
+
+* الطلبات المتأخرة
+
+* الطلبات القريبة من موعد التسليم
+
+* الفساتين الموجودة في كل مرحلة
+
+* الفساتين التي تنتظر بروفة
+
+* الفساتين التي تحتاج تعديلات
+
+* الطلبات غير المكتملة ماليًا
+
+البحث:
+
+أريد البحث برقم الطلب أو اسم العميلة أو رقم الجوال، وعند فتح الطلب تظهر جميع المعلومات المرتبطة به في شاشة واحدة منظمة.
+
+التصميم:
+
+أريد واجهة عربية RTL، بسيطة وواضحة، ومناسبة للاستخدام اليومي من الجوال والآيباد، مع أقل عدد ممكن من النقرات.
+
+مهم: لا تنشئ نسخة تجريبية بسيطة. صمم النظام من البداية بحيث يكون قابلًا للتوسع لاحقًا لإضافة المخزون والمحاسبة والواتساب والتقارير
 
 This project was built with [Lovable](https://lovable.dev).
 
+**Live app**: https://gown-craft-hub.lovable.app
+
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/a6ba090c-7552-40f1-ae0c-6ba82f8451de).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +134,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
