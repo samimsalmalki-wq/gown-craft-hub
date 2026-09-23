@@ -25,6 +25,8 @@ import {
   type Profile,
   type StageKey,
 } from "@/lib/atelier";
+import { useBranches } from "@/lib/branches";
+import { createStaffAccount } from "@/lib/staff.functions";
 
 
 
@@ -56,6 +58,7 @@ function StaffPage() {
 
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Profile | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const { data: perms = [] } = useQuery({
     queryKey: ["all-permissions"],
@@ -112,9 +115,14 @@ function StaffPage() {
       subtitle="الأقسام والأدوار والمراحل المسموح بها وما يستطيع كل موظف رؤيته وتعديله."
       actions={
         isAdmin ? (
-          <Link to="/roles" className="btn-quiet">
-            الأدوار والصلاحيات
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/roles" className="btn-quiet">
+              الأدوار والصلاحيات
+            </Link>
+            <Btn variant="gold" onClick={() => setAdding(true)}>
+              إضافة موظف
+            </Btn>
+          </div>
         ) : undefined
       }
     >
@@ -224,6 +232,17 @@ function StaffPage() {
         </div>
       )}
 
+      {adding && (
+        <NewStaffSheet
+          onClose={() => setAdding(false)}
+          onCreated={() => {
+            qc.invalidateQueries({ queryKey: ["profiles"] });
+            qc.invalidateQueries({ queryKey: ["all-roles"] });
+            setAdding(false);
+          }}
+        />
+      )}
+
       {editing && (
         <EditStaffSheet
           profile={editing}
@@ -240,6 +259,114 @@ function StaffPage() {
         />
       )}
     </AppShell>
+  );
+}
+
+function NewStaffSheet({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const { data: departments = [] } = useDepartments();
+  const { data: roleList = [] } = useRoles();
+  const { data: branches = [] } = useBranches();
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    phone: "",
+    jobTitle: "",
+    roleId: "",
+    departmentId: "",
+    branchId: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await createStaffAccount({ data: form });
+      toast.success(`تم إنشاء حساب ${form.fullName} — أعطه البريد وكلمة المرور ليدخل`);
+      onCreated();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذر إنشاء الحساب");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Sheet open onClose={onClose} title="إضافة موظف">
+      <form onSubmit={submit} className="space-y-3 px-4 py-4">
+        <Field label="الاسم">
+          <input className="field" value={form.fullName} onChange={set("fullName")} required />
+        </Field>
+        <Field label="البريد الإلكتروني" hint="يدخل به الموظف إلى النظام">
+          <input className="field" type="email" dir="ltr" value={form.email} onChange={set("email")} required />
+        </Field>
+        <Field label="كلمة المرور" hint="٨ أحرف على الأقل — يستطيع الموظف تغييرها من «حسابي»">
+          <input
+            className="field"
+            type="text"
+            dir="ltr"
+            autoComplete="new-password"
+            value={form.password}
+            onChange={set("password")}
+            minLength={8}
+            required
+          />
+        </Field>
+        <Field label="الدور">
+          <select className="field" value={form.roleId} onChange={set("roleId")} required>
+            <option value="" disabled>
+              اختر دورًا
+            </option>
+            {roleList
+              .filter((r) => r.is_active)
+              .map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
+                </option>
+              ))}
+          </select>
+        </Field>
+        <Field label="الفرع" hint="بدون فرع = يرى كل الفروع">
+          <select className="field" value={form.branchId} onChange={set("branchId")}>
+            <option value="">كل الفروع</option>
+            {branches
+              .filter((b) => b.is_active)
+              .map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+          </select>
+        </Field>
+        <Field label="القسم">
+          <select className="field" value={form.departmentId} onChange={set("departmentId")}>
+            <option value="">بدون قسم</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="الجوال">
+          <input className="field" dir="ltr" value={form.phone} onChange={set("phone")} />
+        </Field>
+        <Field label="المسمى الوظيفي">
+          <input className="field" value={form.jobTitle} onChange={set("jobTitle")} />
+        </Field>
+        <div className="flex gap-2 pt-2">
+          <Btn type="submit" variant="gold" disabled={busy}>
+            {busy ? "لحظة…" : "إنشاء الحساب"}
+          </Btn>
+          <Btn type="button" variant="quiet" onClick={onClose}>
+            إلغاء
+          </Btn>
+        </div>
+      </form>
+    </Sheet>
   );
 }
 

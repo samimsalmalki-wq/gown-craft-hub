@@ -21,10 +21,9 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { session, ready } = useSession();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -41,20 +40,19 @@ function AuthPage() {
         if (error) throw error;
         navigate({ to: "/dashboard", replace: true });
       } else {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { full_name: fullName },
-          },
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) throw error;
-        if (data.session) navigate({ to: "/dashboard", replace: true });
-        else setSent(true);
+        setSent(true);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "تعذر إكمال العملية");
+      const message = err instanceof Error ? err.message : "";
+      toast.error(
+        message.includes("Invalid login credentials")
+          ? "البريد أو كلمة المرور غير صحيحة"
+          : message || "تعذر إكمال العملية",
+      );
     } finally {
       setBusy(false);
     }
@@ -72,32 +70,30 @@ function AuthPage() {
           <div className="text-center">
             <h1 className="text-[20px] font-bold">تحقق من بريدك</h1>
             <p className="mt-2 text-[14px] text-muted-foreground">
-              أرسلنا رابط تأكيد إلى {email}. بعد الضغط عليه يمكنك الدخول للنظام.
+              إن كان {email} مسجّلًا لدينا فسيصلك رابط لتعيين كلمة مرور جديدة.
             </p>
+            <button
+              onClick={() => {
+                setSent(false);
+                setMode("signin");
+              }}
+              className="mt-5 text-[13px] text-gold"
+            >
+              العودة لتسجيل الدخول
+            </button>
           </div>
         ) : (
           <>
             <h1 className="text-[22px] font-bold">
-              {mode === "signin" ? "تسجيل الدخول" : "إنشاء حساب موظف"}
+              {mode === "signin" ? "تسجيل الدخول" : "نسيت كلمة المرور"}
             </h1>
             <p className="mt-1 text-[13px] text-muted-foreground">
               {mode === "signin"
                 ? "ادخل بحسابك للوصول إلى الطلبات والمراحل."
-                : "أول حساب يُسجَّل في النظام يصبح مدير الورشة تلقائيًا."}
+                : "اكتب بريدك وسنرسل لك رابطًا لتعيين كلمة مرور جديدة."}
             </p>
 
             <form onSubmit={submit} className="mt-6 space-y-4">
-              {mode === "signup" && (
-                <Field label="الاسم">
-                  <input
-                    className="field"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="مثال: نور الحكيم"
-                    required
-                  />
-                </Field>
-              )}
               <Field label="البريد الإلكتروني">
                 <input
                   className="field"
@@ -108,28 +104,34 @@ function AuthPage() {
                   required
                 />
               </Field>
-              <Field label="كلمة المرور">
-                <input
-                  className="field"
-                  type="password"
-                  dir="ltr"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  minLength={6}
-                  required
-                />
-              </Field>
+              {mode === "signin" && (
+                <Field label="كلمة المرور">
+                  <input
+                    className="field"
+                    type="password"
+                    dir="ltr"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </Field>
+              )}
               <Btn type="submit" disabled={busy} className="w-full">
-                {busy ? "لحظة…" : mode === "signin" ? "دخول" : "إنشاء الحساب"}
+                {busy ? "لحظة…" : mode === "signin" ? "دخول" : "إرسال الرابط"}
               </Btn>
             </form>
 
             <button
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              onClick={() => setMode(mode === "signin" ? "forgot" : "signin")}
               className="mt-5 w-full text-[13px] text-gold"
             >
-              {mode === "signin" ? "ليس لديك حساب؟ إنشاء حساب" : "لدي حساب — تسجيل الدخول"}
+              {mode === "signin" ? "نسيت كلمة المرور؟" : "العودة لتسجيل الدخول"}
             </button>
+            {mode === "signin" && (
+              <p className="mt-3 text-center text-[12px] text-muted-foreground">
+                ليس لديك حساب؟ يضيفك مدير الورشة من شاشة الموظفين.
+              </p>
+            )}
           </>
         )}
       </div>
