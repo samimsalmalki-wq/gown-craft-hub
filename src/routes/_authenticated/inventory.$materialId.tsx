@@ -1,11 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, Sheet } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useMaterialCategories } from "@/lib/data";
 import { fmtDateTime, money } from "@/lib/atelier";
+import {
+  ALL_BRANCHES,
+  branchLabel,
+  stockOf,
+  useBranchScope,
+  useBranches,
+  useMaterialStock,
+  warehouseOf,
+} from "@/lib/branches";
 import {
   MATERIAL_UNITS,
   MOVEMENT_LABEL,
@@ -28,20 +38,36 @@ export const Route = createFileRoute("/_authenticated/inventory/$materialId")({
 
 function MaterialPage() {
   const { materialId } = Route.useParams();
-  const { isManager } = useCurrentAccount();
+  const { canManageCategory, canCategory } = useCurrentAccount();
   const { data: catRows = [] } = useMaterialCategories();
-  const matCats = catRows.filter((c) => c.is_active);
+  const matCats = catRows.filter((c) => c.is_active && canCategory(c.key));
   const { data: material, isLoading } = useMaterial(materialId);
   const { data: movements = [] } = useMaterialMovements(materialId);
   const addMovement = useAddMovement();
   const save = useSaveMaterial();
+  const { branchId } = useBranchScope();
+  const { data: branches = [] } = useBranches();
+  const { data: stock = [] } = useMaterialStock(ALL_BRANCHES);
 
   const urls = useInventoryUrls([material?.image_path]);
   const image = material?.image_path ? urls[material.image_path] : undefined;
 
   const [moveOpen, setMoveOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [move, setMove] = useState({ kind: "in" as "in" | "out", qty: "1", notes: "" });
+  const [move, setMove] = useState({
+    kind: "in" as "in" | "out",
+    qty: "1",
+    notes: "",
+    branch: "",
+  });
+
+  // الموقع الافتراضي للحركة: الفرع المختار، وإلا المخزن الرئيسي
+  const defaultBranch =
+    branchId !== ALL_BRANCHES ? branchId : (warehouseOf(branches)?.id ?? branches[0]?.id ?? "");
+  const moveBranch = move.branch || defaultBranch;
+  const locations = branches
+    .filter((b) => b.is_active || stock.some((s) => s.material_id === materialId && s.branch_id === b.id))
+    .map((b) => ({ branch: b, ...stockOf(stock, materialId, b.id) }));
 
   if (isLoading) {
     return (
@@ -62,14 +88,24 @@ function MaterialPage() {
     e.preventDefault();
     const amount = Number(move.qty);
     if (!amount || amount <= 0) return;
-    await addMovement.mutateAsync({
-      material_id: materialId,
-      kind: move.kind,
-      qty: amount,
-      notes: move.notes.trim() || null,
-    });
-    setMoveOpen(false);
-    setMove({ kind: "in", qty: "1", notes: "" });
+    if (!moveBranch) {
+      toast.error("اختر الموقع");
+      return;
+    }
+    try {
+      await addMovement.mutateAsync({
+        material_id: materialId,
+        kind: move.kind,
+        qty: amount,
+        notes: move.notes.trim() || null,
+        branch_id: moveBranch,
+      });
+      toast.success("انسجلت الحركة");
+      setMoveOpen(false);
+      setMove({ kind: "in", qty: "1", notes: "", branch: "" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر تسجيل الحركة");
+    }
   }
 
   return (
@@ -78,7 +114,7 @@ function MaterialPage() {
       title={material.name}
       subtitle={`${categoryLabel(material.category)} · وحدة ${material.unit}`}
       actions={
-        isManager ? (
+        canManageCategory(material.category) ? (
           <div className="flex gap-2">
             <Btn variant="quiet" onClick={() => setEditOpen(true)}>
               تعديل
@@ -94,7 +130,29 @@ function MaterialPage() {
 
       <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
         <div className="space-y-5">
-          <Card title="الحالة">
+          <Card title="في كل موقع">
+            <ul className="divide-y divide-line text-[13px]">
+              {locations.map((l) => (
+                <li key={l.branch.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
+                  <span className="min-w-0 flex-1 font-medium">
+                    {l.branch.name}
+                    {l.branch.is_warehouse ? " (المخزن الرئيسي)" : ""}
+                  </span>
+                  <span className="num">
+                    متاح {qty(Math.max(0, l.available))} {material.unit}
+                  </span>
+                  {l.reserved > 0 && <Chip tone="gold">محجوز {qty(l.reserved)}</Chip>}
+                  {l.overReserved ? (
+                    <Chip tone="late">المحجوز أكثر من الموجود</Chip>
+                  ) : (
+                    l.isLow && <Chip tone="late">تحت الحد</Chip>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          <Card title="الحالة — كل المواقع">
             <dl className="divide-y divide-line text-[13px]">
               <Row label="الكمية بالمخزن" value={`${qty(material.qty_on_hand)} ${material.unit}`} />
               <Row label="محجوز على طلبات" value={`${qty(material.qty_reserved)} ${material.unit}`} />
@@ -122,7 +180,13 @@ function MaterialPage() {
           )}
         </div>
 
-        <Card title="سجل الحركات">
+        <Card
+          title={
+            branchId === ALL_BRANCHES
+              ? "سجل الحركات — كل المواقع"
+              : `سجل الحركات — ${branchLabel(branches, branchId)}`
+          }
+        >
           {movements.length === 0 ? (
             <Empty>لا توجد حركات بعد.</Empty>
           ) : (
@@ -137,6 +201,9 @@ function MaterialPage() {
                   <span className="num text-[14px]">
                     {qty(m.qty)} {material.unit}
                   </span>
+                  {branchId === ALL_BRANCHES && m.branch_id && (
+                    <Chip>{branchLabel(branches, m.branch_id)}</Chip>
+                  )}
                   <span className="min-w-0 flex-1 truncate text-[12px] text-muted-foreground">
                     {m.notes || ""}
                   </span>
@@ -158,6 +225,29 @@ function MaterialPage() {
             >
               <option value="in">إدخال للمخزن</option>
               <option value="out">صرف من المخزن</option>
+            </select>
+          </Field>
+          <Field
+            label="الموقع"
+            hint={
+              move.kind === "out"
+                ? `المتاح هنا ${qty(Math.max(0, stockOf(stock, materialId, moveBranch).available))} ${material.unit} — المحجوز للطلبات ما ينصرف يدويًا`
+                : "تنضاف الكمية لهذا الموقع"
+            }
+          >
+            <select
+              className="field w-full"
+              value={moveBranch}
+              onChange={(e) => setMove({ ...move, branch: e.target.value })}
+            >
+              {branches
+                .filter((b) => b.is_active)
+                .map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {branchLabel(branches, b.id)}
+                    {b.is_warehouse ? " (المخزن الرئيسي)" : ""}
+                  </option>
+                ))}
             </select>
           </Field>
           <Field label={`الكمية (${material.unit})`}>
@@ -189,8 +279,13 @@ function MaterialPage() {
         onClose={() => setEditOpen(false)}
         material={material}
         onSave={async (values) => {
-          await save.mutateAsync({ id: material.id, ...values });
-          setEditOpen(false);
+          try {
+            await save.mutateAsync({ id: material.id, ...values });
+            toast.success("تم حفظ التعديلات");
+            setEditOpen(false);
+          } catch (err) {
+            toast.error(err instanceof Error ? err.message : "تعذّر الحفظ");
+          }
         }}
         saving={save.isPending}
       />
@@ -239,8 +334,9 @@ function EditSheet({
     notes: material.notes ?? "",
   });
   const [image, setImage] = useState<File | null>(null);
+  const { canCategory } = useCurrentAccount();
   const { data: catRows = [] } = useMaterialCategories();
-  const matCats = catRows.filter((c) => c.is_active);
+  const matCats = catRows.filter((c) => c.is_active && canCategory(c.key));
 
   return (
     <Sheet open={open} onClose={onClose} title="تعديل المادة">

@@ -3,16 +3,34 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
-import { Btn, Card, Field } from "@/components/kit";
+import { Btn, Card, Empty, Field } from "@/components/kit";
+import { PartsPicker } from "@/components/PartsPicker";
+import { useCurrentAccount } from "@/hooks/useSession";
+import { DEFAULT_DRESS_PARTS, isDressType } from "@/lib/goods";
 import { supabase } from "@/integrations/supabase/client";
 import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
 import { qty } from "@/lib/inventory";
-import { useBranchScope, useMaterialStock, stockOf } from "@/lib/branches";
+import {
+  useBranchScope,
+  useBranches,
+  useMaterialStock,
+  stockOf,
+  warehouseOf,
+} from "@/lib/branches";
 import { useItemTypes } from "@/lib/data";
 import { useModelMaterials, useModels } from "@/lib/models-data";
 import { useAddPayment, useCashAccounts } from "@/lib/finance-data";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/finance";
-import { ORDER_KIND_HINT, ORDER_KIND_LABEL, money, type OrderKind } from "@/lib/atelier";
+import { SketchBoard } from "@/components/SketchBoard";
+import { emptySketch } from "@/lib/sketch";
+import { saveSketch, type SketchResult } from "@/lib/sketch-data";
+import {
+  ORDER_KIND_HINT,
+  ORDER_KIND_LABEL,
+  measurementLabel,
+  money,
+  type OrderKind,
+} from "@/lib/atelier";
 
 const KINDS: OrderKind[] = ["own", "rental", "rental_stock"];
 // إنتاج للإيجار يُفتح من شاشة فساتين الإيجار فقط
@@ -40,23 +58,25 @@ export const Route = createFileRoute("/_authenticated/orders/new")({
   component: NewOrderPage,
 });
 
-const MEASURES = [
-  ["bust", "الصدر"],
-  ["waist", "الوسط"],
-  ["hips", "الأرداف"],
-  ["shoulder", "الكتف"],
-  ["sleeve", "طول الكم"],
-  ["length", "طول الفستان"],
-] as const;
-
 function NewOrderPage() {
   const navigate = useNavigate();
+  const { can, ready } = useCurrentAccount();
   const search = Route.useSearch();
   const { opsWriteBranchId: writeBranchId } = useBranchScope();
   const { data: itemTypes = [] } = useItemTypes();
   const [busy, setBusy] = useState(false);
   const [kind, setKind] = useState<OrderKind>(search.kind ?? "own");
   const [itemTypeId, setItemTypeId] = useState("");
+  // قطع الفستان: الافتراضية حسب نوع القطعة لين يغيّرها الموظف
+  const [parts, setParts] = useState<string[]>(DEFAULT_DRESS_PARTS);
+  const [partsTouched, setPartsTouched] = useState(false);
+  const typeName = itemTypes.find((t) => t.id === itemTypeId)?.name ?? "";
+  const pickItemType = (id: string) => {
+    setItemTypeId(id);
+    if (partsTouched) return;
+    const name = itemTypes.find((t) => t.id === id)?.name ?? "";
+    setParts(!name || isDressType(name) ? DEFAULT_DRESS_PARTS : [name]);
+  };
   const [form, setForm] = useState({
     client_name: "",
     client_phone: "",
@@ -77,13 +97,17 @@ function NewOrderPage() {
     model_notes: "",
   });
   const [method, setMethod] = useState<PaymentMethod>("cash");
+  // المقاسات تُكتب داخل لوحة الرسم (الثابتة + المضافة باسمها)
   const [measures, setMeasures] = useState<Record<string, string>>({});
   const [secondFitting, setSecondFitting] = useState(false);
   const [newModel, setNewModel] = useState(false);
-  const [attachments, setAttachments] = useState<File[]>([]);
+  // الرسمة تُحفظ هنا مؤقتًا وتُرفع مع الطلب بعد إنشائه
+  const [sketch, setSketch] = useState<{ result: SketchResult; url: string } | null>(null);
+  const [sketchOpen, setSketchOpen] = useState(false);
   const { data: materials = [] } = useMaterials();
   const { data: models = [] } = useModels();
   const { data: stock = [] } = useMaterialStock();
+  const { data: branches = [] } = useBranches();
   const [modelId, setModelId] = useState("");
   const { data: modelMaterials = [] } = useModelMaterials(newModel ? null : modelId);
   const { data: cashAccounts = [] } = useCashAccounts();
@@ -112,8 +136,10 @@ function NewOrderPage() {
   }, [models, form.model_no, modelId]);
 
   const selectedModel = models.find((m) => m.id === modelId) ?? null;
+  // خامات الطلبات تنحجز من المخزن الرئيسي مباشرة
+  const reserveFrom = warehouseOf(branches)?.id ?? writeBranchId;
   const shortMaterials = modelMaterials.filter(
-    (r) => stockOf(stock, r.material_id, writeBranchId).available < Number(r.qty),
+    (r) => stockOf(stock, r.material_id, reserveFrom).available < Number(r.qty),
   );
   const activeMaterials = materials.filter((m) => m.is_active);
   const fabricOptions = activeMaterials.filter((m) => m.category === "fabric");
@@ -124,6 +150,10 @@ function NewOrderPage() {
     (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const filledMeasures = Object.fromEntries(
+    Object.entries(measures).filter(([, v]) => v.trim() !== ""),
+  );
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -139,6 +169,7 @@ function NewOrderPage() {
         .insert({
           order_kind: kind,
           item_type_id: itemTypeId || null,
+          parts,
           security_deposit: kind === "rental" ? Number(form.security_deposit || 0) : 0,
           external_invoice_no: form.external_invoice_no.trim() || null,
           client_name: isStock ? form.client_name || "مخزون المحل" : form.client_name,
@@ -159,7 +190,7 @@ function NewOrderPage() {
             [form.notes.trim(), form.model_notes.trim() && `ملاحظات الموديل: ${form.model_notes.trim()}`]
               .filter(Boolean)
               .join("\n") || null,
-          measurements: measures,
+          measurements: filledMeasures,
           model_no: newModel ? null : (selectedModel?.code ?? (form.model_no || null)),
           model_id: newModel ? null : modelId || null,
           is_new_model: newModel,
@@ -193,22 +224,11 @@ function NewOrderPage() {
       }
 
 
-      if (attachments.length) {
+      if (sketch) {
         try {
-          for (const file of attachments) {
-            const path = `${data.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
-            const up = await supabase.storage.from("order-files").upload(path, file);
-            if (up.error) throw up.error;
-            const ins = await supabase.from("order_files").insert({
-              order_id: data.id,
-              storage_path: path,
-              kind: "measurements",
-              created_by: uid,
-            });
-            if (ins.error) throw ins.error;
-          }
+          await saveSketch(data.id, { ...sketch.result, caption: "تصميم 1" });
         } catch {
-          toast.error("تم حفظ الطلب لكن تعذر رفع بعض المرفقات");
+          toast.error("تم حفظ الطلب لكن تعذر رفع الرسمة — ارسميها من صفحة الطلب");
         }
       }
 
@@ -216,14 +236,17 @@ function NewOrderPage() {
         !newModel && modelId
           ? modelMaterials.map((r) => ({ materialId: r.material_id, amount: Number(r.qty) }))
           : [];
-      if (wanted.length) {
+      // كل مادة تنحجز لحالها من المخزن الرئيسي، واللي ما تكفي تنذكر بالاسم
+      const failed: string[] = [];
+      for (const row of wanted) {
         try {
-          for (const row of wanted) {
-            await reserve.mutateAsync({ orderId: data.id, materialId: row.materialId, qty: row.amount });
-          }
+          await reserve.mutateAsync({ orderId: data.id, materialId: row.materialId, qty: row.amount });
         } catch {
-          toast.error("تم حفظ الطلب لكن تعذر حجز بعض المواد");
+          failed.push(nameOf(row.materialId) || "مادة");
         }
+      }
+      if (failed.length) {
+        toast.error(`تم حفظ الطلب، وما انحجز من المخزن الرئيسي: ${failed.join("، ")}`);
       }
 
       toast.success("تم إنشاء الطلب");
@@ -233,6 +256,14 @@ function NewOrderPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (ready && !can("orders.create")) {
+    return (
+      <AppShell title="طلب جديد">
+        <Empty>تسجيل الطلبات الجديدة غير متاح لحسابك.</Empty>
+      </AppShell>
+    );
   }
 
   return (
@@ -269,7 +300,7 @@ function NewOrderPage() {
               </select>
             </Field>
             <Field label="نوع القطعة">
-              <select className="field" value={itemTypeId} onChange={(e) => setItemTypeId(e.target.value)}>
+              <select className="field" value={itemTypeId} onChange={(e) => pickItemType(e.target.value)}>
                 <option value="">اختر نوع القطعة</option>
                 {itemTypes
                   .filter((t) => t.is_active)
@@ -279,6 +310,19 @@ function NewOrderPage() {
                     </option>
                   ))}
               </select>
+            </Field>
+            <Field
+              label="قطع الفستان"
+              hint="قائمة تأشير عند إرسال الفستان من المعمل واستلامه وتسليمه للعميلة"
+            >
+              <PartsPicker
+                value={parts}
+                onChange={(next) => {
+                  setParts(next);
+                  setPartsTouched(true);
+                }}
+                {...(typeName && !isDressType(typeName) ? { extraOptions: [typeName] } : {})}
+              />
             </Field>
             <Field label="ملاحظات العمل">
               <textarea className="field min-h-24" value={form.notes} onChange={set("notes")} />
@@ -397,7 +441,9 @@ function NewOrderPage() {
                 <p className="text-[12px] text-muted-foreground">مواد الموديل تُحجز تلقائيًا بعد الحفظ</p>
                 {shortMaterials.length > 0 && (
                   <p className="mt-2 text-[13px] text-late">
-                    بعض مواد الموديل غير كافية في هذا الفرع — اطلبها من المخزن الرئيسي.
+                    ما تكفي في المخزن الرئيسي:{" "}
+                    {shortMaterials.map((r) => nameOf(r.material_id)).join("، ")} — ينحفظ الطلب
+                    وتنحجز باقي المواد، وهذي تحجزها بعد ما تتوفر.
                   </p>
                 )}
               </div>
@@ -426,38 +472,80 @@ function NewOrderPage() {
           </div>
         </Card>
 
-        <Card title="المقاسات (سم)">
-          <div className="grid gap-4 px-4 py-4 sm:grid-cols-3">
-            {MEASURES.map(([key, label]) => (
-              <Field key={key} label={label}>
-                <input
-                  className="field"
-                  dir="ltr"
-                  value={measures[key] ?? ""}
-                  onChange={(e) => setMeasures((m) => ({ ...m, [key]: e.target.value }))}
-                />
-              </Field>
-            ))}
-          </div>
-          <div className="border-t border-black/5 px-4 py-4">
-            <Field label="مرفق" hint="صور أو ملفات ورقة المقاسات">
-              <input
-                className="field"
-                type="file"
-                multiple
-                accept="image/*,application/pdf"
-                onChange={(e) => setAttachments(Array.from(e.target.files ?? []))}
-              />
-            </Field>
-            {attachments.length > 0 && (
-              <ul className="mt-2 grid gap-1 text-sm text-muted-foreground">
-                {attachments.map((f) => (
-                  <li key={f.name}>{f.name}</li>
+        <Card title="المقاسات والتصميم">
+          <div className="px-4 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-[13px] font-medium">لوحة الرسم</p>
+                <p className="text-[11px] text-muted-foreground">
+                  اكتبي المقاسات بجانب الرسمة (ويمكن إضافة مقاس جديد باسمه)، وارسمي التصميم بالقلم فوق رسمة
+                  الجسم.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Btn type="button" variant="quiet" onClick={() => setSketchOpen(true)}>
+                  {sketch ? "تعديل الرسمة والمقاسات" : "افتح لوحة الرسم"}
+                </Btn>
+                {sketch && (
+                  <Btn
+                    type="button"
+                    variant="quiet"
+                    onClick={() => {
+                      URL.revokeObjectURL(sketch.url);
+                      setSketch(null);
+                    }}
+                  >
+                    حذف
+                  </Btn>
+                )}
+              </div>
+            </div>
+            {Object.keys(filledMeasures).length > 0 ? (
+              <dl className="mt-3 flex flex-wrap gap-1.5 text-[12px]">
+                {Object.entries(filledMeasures).map(([key, v]) => (
+                  <div key={key} className="rounded-full bg-ivory px-3 py-1">
+                    <dt className="inline text-muted-foreground">{measurementLabel(key)}: </dt>
+                    <dd className="num inline">{v}</dd>
+                  </div>
                 ))}
-              </ul>
+              </dl>
+            ) : (
+              <p className="mt-3 text-[12px] text-muted-foreground">لم تُكتب المقاسات بعد.</p>
+            )}
+            {sketch && (
+              <img
+                src={sketch.url}
+                alt="التصميم"
+                className="mt-3 w-full max-w-xs rounded-lg border border-line bg-white"
+              />
             )}
           </div>
         </Card>
+
+        {sketchOpen && (
+          <SketchBoard
+            order={{
+              client_name: form.client_name || "عميلة جديدة",
+              order_no: "",
+              measurements: measures,
+            }}
+            initial={sketch?.result.doc ?? emptySketch()}
+            initialFiles={sketch?.result.files ?? []}
+            onMeasuresChange={setMeasures}
+            onClose={() => setSketchOpen(false)}
+            onSave={async (result) => {
+              const first = result.pngs[0];
+              if (!first) return;
+              if (sketch) URL.revokeObjectURL(sketch.url);
+              setSketch({
+                result,
+                url: URL.createObjectURL(first),
+              });
+              setSketchOpen(false);
+              toast.success("تم حفظ الرسمة — تُرفع مع الطلب عند الحفظ");
+            }}
+          />
+        )}
 
         <div>
           <Btn type="submit" disabled={busy}>

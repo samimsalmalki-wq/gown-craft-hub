@@ -172,6 +172,18 @@ function WorkflowPage() {
                   />
                   تحتاج مراجعة
                 </label>
+                <label
+                  className="flex items-center gap-2 text-[12px]"
+                  title="لما يوصل الطلب لهذي المرحلة يدخل «جاهز المعمل» ويُرسل للفرع بقائمة القطع"
+                >
+                  <input
+                    type="checkbox"
+                    className="size-5 accent-current"
+                    checked={t.sends_to_branch}
+                    onChange={(e) => patch(t.id, { sends_to_branch: e.target.checked })}
+                  />
+                  التسليم للمحل
+                </label>
                 <label className="flex items-center gap-2 text-[12px]">
                   <input
                     type="checkbox"

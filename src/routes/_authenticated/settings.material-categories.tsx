@@ -29,7 +29,8 @@ export const Route = createFileRoute("/_authenticated/settings/material-categori
 });
 
 function MaterialCategoriesPage() {
-  const { isManager, ready } = useCurrentAccount();
+  const { can, ready } = useCurrentAccount();
+  const isManager = can("catalog.manage");
   const { data: rows = [] } = useMaterialCategories();
   const add = useAddMaterialCategory();
   const update = useUpdateMaterialCategory();
@@ -38,7 +39,7 @@ function MaterialCategoriesPage() {
   if (ready && !isManager) {
     return (
       <AppShell title="تصنيفات الخامات">
-        <Empty>هذه الشاشة متاحة للمدير والمشرف فقط.</Empty>
+        <Empty>هذه الشاشة متاحة لمن يملك صلاحية الموديلات والكتالوج.</Empty>
       </AppShell>
     );
   }

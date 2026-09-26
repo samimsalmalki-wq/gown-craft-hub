@@ -33,11 +33,29 @@ export const STAGES: { key: StageKey; label: string }[] = [
   { key: "delivery", label: "التسليم" },
 ];
 
+/** خانات بطاقة المقاسات (بالسنتيمتر) */
+export const MEASUREMENT_FIELDS = [
+  ["bust", "الصدر"],
+  ["waist", "الوسط"],
+  ["hips", "الأرداف"],
+  ["shoulder", "الكتف"],
+  ["sleeve", "طول الكم"],
+  ["length", "طول الفستان"],
+] as const;
+
+export type MeasurementKey = (typeof MEASUREMENT_FIELDS)[number][0];
+
+export const measurementLabel = (key: string) =>
+  MEASUREMENT_FIELDS.find(([k]) => k === key)?.[1] ?? key;
+
+/** مقاس مضاف باسمه في الطلب (ليس من الخانات الثابتة): مفتاحه هو اسمه */
+export const isCustomMeasurement = (key: string) => !MEASUREMENT_FIELDS.some(([k]) => k === key);
+
 export const ROLE_LABEL: Record<AppRole, string> = {
   admin: "مدير النظام",
-  supervisor: "مشرف",
-  staff: "موظف",
-  cs: "خدمة عملاء",
+  supervisor: "مشرف فرع",
+  staff: "عاملة إنتاج",
+  cs: "موظفة مبيعات",
 };
 
 /* ===== كتالوج الأدوار الحيّ: يُحدَّث من جدول الأدوار ===== */
@@ -49,6 +67,8 @@ export type RoleCatalogRow = {
   position: number;
   is_builtin: boolean;
   is_active: boolean;
+  /** أصناف المخزون المسموحة للدور (فارغة = كل الأصناف) */
+  material_categories: string[];
 };
 
 export const BUILTIN_ROLES: AppRole[] = ["admin", "supervisor", "staff", "cs"];
@@ -60,6 +80,7 @@ let ROLE_CATALOG: RoleCatalogRow[] = BUILTIN_ROLES.map((key, i) => ({
   position: i + 1,
   is_builtin: true,
   is_active: true,
+  material_categories: [],
 }));
 
 export const setRoleCatalog = (rows: RoleCatalogRow[]) => {
@@ -195,26 +216,119 @@ export const itemTypeCatalog = () => ITEM_TYPES;
 export const itemTypeLabel = (id: string | null | undefined) =>
   (id ? ITEM_TYPES.find((t) => t.id === id)?.name : null) ?? "—";
 
-export const PERMISSIONS: { key: string; label: string; hint: string }[] = [
-  { key: "orders.edit", label: "تعديل الطلبات", hint: "إضافة وتعديل بيانات الطلب والعميلة" },
-  { key: "stages.edit", label: "تحديث المراحل", hint: "بدء وإنهاء المراحل وإضافة ملاحظات" },
-  { key: "finance.view", label: "عرض المالية", hint: "القيم والعربون والمبلغ المتبقي" },
-  { key: "files.upload", label: "إرفاق الصور", hint: "رفع صور الفستان وملفات المراحل" },
-  { key: "inventory.manage", label: "المخزون والمواد", hint: "إضافة المواد وحركات الصرف والحجز" },
-  { key: "rentals.manage", label: "فساتين الإيجار", hint: "إضافة الفساتين والتأجير والإرجاع" },
-  { key: "whatsapp.manage", label: "رسائل الواتساب", hint: "تعديل نصوص الرسائل الجاهزة" },
-  { key: "reports.view", label: "التقارير", hint: "تقارير الأداء والمتأخرات" },
-  { key: "staff.manage", label: "إدارة الموظفين", hint: "بيانات الموظفين وأقسامهم" },
-  { key: "finance.payments", label: "الدفعات وسندات القبض", hint: "تسجيل التحصيل وإصدار سندات القبض" },
-  { key: "finance.invoices", label: "الفواتير", hint: "إصدار الفواتير وبنودها والضريبة" },
-  { key: "finance.expenses", label: "المصروفات والصناديق", hint: "المصروفات والمشتريات وحركة الصناديق" },
-  { key: "finance.accounts", label: "الحسابات والقيود", hint: "شجرة الحسابات وقيود اليومية" },
-  { key: "finance.reports", label: "التقارير المالية", hint: "المستحقات والتحصيل وتقرير الضريبة" },
-  { key: "branches.all", label: "كل الفروع", hint: "رؤية بيانات جميع الفروع والتبديل بينها" },
-  { key: "branches.manage", label: "إدارة الفروع", hint: "إضافة الفروع وتعديل بياناتها" },
-  { key: "inventory.transfer", label: "نقل المخزون", hint: "نقل الخامات بين الفروع" },
-  { key: "inventory.request", label: "طلب خامات", hint: "طلب صرف خامات من المخزن الرئيسي" },
-  { key: "inventory.approve", label: "اعتماد طلبات الخامات", hint: "اعتماد أو رفض طلبات الصرف" },
+export type Permission = { key: string; label: string; hint: string; group: string };
+
+/** أقسام الصلاحيات بالترتيب الذي تظهر به في شاشة الأدوار */
+export const PERMISSION_GROUPS = [
+  "الطلبات",
+  "الإنتاج",
+  "فساتين الإيجار",
+  "المخزون والمستودع",
+  "المالية",
+  "الإدارة",
+] as const;
+
+export const PERMISSIONS: Permission[] = [
+  { group: "الطلبات", key: "orders.create", label: "تسجيل طلب جديد", hint: "إنشاء طلب تفصيل أو إيجار جديد" },
+  { group: "الطلبات", key: "orders.edit", label: "تعديل الطلبات", hint: "تعديل بيانات الطلب والعميلة والأسعار" },
+  {
+    group: "الطلبات",
+    key: "orders.view_all",
+    label: "كل طلبات الفرع",
+    hint: "بدونها يرى الموظف الطلبات التي سجّلها أو المسندة إليه فقط",
+  },
+  { group: "الطلبات", key: "finance.view", label: "عرض المبالغ", hint: "قيمة الطلب والعربون والمبلغ المتبقي" },
+  {
+    group: "الطلبات",
+    key: "payments.collect",
+    label: "تحصيل العربون",
+    hint: "تسجيل سندات قبض على الطلبات التي يراها فقط",
+  },
+  { group: "الطلبات", key: "files.upload", label: "إرفاق الصور", hint: "رفع صور الفستان وملفات المراحل" },
+  {
+    group: "الإنتاج",
+    key: "stages.manage",
+    label: "إدارة المراحل",
+    hint: "إسناد العاملات وبدء وإنهاء واعتماد المراحل المسموحة له في صفحة الموظف",
+  },
+  { group: "الإنتاج", key: "stages.edit", label: "تنفيذ مراحلي", hint: "بدء وإنهاء المراحل المسندة إليه فقط" },
+  {
+    group: "فساتين الإيجار",
+    key: "rentals.manage",
+    label: "فساتين الإيجار",
+    hint: "إضافة الفساتين والحجز والتسليم والإرجاع وطلب الإلغاء",
+  },
+  {
+    group: "فساتين الإيجار",
+    key: "rentals.cancel",
+    label: "قرار إلغاء الحجز",
+    hint: "الموافقة على الإلغاء ورد المدفوع كامل أو جزء منه — للمدير فقط إلا إذا فعّلها",
+  },
+  {
+    group: "المخزون والمستودع",
+    key: "inventory.manage",
+    label: "إدارة المواد",
+    hint: "إضافة المواد وحركات الإدخال والصرف والحجز (ضمن أصناف الدور)",
+  },
+  { group: "المخزون والمستودع", key: "inventory.request", label: "طلب خامات", hint: "طلب صرف خامات من المستودع" },
+  {
+    group: "المخزون والمستودع",
+    key: "inventory.approve",
+    label: "اعتماد طلبات الخامات",
+    hint: "اعتماد أو رفض طلبات الصرف (ضمن أصناف الدور)",
+  },
+  { group: "المخزون والمستودع", key: "inventory.transfer", label: "نقل المخزون", hint: "نقل الخامات بين الفروع" },
+  {
+    group: "المخزون والمستودع",
+    key: "goods.manage",
+    label: "إدارة البضاعة الجاهزة",
+    hint: "إضافة الفساتين والطرح والعينات وتعديل كمياتها وأسعارها",
+  },
+  {
+    group: "المخزون والمستودع",
+    key: "goods.transfer",
+    label: "إرسال واستلام الجاهز",
+    hint: "إرسال الجاهز من المعمل للفروع، وتأكيد الاستلام والتسليم للعميلة بقائمة القطع",
+  },
+  {
+    group: "المخزون والمستودع",
+    key: "goods.sell",
+    label: "البيع من المخزون",
+    hint: "بيع القطع القابلة للبيع بفاتورة ضريبية",
+  },
+  {
+    group: "المخزون والمستودع",
+    key: "goods.discount",
+    label: "البيع بخصم",
+    hint: "البيع بأقل من السعر المفترض للقطعة",
+  },
+  {
+    group: "المخزون والمستودع",
+    key: "goods.return",
+    label: "مرتجع البيع",
+    hint: "إرجاع قطع مباعة ورد مبلغها من صندوق الفرع",
+  },
+  { group: "المالية", key: "finance.payments", label: "الدفعات وسندات القبض", hint: "تسجيل التحصيل وإصدار سندات القبض" },
+  { group: "المالية", key: "finance.invoices", label: "الفواتير", hint: "إصدار الفواتير وبنودها والضريبة" },
+  {
+    group: "المالية",
+    key: "finance.expenses",
+    label: "المصروفات والمشتريات",
+    hint: "المصروفات والمشتريات وحركة الصناديق",
+  },
+  { group: "المالية", key: "finance.accounts", label: "الحسابات والقيود", hint: "شجرة الحسابات وقيود اليومية" },
+  { group: "المالية", key: "finance.reports", label: "التقارير المالية", hint: "المستحقات والتحصيل وتقرير الضريبة" },
+  { group: "الإدارة", key: "branches.all", label: "كل الفروع", hint: "رؤية بيانات جميع الفروع والتبديل بينها" },
+  { group: "الإدارة", key: "branches.manage", label: "إدارة الفروع", hint: "إضافة الفروع وتعديل بياناتها" },
+  { group: "الإدارة", key: "staff.manage", label: "عرض الموظفين", hint: "قائمة الموظفين وبياناتهم وأداؤهم" },
+  { group: "الإدارة", key: "reports.view", label: "تقارير الأداء", hint: "تقارير الأداء والمتأخرات" },
+  {
+    group: "الإدارة",
+    key: "catalog.manage",
+    label: "الموديلات والكتالوج",
+    hint: "الموديلات وأنواع القطع وتصنيفات المواد وحالات فساتين الإيجار",
+  },
+  { group: "الإدارة", key: "whatsapp.manage", label: "رسائل الواتساب", hint: "تعديل نصوص الرسائل الجاهزة" },
 ];
 
 

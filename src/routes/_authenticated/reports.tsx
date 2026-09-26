@@ -24,14 +24,14 @@ export const Route = createFileRoute("/_authenticated/reports")({
 });
 
 function ReportsPage() {
-  const { isManager, ready } = useCurrentAccount();
+  const { can, ready } = useCurrentAccount();
   const { data: profiles = [] } = useProfiles();
   const { data: rows = [] } = useStagesWithOrders();
 
-  if (ready && !isManager) {
+  if (ready && !can("reports.view")) {
     return (
       <AppShell title="تقرير الأداء">
-        <Empty>هذه الشاشة متاحة للمدير والمشرف فقط.</Empty>
+        <Empty>هذه الشاشة متاحة لمن يملك صلاحية تقارير الأداء.</Empty>
       </AppShell>
     );
   }

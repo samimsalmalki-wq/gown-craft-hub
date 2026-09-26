@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import { ALL_BRANCHES, useBranchScope } from "./branches";
+import { fetchAll } from "./fetch-all";
 import type { Invoice, InvoiceLine, Payment, PaymentMethod, TaxSettings } from "./finance";
 
 /** يضيف شرط الفرع على الاستعلام إن كان فرعًا محددًا */
@@ -45,11 +46,13 @@ export function usePayments() {
   return useQuery({
     queryKey: ["payments", branchId],
     queryFn: async (): Promise<Payment[]> => {
-      const { data, error } = await onBranch(supabase.from("payments").select("*"), branchId)
-        .order("paid_at", { ascending: false })
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      return fetchAll<Payment>((a, b) =>
+        onBranch(supabase.from("payments").select("*"), branchId)
+          .order("paid_at", { ascending: false })
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(a, b),
+      );
     },
   });
 }
@@ -142,12 +145,12 @@ export function useInvoices() {
   return useQuery({
     queryKey: ["invoices", branchId],
     queryFn: async (): Promise<Invoice[]> => {
-      const { data, error } = await onBranch(
-        supabase.from("invoices").select("*"),
-        branchId,
-      ).order("issue_date", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      return fetchAll<Invoice>((a, b) =>
+        onBranch(supabase.from("invoices").select("*"), branchId)
+          .order("issue_date", { ascending: false })
+          .order("id")
+          .range(a, b),
+      );
     },
   });
 }
@@ -444,13 +447,18 @@ export function useAddExpenseCategory() {
   });
 }
 
+/** صناديق القبض والصرف العادية (بدون صناديق التأمينات، فهي أمانات للعميلات) */
 export function useCashAccounts() {
   const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["cash-accounts", branchId],
     queryFn: async () => {
       const { data, error } = await onBranch(
-        supabase.from("cash_accounts").select("*").eq("is_active", true),
+        supabase
+          .from("cash_accounts")
+          .select("*")
+          .eq("is_active", true)
+          .eq("is_deposit_box", false),
         branchId,
       ).order("created_at");
       if (error) throw error;
@@ -464,15 +472,17 @@ export function useCashTransactions() {
   return useQuery({
     queryKey: ["cash-transactions", branchId],
     queryFn: async () => {
-      const { data, error } = await onBranch(
-        supabase.from("cash_transactions").select("*, cash_accounts!inner(branch_id)"),
-        branchId,
-        "cash_accounts.branch_id",
-      )
-        .order("occurred_at", { ascending: false })
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      return fetchAll((a, b) =>
+        onBranch(
+          supabase.from("cash_transactions").select("*, cash_accounts!inner(branch_id)"),
+          branchId,
+          "cash_accounts.branch_id",
+        )
+          .order("occurred_at", { ascending: false })
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(a, b),
+      );
     },
   });
 }
@@ -482,12 +492,12 @@ export function useExpenses() {
   return useQuery({
     queryKey: ["expenses", branchId],
     queryFn: async () => {
-      const { data, error } = await onBranch(
-        supabase.from("expenses").select("*"),
-        branchId,
-      ).order("occurred_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      return fetchAll((a, b) =>
+        onBranch(supabase.from("expenses").select("*"), branchId)
+          .order("occurred_at", { ascending: false })
+          .order("id")
+          .range(a, b),
+      );
     },
   });
 }
@@ -587,14 +597,13 @@ export function useJournalEntries() {
   return useQuery({
     queryKey: ["journal-entries", branchId],
     queryFn: async () => {
-      const { data, error } = await onBranch(
-        supabase.from("journal_entries").select("*"),
-        branchId,
-      )
-        .order("entry_date", { ascending: false })
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      return fetchAll((a, b) =>
+        onBranch(supabase.from("journal_entries").select("*"), branchId)
+          .order("entry_date", { ascending: false })
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(a, b),
+      );
     },
   });
 }
@@ -604,13 +613,15 @@ export function useJournalLines() {
   return useQuery({
     queryKey: ["journal-lines", branchId],
     queryFn: async () => {
-      const { data, error } = await onBranch(
-        supabase.from("journal_lines").select("*, journal_entries!inner(branch_id)"),
-        branchId,
-        "journal_entries.branch_id",
+      return fetchAll((a, b) =>
+        onBranch(
+          supabase.from("journal_lines").select("*, journal_entries!inner(branch_id)"),
+          branchId,
+          "journal_entries.branch_id",
+        )
+          .order("id")
+          .range(a, b),
       );
-      if (error) throw error;
-      return data ?? [];
     },
   });
 }
@@ -641,6 +652,112 @@ export function useAddJournalEntry() {
       qc.invalidateQueries({ queryKey: ["journal-entries"] });
       qc.invalidateQueries({ queryKey: ["journal-lines"] });
     },
+  });
+}
+
+/* ===== مجاميع الحسابات (تُحسب في قاعدة البيانات) ===== */
+
+const dayBefore = (day: string) => {
+  const d = new Date(`${day}T00:00:00`);
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+/** مدين ودائن كل حساب في فترة (أو كل الفترات إن لم تُحدَّد) */
+async function accountTotals(
+  from: string | null,
+  to: string | null,
+  branchId: string,
+): Promise<Record<string, { debit: number; credit: number }>> {
+  const { data, error } = await supabase.rpc("finance_account_totals", {
+    ...(from ? { p_from: from } : {}),
+    ...(to ? { p_to: to } : {}),
+    ...(branchId !== ALL_BRANCHES ? { p_branch: branchId } : {}),
+  });
+  if (error) throw error;
+  const totals: Record<string, { debit: number; credit: number }> = {};
+  for (const r of data ?? []) {
+    totals[r.account_id] = { debit: Number(r.debit), credit: Number(r.credit) };
+  }
+  return totals;
+}
+
+/** مجاميع الحسابات لفترة — لدليل الحسابات وقائمة الدخل */
+export function useAccountTotals(from: string | null = null, to: string | null = null) {
+  const { opsBranchId: branchId } = useBranchScope();
+  return useQuery({
+    queryKey: ["account-totals", from, to, branchId],
+    queryFn: () => accountTotals(from, to, branchId),
+  });
+}
+
+/** أرصدة الصناديق (ومنها صناديق التأمينات) = الافتتاحي + المقبوض − المصروف */
+export function useCashBoxBalances() {
+  const { opsBranchId: branchId } = useBranchScope();
+  return useQuery({
+    queryKey: ["cash-box-balances", branchId],
+    queryFn: async () => {
+      const [accounts, totals] = await Promise.all([
+        onBranch(supabase.from("cash_accounts").select("*").eq("is_active", true), branchId).order(
+          "created_at",
+        ),
+        supabase.rpc(
+          "cash_box_totals",
+          branchId !== ALL_BRANCHES ? { p_branch: branchId } : {},
+        ),
+      ]);
+      if (accounts.error) throw accounts.error;
+      if (totals.error) throw totals.error;
+      return (accounts.data ?? []).map((a) => {
+        const t = (totals.data ?? []).find((x) => x.account_id === a.id);
+        const totalIn = Number(t?.total_in ?? 0);
+        const totalOut = Number(t?.total_out ?? 0);
+        return { account: a, totalIn, totalOut, balance: Number(a.opening_balance) + totalIn - totalOut };
+      });
+    },
+  });
+}
+
+/** التحويل بين الصناديق (مثل إيداع كاش الصندوق في البنك) */
+export function useTransferCash() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      from: string;
+      to: string;
+      amount: number;
+      date: string;
+      note: string | null;
+    }) => {
+      const { error } = await supabase.rpc("transfer_cash", {
+        p_from: input.from,
+        p_to: input.to,
+        p_amount: input.amount,
+        p_date: input.date,
+        ...(input.note ? { p_note: input.note } : {}),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      for (const key of ["cash-transactions", "cash-box-balances", "journal-entries", "journal-lines", "account-totals"]) {
+        qc.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
+/** سندات الصرف (رد التأمين ورد مبالغ الإلغاء) */
+export function useCashVouchers() {
+  const { opsBranchId: branchId } = useBranchScope();
+  return useQuery({
+    queryKey: ["cash-vouchers", branchId],
+    queryFn: () =>
+      fetchAll((a, b) =>
+        onBranch(supabase.from("cash_vouchers").select("*"), branchId)
+          .order("paid_at", { ascending: false })
+          .order("id")
+          .range(a, b),
+      ),
   });
 }
 
@@ -687,31 +804,24 @@ export function useLedger(accountId: string, from: string, to: string) {
       openingCredit: number;
     }> => {
       const [period, before] = await Promise.all([
-        onBranch(
-          supabase
-            .from("journal_lines")
-            .select(LEDGER_SELECT)
-            .eq("account_id", accountId)
-            .gte("journal_entries.entry_date", from)
-            .lte("journal_entries.entry_date", to),
-          branchId,
-          "journal_entries.branch_id",
-        ).order("entry_date", { referencedTable: "journal_entries", ascending: true }),
-        onBranch(
-          supabase
-            .from("journal_lines")
-            .select("debit, credit, journal_entries!inner(entry_date, branch_id)")
-            .eq("account_id", accountId)
-            .lt("journal_entries.entry_date", from),
-          branchId,
-          "journal_entries.branch_id",
+        fetchAll((a, b) =>
+          onBranch(
+            supabase
+              .from("journal_lines")
+              .select(LEDGER_SELECT)
+              .eq("account_id", accountId)
+              .gte("journal_entries.entry_date", from)
+              .lte("journal_entries.entry_date", to),
+            branchId,
+            "journal_entries.branch_id",
+          )
+            .order("id")
+            .range(a, b),
         ),
+        accountTotals(null, dayBefore(from), branchId),
       ]);
 
-      if (period.error) throw period.error;
-      if (before.error) throw before.error;
-
-      const raw = (period.data ?? []) as unknown as RawLedgerRow[];
+      const raw = period as unknown as RawLedgerRow[];
       const rows: LedgerRow[] = raw
         .map((l) => ({
           id: l.id,
@@ -730,12 +840,8 @@ export function useLedger(accountId: string, from: string, to: string) {
             : a.entry_date.localeCompare(b.entry_date),
         );
 
-      const prior = (before.data ?? []) as unknown as { debit: number | string; credit: number | string }[];
-      return {
-        rows,
-        openingDebit: prior.reduce((s, l) => s + Number(l.debit), 0),
-        openingCredit: prior.reduce((s, l) => s + Number(l.credit), 0),
-      };
+      const prior = before[accountId] ?? { debit: 0, credit: 0 };
+      return { rows, openingDebit: prior.debit, openingCredit: prior.credit };
     },
   });
 }
@@ -746,30 +852,7 @@ export function useTrialBalance(from: string, to: string) {
   return useQuery({
     queryKey: ["trial-balance", from, to, branchId],
     queryFn: async (): Promise<Record<string, { debit: number; credit: number }>> => {
-      const { data, error } = await onBranch(
-        supabase
-          .from("journal_lines")
-          .select("account_id, debit, credit, journal_entries!inner(entry_date, branch_id)")
-          .gte("journal_entries.entry_date", from)
-          .lte("journal_entries.entry_date", to),
-        branchId,
-        "journal_entries.branch_id",
-      );
-      if (error) throw error;
-
-      const rows = (data ?? []) as unknown as {
-        account_id: string;
-        debit: number | string;
-        credit: number | string;
-      }[];
-
-      const totals: Record<string, { debit: number; credit: number }> = {};
-      for (const r of rows) {
-        const t = (totals[r.account_id] ??= { debit: 0, credit: 0 });
-        t.debit += Number(r.debit);
-        t.credit += Number(r.credit);
-      }
-      return totals;
+      return accountTotals(from, to, branchId);
     },
   });
 }

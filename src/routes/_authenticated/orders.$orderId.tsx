@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, PaymentChip, Sheet } from "@/components/kit";
 import { PaymentsCard } from "@/components/PaymentsCard";
+import { DressPartsCard } from "@/components/goods/DressPartsCard";
+import { branchLabel, useBranches } from "@/lib/branches";
 import { StageRow, StageSheet } from "@/components/StageWork";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import {
@@ -22,20 +24,32 @@ import {
 } from "@/lib/data";
 import { useCurrentAccount } from "@/hooks/useSession";
 import {
-  useCloseRentalReturn,
   useDeliverRentalOrder,
   useDressesOfOrder,
   useIssueMaterial,
   useMaterials,
   useOrderMaterials,
   useRecordsOfOrder,
+  useRentalStatuses,
   useReleaseMaterial,
 } from "@/lib/inventory-data";
-import { DRESS_STATUS_LABEL, RETURN_CONDITIONS, isOutNow, qty } from "@/lib/inventory";
+import {
+  dressStatusLabel,
+  dressStatusTone,
+  isOutNow,
+  qty,
+  rentalMoney,
+} from "@/lib/inventory";
+import { DepositReceiptButton, MethodPicker, ReturnSheet } from "@/components/RentalMoneySheets";
+import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/finance";
 import { useItemTypes } from "@/lib/data";
 import { useModel } from "@/lib/models-data";
+import { SketchBoard } from "@/components/SketchBoard";
+import { SKETCH_KIND, emptySketch, pagePngPath, type SketchDoc } from "@/lib/sketch";
+import { loadSketchDoc, useSaveSketch, useSketchDoc } from "@/lib/sketch-data";
 import {
   ALTERATION_STATUS_LABEL,
+  measurementLabel,
   ORDER_KIND_LABEL,
   ORDER_STATE_LABEL,
   activityLabel,
@@ -47,6 +61,7 @@ import {
   stageLabel,
   type AlterationStatus,
   type Order,
+  type OrderFile,
   type OrderStage,
 } from "@/lib/atelier";
 
@@ -75,7 +90,7 @@ function OrderDetailPage() {
   const { data: profiles = [] } = useProfiles();
   const { data: alterations = [] } = useAlterations(orderId);
   const { data: log = [] } = useActivityLog(orderId);
-  const { can, isManager } = useCurrentAccount();
+  const { can } = useCurrentAccount();
   const urls = useSignedUrls(files.map((f) => f.storage_path));
   const updateOrder = useUpdateOrder(orderId);
   const upload = useUploadFiles(orderId);
@@ -101,6 +116,7 @@ function OrderDetailPage() {
 
   const measures = (order.measurements ?? {}) as Record<string, unknown>;
   const canUpload = can("files.upload");
+  const attachments = files.filter((f) => f.kind !== SKETCH_KIND);
 
   return (
     <AppShell
@@ -113,6 +129,9 @@ function OrderDetailPage() {
             {ORDER_KIND_LABEL[order.order_kind]}
           </Chip>
           <Chip tone="gold">{stageLabel(order.current_stage)}</Chip>
+          <Link to="/orders/$orderId/print" params={{ orderId: order.id }} className="btn-quiet">
+            طباعة للمعمل
+          </Link>
           <WhatsAppButton order={order} />
         </>
       }
@@ -157,7 +176,9 @@ function OrderDetailPage() {
             </dl>
           </Card>
 
-          {order.order_kind !== "own" && <RentalOrderCard order={order} canEdit={isManager} />}
+          <DressPartsCard order={order} />
+
+          {order.order_kind !== "own" && <RentalOrderCard order={order} canEdit={can("rentals.manage")} />}
 
 
 
@@ -169,7 +190,11 @@ function OrderDetailPage() {
             ) : (
               <dl className="divide-y divide-line text-[13px]">
                 {Object.entries(measures).map(([k, v]) => (
-                  <Row key={k} label={k} value={<span className="num">{String(v)}</span>} />
+                  <Row
+                    key={k}
+                    label={measurementLabel(k)}
+                    value={<span className="num">{String(v)}</span>}
+                  />
                 ))}
               </dl>
             )}
@@ -179,7 +204,7 @@ function OrderDetailPage() {
             <p className="px-4 py-3 text-[13px] whitespace-pre-wrap">{order.materials || "—"}</p>
           </Card>
 
-          <OrderMaterialsCard orderId={order.id} canEdit={isManager} />
+          <OrderMaterialsCard orderId={order.id} canEdit={can("inventory.manage")} />
 
           {can("finance.view") && (
             <Card title="المالية" action={<PaymentChip status={order.payment_status} />}>
@@ -279,7 +304,7 @@ function OrderDetailPage() {
                             </option>
                           ))}
                         </select>
-                        {isManager && (
+                        {can("stages.manage") && (
                           <select
                             className="field h-9 min-h-0 py-0 text-[12px]"
                             value={a.assignee_id ?? ""}
@@ -306,6 +331,13 @@ function OrderDetailPage() {
             )}
           </Card>
 
+          <SketchCard
+            order={order}
+            sketches={files.filter((f) => f.kind === SKETCH_KIND)}
+            urls={urls}
+            canDraw={canUpload}
+          />
+
           <Card
             title="الصور والملفات"
             action={
@@ -326,11 +358,11 @@ function OrderDetailPage() {
               ) : undefined
             }
           >
-            {files.length === 0 ? (
+            {attachments.length === 0 ? (
               <Empty>لا توجد صور مرفقة.</Empty>
             ) : (
               <div className="grid grid-cols-3 gap-2 px-4 py-4 sm:grid-cols-4">
-                {files.map((f) => (
+                {attachments.map((f) => (
                   <a
                     key={f.id}
                     href={urls[f.storage_path]}
@@ -367,6 +399,194 @@ function OrderDetailPage() {
         />
       )}
     </AppShell>
+  );
+}
+
+/** لوحة التصميم: رسم بقلم الآيباد فوق رسمة الجسم، وكل حفظ نسخة جديدة */
+function SketchCard({
+  order,
+  sketches,
+  urls,
+  canDraw,
+}: {
+  order: Order;
+  sketches: OrderFile[];
+  urls: Record<string, string>;
+  canDraw: boolean;
+}) {
+  const save = useSaveSketch(order.id);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pageIdx, setPageIdx] = useState(0);
+  const [board, setBoard] = useState<SketchDoc | null>(null);
+  const [loading, setLoading] = useState(false);
+  const selected = sketches.find((s) => s.id === selectedId) ?? sketches[0] ?? null;
+  const { data: doc } = useSketchDoc(selected?.storage_path);
+  const pagePaths = selected
+    ? (doc?.pages ?? [null]).map((_, i) => pagePngPath(selected.storage_path, i))
+    : [];
+  const extraUrls = useSignedUrls([
+    ...pagePaths.slice(1),
+    ...(doc?.attachments ?? []).map((a) => a.path),
+  ]);
+  const urlOf = (path: string | undefined) => (path ? (urls[path] ?? extraUrls[path]) : undefined);
+  const shownPage = Math.min(pageIdx, Math.max(0, pagePaths.length - 1));
+  const selectedUrl = urlOf(pagePaths[shownPage]);
+
+  async function continueFrom(file: OrderFile) {
+    setLoading(true);
+    try {
+      setBoard(await loadSketchDoc(file.storage_path));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Card
+      title="لوحة التصميم"
+      action={
+        canDraw ? (
+          <div className="flex items-center gap-3">
+            {selected && (
+              <button
+                className="text-[13px] text-gold disabled:opacity-50"
+                disabled={loading}
+                onClick={() => continueFrom(selected)}
+              >
+                {loading ? "لحظة…" : "إكمال الرسم"}
+              </button>
+            )}
+            <button className="text-[13px] text-gold" onClick={() => setBoard(emptySketch())}>
+              رسمة جديدة
+            </button>
+          </div>
+        ) : undefined
+      }
+    >
+      {!selected ? (
+        <Empty>
+          {canDraw
+            ? "ارسمي التصميم بالقلم فوق رسمة الجسم وعليها مقاسات العميلة."
+            : "لا يوجد تصميم مرسوم بعد."}
+        </Empty>
+      ) : (
+        <div className="space-y-3 px-4 py-4">
+          <a
+            href={selectedUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block overflow-hidden rounded-lg border border-line bg-white"
+          >
+            {selectedUrl ? (
+              <img src={selectedUrl} alt={selected.caption ?? "التصميم"} className="w-full" />
+            ) : (
+              <div className="aspect-[5/7]" />
+            )}
+          </a>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[12px] text-muted-foreground">
+              {selected.caption ?? "تصميم"} · {fmtDateTime(selected.created_at)}
+            </p>
+            {pagePaths.length > 1 && (
+              <div className="flex gap-1">
+                {pagePaths.map((p, i) => (
+                  <button
+                    key={p}
+                    onClick={() => setPageIdx(i)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] ${
+                      i === shownPage ? "bg-ink text-paper" : "border border-line"
+                    }`}
+                  >
+                    صفحة {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {doc && doc.attachments.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-[12px] font-medium">صور مرفقة</p>
+              <div className="grid grid-cols-4 gap-2">
+                {doc.attachments.map((a) => (
+                  <a
+                    key={a.path}
+                    href={extraUrls[a.path]}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="aspect-square overflow-hidden rounded-lg border border-line bg-ivory"
+                  >
+                    {extraUrls[a.path] && (
+                      <img src={extraUrls[a.path]} alt={a.name} className="size-full object-cover" />
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {doc && doc.links.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-[12px] font-medium">روابط</p>
+              <ul className="space-y-1">
+                {doc.links.map((l) => (
+                  <li key={l.id}>
+                    <a
+                      href={l.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block truncate text-[12.5px] text-gold"
+                      dir={l.title ? "rtl" : "ltr"}
+                    >
+                      {l.title || l.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {sketches.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {sketches.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => {
+                    setSelectedId(s.id);
+                    setPageIdx(0);
+                  }}
+                  className={`w-16 shrink-0 overflow-hidden rounded-md border bg-white ${
+                    s.id === selected.id ? "border-gold ring-1 ring-gold" : "border-line"
+                  }`}
+                  title={s.caption ?? ""}
+                >
+                  {urls[s.storage_path] ? (
+                    <img src={urls[s.storage_path]} alt={s.caption ?? ""} className="w-full" />
+                  ) : (
+                    <div className="aspect-[5/7]" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {board && (
+        <SketchBoard
+          order={order}
+          initial={board}
+          onClose={() => setBoard(null)}
+          onSave={async (result) => {
+            await save.mutateAsync({ ...result, caption: `تصميم ${sketches.length + 1}` });
+            toast.success("تم حفظ التصميم");
+            setSelectedId(null);
+            setPageIdx(0);
+            setBoard(null);
+          }}
+        />
+      )}
+    </Card>
   );
 }
 
@@ -467,30 +687,49 @@ function ItemTypeValue({ id }: { id: string | null }) {
 function RentalOrderCard({ order, canEdit }: { order: Order; canEdit: boolean }) {
   const { data: dresses = [] } = useDressesOfOrder(order.id);
   const { data: records = [] } = useRecordsOfOrder(order.id);
+  useRentalStatuses();
   const deliver = useDeliverRentalOrder();
-  const close = useCloseRentalReturn();
   const [dueDate, setDueDate] = useState("");
-  const [retOpen, setRetOpen] = useState(false);
-  const [condition, setCondition] = useState("ok");
-  const [damage, setDamage] = useState("");
-  const [note, setNote] = useState("");
+  const [deposit, setDeposit] = useState(String(Number(order.security_deposit) || ""));
+  const [depositMethod, setDepositMethod] = useState<PaymentMethod>("cash");
+  // نحفظ رقم العقد حتى تبقى نافذة الإيصال بعد الإرجاع
+  const [retId, setRetId] = useState<string | null>(null);
 
   const dress = dresses[0] ?? null;
-  const openRecord = records.find((r) => !r.returned_at && isOutNow(r)) ?? null;
+  const openRecord = records.find(isOutNow) ?? null;
+  const lastRecord = records[0] ?? null;
   const isStock = order.order_kind === "rental_stock";
+  const held = lastRecord ? rentalMoney(lastRecord) : null;
 
   return (
     <Card
       title={isStock ? "قطعة للمخزون" : "الإيجار والتأمين"}
       action={
         dress ? (
-          <Chip tone={dress.status === "rented" ? "gold" : "ok"}>{DRESS_STATUS_LABEL[dress.status]}</Chip>
+          <Chip tone={dressStatusTone(dress.status)}>{dressStatusLabel(dress.status)}</Chip>
         ) : undefined
       }
     >
       <dl className="divide-y divide-line text-[13px]">
         {!isStock && (
           <Row label="مبلغ التأمين" value={<span className="num">{money(order.security_deposit)}</span>} />
+        )}
+        {held && held.depositPaid > 0 && (
+          <Row
+            label="التأمين المقبوض"
+            value={
+              <span className="num">
+                {money(held.depositPaid)}
+                {lastRecord?.deposit_method ? ` · ${PAYMENT_METHOD_LABEL[lastRecord.deposit_method]}` : ""}
+              </span>
+            }
+          />
+        )}
+        {held && held.depositRefunded > 0 && (
+          <Row label="رُد للعميلة" value={<span className="num">{money(held.depositRefunded)}</span>} />
+        )}
+        {held && held.damage > 0 && (
+          <Row label="خصم تلف" value={<span className="num text-late">{money(held.damage)}</span>} />
         )}
         <Row
           label="فستان المخزون"
@@ -504,9 +743,7 @@ function RentalOrderCard({ order, canEdit }: { order: Order; canEdit: boolean })
             )
           }
         />
-        {openRecord && (
-          <Row label="موعد رجوع الفستان" value={fmtDate(openRecord.due_date)} />
-        )}
+        {openRecord && <Row label="موعد رجوع الفستان" value={fmtDate(openRecord.due_date)} />}
       </dl>
 
       {canEdit && (
@@ -514,21 +751,46 @@ function RentalOrderCard({ order, canEdit }: { order: Order; canEdit: boolean })
           {!dress && (
             <>
               {!isStock && (
-                <Field label="موعد رجوع الفستان من العميلة">
-                  <input
-                    className="field"
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                  />
-                </Field>
+                <>
+                  <Field label="موعد رجوع الفستان من العميلة">
+                    <input
+                      className="field"
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                    />
+                  </Field>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field
+                      label="التأمين المقبوض عند التسليم"
+                      hint="يدخل صندوق التأمينات — أمانة للعميلة"
+                    >
+                      <input
+                        className="field"
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        step="0.01"
+                        value={deposit}
+                        onChange={(e) => setDeposit(e.target.value)}
+                      />
+                    </Field>
+                    <MethodPicker value={depositMethod} onChange={setDepositMethod} />
+                  </div>
+                </>
               )}
               <Btn
                 variant="gold"
                 disabled={deliver.isPending}
                 onClick={() =>
                   deliver
-                    .mutateAsync({ orderId: order.id, dueDate: dueDate || null })
+                    .mutateAsync({
+                      orderId: order.id,
+                      dueDate: dueDate || null,
+                      ...(isStock
+                        ? {}
+                        : { depositPaid: Math.max(Number(deposit) || 0, 0), depositMethod }),
+                    })
                     .then(() =>
                       toast.success(isStock ? "دخلت القطعة مخزون الإيجار" : "تم التسليم وسُجل خروج الفستان"),
                     )
@@ -540,65 +802,30 @@ function RentalOrderCard({ order, canEdit }: { order: Order; canEdit: boolean })
             </>
           )}
 
-          {openRecord && !retOpen && (
-            <Btn onClick={() => setRetOpen(true)}>تسجيل إرجاع الفستان</Btn>
-          )}
-
-          {openRecord && retOpen && (
-            <div className="space-y-3">
-              <Field label="حالة الفستان عند الإرجاع">
-                <select className="field" value={condition} onChange={(e) => setCondition(e.target.value)}>
-                  {RETURN_CONDITIONS.map((c) => (
-                    <option key={c.key} value={c.key}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field
-                label="خصم تلف أو تنظيف"
-                hint={`يُخصم من التأمين ${money(openRecord.deposit_amount)}`}
-              >
-                <input
-                  className="field"
-                  dir="ltr"
-                  inputMode="decimal"
-                  value={damage}
-                  onChange={(e) => setDamage(e.target.value)}
-                />
-              </Field>
-              <Field label="ملاحظة">
-                <input className="field" value={note} onChange={(e) => setNote(e.target.value)} />
-              </Field>
-              <div className="flex gap-2">
-                <Btn
-                  variant="gold"
-                  disabled={close.isPending}
-                  onClick={() =>
-                    close
-                      .mutateAsync({
-                        recordId: openRecord.id,
-                        condition,
-                        damage: Number(damage || 0),
-                        note: note || null,
-                      })
-                      .then(() => {
-                        toast.success("تم الإرجاع ورد التأمين");
-                        setRetOpen(false);
-                      })
-                      .catch((err: Error) => toast.error(err.message))
-                  }
-                >
-                  تأكيد الإرجاع
-                </Btn>
-                <Btn variant="quiet" onClick={() => setRetOpen(false)}>
-                  إلغاء
-                </Btn>
-              </div>
-            </div>
-          )}
+          {openRecord && <Btn onClick={() => setRetId(openRecord.id)}>تسجيل إرجاع الفستان</Btn>}
         </div>
       )}
+
+      {lastRecord && Number(lastRecord.deposit_paid) > 0 && (
+        <div className="space-y-2 border-t border-line px-4 py-3 text-[12px]">
+          <p className="text-muted-foreground">إيصالات التأمين للعميلة</p>
+          <div className="flex flex-wrap gap-2">
+            <DepositReceiptButton record={lastRecord} dress={dress} kind="received" className="min-h-9 px-3 text-[12px]" />
+            {lastRecord.refund_voucher_no && (
+              <DepositReceiptButton record={lastRecord} dress={dress} kind="refunded" className="min-h-9 px-3 text-[12px]" />
+            )}
+            {lastRecord.client_phone && (
+              <WhatsAppButton size="sm" rental={{ record: lastRecord, dress }} />
+            )}
+          </div>
+        </div>
+      )}
+
+      <ReturnSheet
+        record={records.find((r) => r.id === retId) ?? null}
+        dress={dress}
+        onClose={() => setRetId(null)}
+      />
     </Card>
   );
 }
@@ -615,6 +842,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 function OrderMaterialsCard({ orderId, canEdit }: { orderId: string; canEdit: boolean }) {
   const { data: rows = [] } = useOrderMaterials(orderId);
   const { data: materials = [] } = useMaterials();
+  const { data: branches = [] } = useBranches();
   const issue = useIssueMaterial();
   const release = useReleaseMaterial();
 
@@ -631,13 +859,37 @@ function OrderMaterialsCard({ orderId, canEdit }: { orderId: string; canEdit: bo
               <span className="min-w-0 flex-1 truncate text-[14px]">{material?.name ?? "مادة"}</span>
               <span className="num text-[12px] text-muted-foreground">
                 محجوز {qty(reserved)} · مصروف {qty(r.qty_issued)} {material?.unit ?? ""}
+                {r.branch_id && ` · ${branchLabel(branches, r.branch_id)}`}
               </span>
               {canEdit && reserved > 0 && (
                 <div className="flex gap-2">
-                  <Btn variant="quiet" onClick={() => issue.mutate({ row: r, qty: reserved })}>
+                  <Btn
+                    variant="quiet"
+                    disabled={issue.isPending}
+                    onClick={() =>
+                      issue.mutate(
+                        { row: r, qty: reserved },
+                        {
+                          onSuccess: () => toast.success("انصرفت المادة على الطلب"),
+                          onError: (err) =>
+                            toast.error(err instanceof Error ? err.message : "تعذّر الصرف"),
+                        },
+                      )
+                    }
+                  >
                     صرف
                   </Btn>
-                  <Btn variant="quiet" onClick={() => release.mutate(r)}>
+                  <Btn
+                    variant="quiet"
+                    disabled={release.isPending}
+                    onClick={() =>
+                      release.mutate(r, {
+                        onSuccess: () => toast.success("انفك الحجز"),
+                        onError: (err) =>
+                          toast.error(err instanceof Error ? err.message : "تعذّر فك الحجز"),
+                      })
+                    }
+                  >
                     تحرير الحجز
                   </Btn>
                 </div>

@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { Card, Chip, Empty, PaymentChip, Stat } from "@/components/kit";
 import { useOrders } from "@/lib/data";
 import { useMaterials, useRentalDresses, useRentalRecords } from "@/lib/inventory-data";
-import { available, isLowStock, isRentalLate, qty } from "@/lib/inventory";
+import { available, isLowStock, isRentalLate, qty, rentalMoney } from "@/lib/inventory";
 import {
   STAGES,
   fmtDate,
@@ -68,9 +68,10 @@ function DashboardPage() {
 
   const lowMaterials = materials.filter((m) => m.is_active && isLowStock(m));
   const lateRentals = rentals.filter(isRentalLate);
+  // التأمين المحفوظ فعليًا في صندوق التأمينات
   const heldDeposits = rentals
-    .filter((r) => !r.returned_at)
-    .reduce((s, r) => s + Number(r.deposit_amount ?? 0), 0);
+    .filter((r) => !r.returned_at && !r.cancelled_at)
+    .reduce((s, r) => s + rentalMoney(r).depositHeld, 0);
 
   const count = (key: FilterKey) =>
     orders.filter(FILTERS.find((f) => f.key === key)!.test).length;

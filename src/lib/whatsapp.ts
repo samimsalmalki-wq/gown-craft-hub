@@ -1,11 +1,21 @@
 import type { Database } from "@/integrations/supabase/types";
 import type { Order } from "./atelier";
 import { fmtDate, money, remaining } from "./atelier";
-import type { RentalDress, RentalRecord } from "./inventory";
+import { PAYMENT_METHOD_LABEL } from "./finance";
+import { rentalMoney, type RentalDress, type RentalRecord } from "./inventory";
 
 export type WhatsappTemplate = Database["public"]["Tables"]["whatsapp_templates"]["Row"];
 
-export const RENTAL_TEMPLATE_KEYS = ["rental_return"];
+export const RENTAL_TEMPLATE_KEYS = [
+  "rental_return",
+  "rental_fitting",
+  "rental_deposit_received",
+  "rental_deposit_refunded",
+];
+
+/** إيصالات التأمين تُرسل بعد التسليم والإرجاع */
+export const DEPOSIT_RECEIVED_KEY = "rental_deposit_received";
+export const DEPOSIT_REFUNDED_KEY = "rental_deposit_refunded";
 
 /** حقول جاهزة للإدراج في نص الرسالة */
 export const TEMPLATE_VARS: { key: string; label: string }[] = [
@@ -21,6 +31,18 @@ export const TEMPLATE_VARS: { key: string; label: string }[] = [
   { key: "remaining", label: "المبلغ المتبقي" },
   { key: "dress_code", label: "كود فستان الإيجار" },
   { key: "return_due_date", label: "موعد إرجاع الإيجار" },
+  { key: "invoice_no", label: "رقم فاتورة المبيعات" },
+  { key: "fitting_date", label: "موعد بروفة الإيجار" },
+  { key: "out_date", label: "موعد خروج فستان الإيجار" },
+  { key: "delivered_date", label: "تاريخ استلام العميلة للفستان" },
+  { key: "deposit_paid", label: "التأمين المقبوض" },
+  { key: "deposit_method", label: "طريقة دفع التأمين" },
+  { key: "receipt_no", label: "رقم سند قبض التأمين" },
+  { key: "returned_date", label: "تاريخ إرجاع الفستان" },
+  { key: "damage_amount", label: "خصم التلف" },
+  { key: "deposit_refund", label: "التأمين المسترد" },
+  { key: "refund_method", label: "طريقة رد التأمين" },
+  { key: "voucher_no", label: "رقم سند صرف التأمين" },
 ];
 
 /** يحوّل رقم الجوال إلى صيغة دولية بدون رموز (افتراضي السعودية 966) */
@@ -53,13 +75,30 @@ export function orderVars(order: Order): Record<string, string> {
   };
 }
 
-export function rentalVars(record: RentalRecord, dress?: RentalDress | null): Record<string, string> {
+export function rentalVars(
+  record: RentalRecord,
+  dress?: Pick<RentalDress, "code"> | null,
+): Record<string, string> {
+  const m = rentalMoney(record);
   return {
     client_name: record.client_name,
     dress_code: dress?.code ?? "—",
     return_due_date: fmtDate(record.due_date),
     total_amount: money(record.amount),
     deposit_amount: money(record.deposit_amount),
+    remaining: money(m.remaining),
+    invoice_no: record.external_invoice_no ?? "—",
+    fitting_date: fmtDate(record.fitting_date),
+    out_date: fmtDate(record.out_date),
+    delivered_date: fmtDate(record.delivered_at),
+    deposit_paid: money(m.depositPaid),
+    deposit_method: record.deposit_method ? PAYMENT_METHOD_LABEL[record.deposit_method] : "—",
+    receipt_no: record.deposit_receipt_no ?? "—",
+    returned_date: fmtDate(record.returned_at),
+    damage_amount: money(m.damage),
+    deposit_refund: money(m.depositRefunded),
+    refund_method: record.refund_method ? PAYMENT_METHOD_LABEL[record.refund_method] : "—",
+    voucher_no: record.refund_voucher_no ?? "—",
   };
 }
 
@@ -77,6 +116,18 @@ export const SAMPLE_VARS: Record<string, string> = {
   remaining: "٣٫٠٠٠ ر.س",
   dress_code: "D-018",
   return_due_date: "٣٠/٩/٢٠٢٦",
+  invoice_no: "INV-5520",
+  fitting_date: "٢٢/٩/٢٠٢٦",
+  out_date: "٢٥/٩/٢٠٢٦",
+  delivered_date: "٢٥/٩/٢٠٢٦",
+  deposit_paid: "١٫٠٠٠ ر.س",
+  deposit_method: "نقدًا",
+  receipt_no: "R-00231",
+  returned_date: "٣٠/٩/٢٠٢٦",
+  damage_amount: "١٥٠ ر.س",
+  deposit_refund: "٨٥٠ ر.س",
+  refund_method: "نقدًا",
+  voucher_no: "P-00012",
 };
 
 export function waLink(phone: string, text: string) {

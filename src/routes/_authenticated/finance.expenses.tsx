@@ -16,9 +16,11 @@ import {
   useExpenseCategories,
   useExpenses,
   useSuppliers,
+  useCashBoxBalances,
+  useTransferCash,
 } from "@/lib/finance-data";
 import { fmtDate, money } from "@/lib/atelier";
-import { CASH_KIND_LABEL, cashBalance, monthStartISO, todayISO } from "@/lib/finance";
+import { CASH_KIND_LABEL, monthStartISO, todayISO } from "@/lib/finance";
 
 export const Route = createFileRoute("/_authenticated/finance/expenses")({
   head: () => ({
@@ -48,6 +50,11 @@ function ExpensesPage() {
   const { data: accounts = [] } = useCashAccounts();
   const { data: txs = [] } = useCashTransactions();
   const { data: materials = [] } = useMaterials();
+  const { data: balances = [] } = useCashBoxBalances();
+  const transfer = useTransferCash();
+  const [move, setMove] = useState({ from: "", to: "", amount: "", date: todayISO(), note: "" });
+  const boxName = (id: string) => balances.find((b) => b.account.id === id)?.account.name ?? "صندوق";
+  const regularBoxes = balances.filter((b) => !b.account.is_deposit_box);
   const add = useAddExpense();
   const addCategory = useAddExpenseCategory();
   const addSupplier = useAddSupplier();
@@ -115,11 +122,11 @@ function ExpensesPage() {
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="مصروفات هذا الشهر" value={money(monthTotal)} tone="late" />
         <Stat label="ضريبة مدخلات الشهر" value={money(vatTotal)} />
-        {accounts.slice(0, 2).map((a) => (
+        {regularBoxes.slice(0, 2).map((b) => (
           <Stat
-            key={a.id}
-            label={`${a.name} (${CASH_KIND_LABEL[a.kind]})`}
-            value={money(cashBalance(a, txs))}
+            key={b.account.id}
+            label={`${b.account.name} (${CASH_KIND_LABEL[b.account.kind]})`}
+            value={money(b.balance)}
             tone="gold"
           />
         ))}
@@ -308,16 +315,114 @@ function ExpensesPage() {
         <div className="space-y-5">
           <Card title="أرصدة الصناديق">
             <ul className="divide-y divide-line">
-              {accounts.map((a) => (
-                <li key={a.id} className="flex items-center justify-between px-4 py-3 text-[13px]">
-                  <span>
-                    {a.name} <Chip tone="neutral">{CASH_KIND_LABEL[a.kind]}</Chip>
+              {balances.map((b) => (
+                <li
+                  key={b.account.id}
+                  className="flex items-center justify-between gap-2 px-4 py-3 text-[13px]"
+                >
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    {b.account.name}
+                    {b.account.is_deposit_box ? (
+                      <Chip tone="soon">أمانات العميلات</Chip>
+                    ) : (
+                      <Chip tone="neutral">{CASH_KIND_LABEL[b.account.kind]}</Chip>
+                    )}
                   </span>
-                  <span className="num text-[14px]">{money(cashBalance(a, txs))}</span>
+                  <span className="num text-[14px]">{money(b.balance)}</span>
                 </li>
               ))}
             </ul>
           </Card>
+
+          {canEdit && regularBoxes.length > 1 && (
+            <Card title="تحويل بين الصناديق">
+              <div className="space-y-3 px-4 py-4">
+                <p className="text-[12px] text-muted-foreground">
+                  مثل إيداع كاش الصندوق في البنك. يتسجّل في الصندوقين وفي الحسابات معًا.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="من صندوق">
+                    <select
+                      className="field"
+                      value={move.from}
+                      onChange={(e) => setMove({ ...move, from: e.target.value })}
+                    >
+                      <option value="">اختر</option>
+                      {regularBoxes.map((b) => (
+                        <option key={b.account.id} value={b.account.id}>
+                          {b.account.name} — {money(b.balance)}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="إلى صندوق">
+                    <select
+                      className="field"
+                      value={move.to}
+                      onChange={(e) => setMove({ ...move, to: e.target.value })}
+                    >
+                      <option value="">اختر</option>
+                      {regularBoxes
+                        .filter((b) => b.account.id !== move.from)
+                        .map((b) => (
+                          <option key={b.account.id} value={b.account.id}>
+                            {b.account.name}
+                          </option>
+                        ))}
+                    </select>
+                  </Field>
+                  <Field label="المبلغ">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      className="field"
+                      value={move.amount}
+                      onChange={(e) => setMove({ ...move, amount: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="التاريخ">
+                    <input
+                      type="date"
+                      className="field"
+                      value={move.date}
+                      onChange={(e) => setMove({ ...move, date: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <Field label="ملاحظة">
+                  <input
+                    className="field"
+                    value={move.note}
+                    onChange={(e) => setMove({ ...move, note: e.target.value })}
+                    placeholder="مثال: إيداع مبيعات الأسبوع"
+                  />
+                </Field>
+                <Btn
+                  variant="gold"
+                  disabled={transfer.isPending || !move.from || !move.to || !(Number(move.amount) > 0)}
+                  onClick={() =>
+                    transfer
+                      .mutateAsync({
+                        from: move.from,
+                        to: move.to,
+                        amount: Number(move.amount),
+                        date: move.date,
+                        note: move.note.trim() || null,
+                      })
+                      .then(() => {
+                        toast.success("تم التحويل");
+                        setMove({ from: "", to: "", amount: "", date: todayISO(), note: "" });
+                      })
+                      .catch((err: Error) => toast.error(err.message))
+                  }
+                >
+                  تحويل
+                </Btn>
+              </div>
+            </Card>
+          )}
 
           <Card title="آخر المصروفات">
             {expenses.length === 0 ? (
@@ -351,7 +456,7 @@ function ExpensesPage() {
                       <p className="truncate text-[13px]">{t.description || "حركة"}</p>
                       <p className="text-[11px] text-muted-foreground">
                         {fmtDate(t.occurred_at)} ·{" "}
-                        {accounts.find((a) => a.id === t.account_id)?.name ?? "صندوق"}
+                        {boxName(t.account_id)}
                       </p>
                     </div>
                     <span className={t.direction === "in" ? "num text-ok" : "num text-late"}>

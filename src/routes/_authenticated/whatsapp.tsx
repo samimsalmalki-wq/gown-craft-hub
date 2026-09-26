@@ -28,7 +28,8 @@ export const Route = createFileRoute("/_authenticated/whatsapp")({
 });
 
 function WhatsappPage() {
-  const { isManager } = useCurrentAccount();
+  const { can } = useCurrentAccount();
+  const isManager = can("whatsapp.manage");
   const { data: templates = [], isLoading } = useWhatsappTemplates();
   const save = useSaveWhatsappTemplate();
   const [drafts, setDrafts] = useState<Record<string, string>>({});

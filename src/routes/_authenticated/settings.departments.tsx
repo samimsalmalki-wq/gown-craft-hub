@@ -22,16 +22,16 @@ export const Route = createFileRoute("/_authenticated/settings/departments")({
 });
 
 function DepartmentsPage() {
-  const { isManager, ready } = useCurrentAccount();
+  const { isAdmin, ready } = useCurrentAccount();
   const { data: rows = [] } = useDepartments();
   const add = useAddDepartment();
   const update = useUpdateDepartment();
   const [name, setName] = useState("");
 
-  if (ready && !isManager) {
+  if (ready && !isAdmin) {
     return (
       <AppShell title="الأقسام">
-        <Empty>هذه الشاشة متاحة للمدير والمشرف فقط.</Empty>
+        <Empty>هذه الشاشة متاحة لمدير النظام فقط.</Empty>
       </AppShell>
     );
   }

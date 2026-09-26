@@ -28,7 +28,8 @@ export const Route = createFileRoute("/_authenticated/item-types")({
 });
 
 function ItemTypesPage() {
-  const { isManager, ready } = useCurrentAccount();
+  const { can, ready } = useCurrentAccount();
+  const isManager = can("catalog.manage");
   const { data: types = [] } = useItemTypes();
   const add = useAddItemType();
   const update = useUpdateItemType();
@@ -37,7 +38,7 @@ function ItemTypesPage() {
   if (ready && !isManager) {
     return (
       <AppShell title="أنواع القطع">
-        <Empty>هذه الشاشة متاحة للمدير والمشرف فقط.</Empty>
+        <Empty>هذه الشاشة متاحة لمن يملك صلاحية الموديلات والكتالوج.</Empty>
       </AppShell>
     );
   }

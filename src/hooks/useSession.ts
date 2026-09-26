@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
-import type { AppRole } from "@/lib/atelier";
+import { ROLE_LABEL, type AppRole } from "@/lib/atelier";
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -37,18 +37,22 @@ export function useCurrentAccount() {
       ]);
 
       let rolePerms: string[] = [];
+      let roleRow: { label: string; material_categories: string[] } | null = null;
       const roleId = profile.data?.role_id;
       if (roleId) {
-        const { data } = await supabase
-          .from("role_permissions")
-          .select("permission")
-          .eq("role_id", roleId);
-        rolePerms = (data ?? []).map((p) => p.permission);
+        const [rp, rr] = await Promise.all([
+          supabase.from("role_permissions").select("permission").eq("role_id", roleId),
+          supabase.from("roles").select("label, material_categories").eq("id", roleId).maybeSingle(),
+        ]);
+        rolePerms = (rp.data ?? []).map((p) => p.permission);
+        roleRow = rr.data ?? null;
       }
 
       return {
         profile: profile.data,
         roles: (roles.data ?? []).map((r) => r.role as AppRole),
+        roleName: roleRow?.label ?? null,
+        categories: roleRow?.material_categories ?? [],
         permissions: Array.from(
           new Set([...(perms.data ?? []).map((p) => p.permission), ...rolePerms]),
         ),
@@ -56,30 +60,41 @@ export function useCurrentAccount() {
     },
   });
 
-
+  const profile = query.data?.profile ?? null;
+  const active = profile?.is_active !== false;
   const roles = query.data?.roles ?? [];
-  const permissions = query.data?.permissions ?? [];
-  const isAdmin = roles.includes("admin");
-  const isSupervisor = roles.includes("supervisor");
-  const isManager = isAdmin || isSupervisor;
-  const isCS = roles.includes("cs");
+  const permissions = active ? (query.data?.permissions ?? []) : [];
+  const isAdmin = active && roles.includes("admin");
+  const role = (roles[0] ?? "staff") as AppRole;
+  const allowedStages = profile?.allowed_stages ?? [];
+  const categories = query.data?.categories ?? [];
+
+  /** كل الصلاحيات تأتي من شاشة الأدوار والصلاحيات، والمدير وحده يملك كل شيء */
+  const can = (permission: string) => isAdmin || permissions.includes(permission);
+  /** المراحل المسموحة في صفحة الموظف (فارغة = كل المراحل) */
+  const canStage = (stage: string) =>
+    isAdmin || allowedStages.length === 0 || allowedStages.includes(stage);
+  /** أصناف المخزون المسموحة للدور (فارغة = كل الأصناف) */
+  const canCategory = (category: string) =>
+    isAdmin || categories.length === 0 || categories.includes(category);
 
   return {
     ready: ready && (!userId || !query.isLoading),
     user,
     userId,
-    profile: query.data?.profile ?? null,
+    profile,
     roles,
-    role: (roles[0] ?? "staff") as AppRole,
+    role,
+    roleName: query.data?.roleName ?? ROLE_LABEL[role],
     isAdmin,
-    isSupervisor,
-    isManager,
-    isCS,
     permissions,
-    /** المدير يرى كل شيء، والمشرف يرى كل شيء ما عدا المالية التي تُمنح صلاحياتها صراحة */
-    can: (permission: string) =>
-      isAdmin ||
-      permissions.includes(permission) ||
-      (isManager && !permission.startsWith("finance.")),
+    categories,
+    can,
+    canStage,
+    canCategory,
+    /** يدير هذه المرحلة: إسناد وبدء وإنهاء واعتماد */
+    canManageStage: (stage: string) => can("stages.manage") && canStage(stage),
+    /** يدير هذا الصنف في المخزون */
+    canManageCategory: (category: string) => can("inventory.manage") && canCategory(category),
   };
 }

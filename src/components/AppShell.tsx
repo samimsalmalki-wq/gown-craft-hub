@@ -1,4 +1,4 @@
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutGrid,
@@ -26,7 +26,8 @@ import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useMarkNotificationsRead, useNotifications, useStageTemplates } from "@/lib/data";
-import { ROLE_LABEL, fmtDateTime } from "@/lib/atelier";
+import { fmtDateTime } from "@/lib/atelier";
+import { GOODS_PERMS, MATERIALS_PERMS } from "@/lib/goods";
 import { Avatar, Sheet } from "@/components/kit";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { cn } from "@/lib/utils";
@@ -35,22 +36,44 @@ type NavItem = {
   to: string;
   label: string;
   icon: typeof LayoutGrid;
-  managerOnly?: boolean;
-  adminOnly?: boolean;
-  financeOnly?: boolean;
+  /** يظهر العنصر إذا امتلك الحساب أيًّا من هذه الصلاحيات (بدونها يظهر للجميع) */
+  anyOf?: string[];
+  /** يظهر نشطًا في هذه المسارات أيضًا */
+  match?: string[];
 };
+
+const FINANCE = ["finance.payments", "finance.invoices", "finance.reports"];
+
+const ACTIVE = { className: "bg-goldsoft/50 text-ink ring-1 ring-black/5 font-medium" };
+const INACTIVE = { className: "text-muted-foreground hover:text-ink" };
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "لوحة التحكم", icon: LayoutGrid },
-  { to: "/tasks", label: "مهامي", icon: CheckSquare },
-  { to: "/orders", label: "الطلبات", icon: ListOrdered },
-  { to: "/stages", label: "لوحة الإنتاج", icon: Layers },
-  { to: "/late", label: "المتأخرات", icon: AlarmClock },
-  { to: "/finance", label: "الماليات", icon: Wallet, financeOnly: true },
-  { to: "/inventory", label: "مخزون المواد", icon: Boxes },
-  { to: "/models", label: "الموديلات", icon: Shirt },
-  { to: "/staff", label: "الموظفون", icon: Users, managerOnly: true },
-  { to: "/reports", label: "تقرير الأداء", icon: BarChart3, managerOnly: true },
+  { to: "/tasks", label: "مهامي", icon: CheckSquare, anyOf: ["stages.edit", "stages.manage"] },
+  {
+    to: "/orders",
+    label: "الطلبات",
+    icon: ListOrdered,
+    anyOf: ["orders.create", "orders.edit", "orders.view_all", "stages.manage", "rentals.manage"],
+  },
+  { to: "/stages", label: "لوحة الإنتاج", icon: Layers, anyOf: ["stages.manage", "orders.view_all"] },
+  { to: "/late", label: "المتأخرات", icon: AlarmClock, anyOf: ["stages.manage", "orders.view_all"] },
+  { to: "/finance", label: "الماليات", icon: Wallet, anyOf: FINANCE },
+  {
+    to: "/inventory",
+    label: "المخزون",
+    icon: Boxes,
+    anyOf: [...MATERIALS_PERMS, ...GOODS_PERMS],
+    match: ["/inventory", "/goods"],
+  },
+  {
+    to: "/models",
+    label: "الموديلات",
+    icon: Shirt,
+    anyOf: ["catalog.manage", "orders.create", "orders.view_all"],
+  },
+  { to: "/staff", label: "الموظفون", icon: Users, anyOf: ["staff.manage"] },
+  { to: "/reports", label: "تقرير الأداء", icon: BarChart3, anyOf: ["reports.view"] },
   { to: "/settings", label: "الإعدادات", icon: Settings2 },
 ];
 
@@ -67,7 +90,7 @@ export function AppShell({
   eyebrow?: string;
   actions?: ReactNode;
 }) {
-  const { profile, isAdmin, isManager, role, userId, can } = useCurrentAccount();
+  const { profile, roleName, userId, can } = useCurrentAccount();
   const navigate = useNavigate();
   const router = useRouter();
   const qc = useQueryClient();
@@ -79,14 +102,13 @@ export function AppShell({
   const markRead = useMarkNotificationsRead();
   const unread = notes.filter((n) => !n.is_read);
 
-  const canFinance =
-    can("finance.payments") || can("finance.invoices") || can("finance.reports");
-  const items = NAV.filter(
-    (n) =>
-      (!n.managerOnly || isManager) &&
-      (!n.adminOnly || isAdmin) &&
-      (!n.financeOnly || canFinance),
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  // المخزون يفتح على الجاهز لمن له صلاحياته، وإلا على مخزون المواد
+  const goodsFirst = GOODS_PERMS.some(can);
+  const items = NAV.filter((n) => !n.anyOf || n.anyOf.some(can)).map((n) =>
+    n.to === "/inventory" && goodsFirst ? { ...n, to: "/goods" } : n,
   );
+  const forced = (n: NavItem) => Boolean(n.match?.some((p) => path.startsWith(p)));
 
   async function signOut() {
     await qc.cancelQueries();
@@ -118,8 +140,8 @@ export function AppShell({
               <Link
                 key={item.to}
                 to={item.to}
-                activeProps={{ className: "bg-goldsoft/50 text-ink ring-1 ring-black/5 font-medium" }}
-                inactiveProps={{ className: "text-muted-foreground hover:text-ink" }}
+                activeProps={ACTIVE}
+                inactiveProps={forced(item) ? ACTIVE : INACTIVE}
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px]"
               >
                 <item.icon className="size-4" strokeWidth={1.75} />
@@ -133,7 +155,7 @@ export function AppShell({
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-[13px] font-medium">{profile?.full_name || "حساب"}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {ROLE_LABEL[role] ?? "موظف"}
+                  {roleName}
                   {profile?.job_title ? ` · ${profile.job_title}` : ""}
                 </p>
               </div>
@@ -196,20 +218,22 @@ export function AppShell({
             key={item.to}
             to={item.to}
             activeProps={{ className: "text-gold" }}
-            inactiveProps={{ className: "text-muted-foreground" }}
+            inactiveProps={{ className: forced(item) ? "text-gold" : "text-muted-foreground" }}
             className="flex min-w-[68px] flex-1 flex-col items-center gap-1 py-2.5 text-[10.5px] whitespace-nowrap"
           >
             <item.icon className="size-5" strokeWidth={1.75} />
             {item.label}
           </Link>
         ))}
-        <Link
-          to="/orders/new"
-          className="flex min-w-[68px] flex-1 flex-col items-center gap-1 py-2.5 text-[10.5px] text-muted-foreground"
-        >
-          <Plus className="size-5" strokeWidth={1.75} />
-          جديد
-        </Link>
+        {can("orders.create") && (
+          <Link
+            to="/orders/new"
+            className="flex min-w-[68px] flex-1 flex-col items-center gap-1 py-2.5 text-[10.5px] text-muted-foreground"
+          >
+            <Plus className="size-5" strokeWidth={1.75} />
+            جديد
+          </Link>
+        )}
       </nav>
 
       <Sheet open={bellOpen} onClose={() => setBellOpen(false)} title="التنبيهات">

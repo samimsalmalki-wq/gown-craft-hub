@@ -120,6 +120,90 @@
       "when": 1789764086196,
       "tag": "0016_models_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790367982929,
+      "tag": "0018_roles_and_scopes",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790373641244,
+      "tag": "0019_rental_statuses",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790377038250,
+      "tag": "0020_rental_money",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790387631179,
+      "tag": "0021_rental_invoice_fitting_receipts",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790393732368,
+      "tag": "0022_receipt_templates",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790394400000,
+      "tag": "0023_goods_stock",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790395045815,
+      "tag": "0024_finance_fixes",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790395900000,
+      "tag": "0025_inventory_fixes",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790396143102,
+      "tag": "0026_cash_box_consistency",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1790397240000,
+      "tag": "0027_reserve_from_warehouse",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790398140000,
+      "tag": "0028_handover_stage",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790399400000,
+      "tag": "0029_last_stage_active",
+      "breakpoints": true
     }
   ]
 }

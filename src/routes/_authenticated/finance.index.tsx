@@ -6,8 +6,10 @@ import { FinanceTabs } from "@/components/FinanceTabs";
 
 import { Btn, Card, Chip, Empty, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
+import { rentalMoney } from "@/lib/inventory";
+import { useRentalRecords } from "@/lib/inventory-data";
 import { useOrders } from "@/lib/data";
-import { usePayments, useTaxSettings } from "@/lib/finance-data";
+import { useCashBoxBalances, usePayments, useTaxSettings } from "@/lib/finance-data";
 import { fmtDate, isLate, money } from "@/lib/atelier";
 import { monthKey, monthLabel, monthStartISO, orderDue, todayISO } from "@/lib/finance";
 
@@ -36,6 +38,8 @@ function FinancePage() {
   const { data: orders = [] } = useOrders();
   const { data: payments = [] } = usePayments();
   const { data: tax } = useTaxSettings();
+  const { data: rentals = [] } = useRentalRecords();
+  const { data: boxes = [] } = useCashBoxBalances();
 
   const allowed = can("finance.payments") || can("finance.invoices") || can("finance.reports");
   if (ready && !allowed) {
@@ -46,20 +50,28 @@ function FinancePage() {
     );
   }
 
-  const active = orders.filter((o) => o.state !== "cancelled");
+  // إنتاج قطعة للمخزون ليس بيعًا لعميلة، فلا يدخل في القيم والمستحقات
+  const active = orders.filter((o) => o.state !== "cancelled" && o.order_kind !== "rental_stock");
+  const rentalDue = rentals
+    .map((r) => ({ r, due: rentalMoney(r).remaining }))
+    .filter((x) => x.due > 0)
+    .sort((a, b) => b.due - a.due);
+  const rentalDueTotal = rentalDue.reduce((s, x) => s + x.due, 0);
   const totalValue = active.reduce((s, o) => s + Number(o.total_amount), 0);
   const totalCollected = active.reduce((s, o) => s + Number(o.deposit_amount), 0);
-  const outstanding = active.reduce((s, o) => s + orderDue(o), 0);
+  const outstanding = active.reduce((s, o) => s + orderDue(o), 0) + rentalDueTotal;
   const lateDue = active.filter((o) => isLate(o) && orderDue(o) > 0);
 
   const thisMonth = monthStartISO();
   const today = todayISO();
-  const monthCollected = payments
+  // التأمين أمانة للعميلة، لا يُحسب ضمن التحصيل
+  const collected = payments.filter((p) => !p.is_security_deposit);
+  const monthCollected = collected
     .filter((p) => p.paid_at >= thisMonth && p.paid_at <= today)
     .reduce((s, p) => s + Number(p.amount), 0);
 
   const byMonth = new Map<string, number>();
-  for (const p of payments) {
+  for (const p of collected) {
     const k = monthKey(p.paid_at);
     byMonth.set(k, (byMonth.get(k) ?? 0) + Number(p.amount));
   }
@@ -86,7 +98,12 @@ function FinancePage() {
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="إجمالي قيمة الطلبات" value={money(totalValue)} />
         <Stat label="المحصَّل" value={money(totalCollected)} tone="gold" />
-        <Stat label="المستحق" value={money(outstanding)} tone="late" hint={`${receivables.length} طلب`} />
+        <Stat
+          label="المستحق"
+          value={money(outstanding)}
+          tone="late"
+          hint={`${receivables.length} طلب · ${rentalDue.length} إيجار`}
+        />
         <Stat label="تحصيل هذا الشهر" value={money(monthCollected)} />
       </div>
 
@@ -121,6 +138,52 @@ function FinancePage() {
         </Card>
 
         <div className="space-y-5">
+          {boxes.length > 0 && (
+            <Card title="أرصدة الصناديق">
+              <ul className="divide-y divide-line">
+                {boxes.map((b) => (
+                  <li
+                    key={b.account.id}
+                    className="flex items-center justify-between gap-2 px-4 py-2.5 text-[13px]"
+                  >
+                    <span className="truncate">
+                      {b.account.name}
+                      {b.account.is_deposit_box && (
+                        <span className="text-[11px] text-soon"> · أمانات</span>
+                      )}
+                    </span>
+                    <span className="num">{money(b.balance)}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {rentalDue.length > 0 && (
+            <Card title="المتبقي على عميلات الإيجار">
+              <ul className="divide-y divide-line">
+                {rentalDue.map(({ r, due }) => (
+                  <li key={r.id}>
+                    <Link
+                      to="/rentals/$dressId"
+                      params={{ dressId: r.dress_id }}
+                      className="flex items-center justify-between gap-2 px-4 py-2.5 text-[13px] hover:bg-ivory"
+                    >
+                      <span className="truncate">
+                        {r.client_name}
+                        <span className="text-[11px] text-muted-foreground">
+                          {" "}
+                          · الخروج {fmtDate(r.out_date)}
+                        </span>
+                      </span>
+                      <span className="num text-late">{money(due)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
           <Card title="التحصيل شهريًا">
             {months.length === 0 ? (
               <Empty>لا توجد دفعات بعد.</Empty>

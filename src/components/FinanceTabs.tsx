@@ -5,6 +5,7 @@ import { useCurrentAccount } from "@/hooks/useSession";
 const TABS = [
   { to: "/finance", label: "اللوحة", perms: ["finance.payments", "finance.invoices", "finance.reports"] },
   { to: "/finance/payments", label: "التحصيل", perms: ["finance.payments", "finance.reports"] },
+  { to: "/finance/invoices", label: "الفواتير", perms: ["finance.invoices", "finance.reports"] },
   { to: "/finance/expenses", label: "المصروفات", perms: ["finance.expenses", "finance.reports"] },
   { to: "/finance/accounts", label: "الحسابات", perms: ["finance.accounts", "finance.reports"] },
   { to: "/finance/journal", label: "القيود", perms: ["finance.accounts", "finance.reports"] },

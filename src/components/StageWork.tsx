@@ -65,7 +65,7 @@ export function StageSheet({
   stage: OrderStage | null;
   onClose: () => void;
 }) {
-  const { can, isManager, userId } = useCurrentAccount();
+  const { can, canManageStage, userId } = useCurrentAccount();
   const { data: profiles = [] } = useProfiles();
   const { data: templates = [] } = useStageTemplates();
   const actions = useStageActions();
@@ -91,8 +91,10 @@ export function StageSheet({
 
   if (!stage) return null;
 
-  const canEdit = can("stages.edit");
   const mine = stage.assignee_id === userId;
+  // المشرف يدير المراحل المسموحة له، والعاملة تنفّذ المراحل المسندة إليها فقط
+  const manage = canManageStage(stage.stage);
+  const canEdit = manage || (can("stages.edit") && mine);
   const eligible = profiles.filter(
     (p) =>
       p.is_active &&
@@ -136,6 +138,7 @@ export function StageSheet({
 
         {canEdit && (
           <>
+            {manage && (
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="الموظف المسؤول">
                 <select className="field" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
@@ -186,6 +189,7 @@ export function StageSheet({
                 </Btn>
               </div>
             </div>
+            )}
 
             <Field label="ملاحظات المرحلة">
               <textarea
@@ -203,7 +207,7 @@ export function StageSheet({
             </Btn>
 
             <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-              {(mine || isManager) && stage.status !== "in_progress" && stage.status !== "done" && (
+              {stage.status !== "in_progress" && stage.status !== "done" && (
                 <Btn onClick={() => wrap(actions.start.mutateAsync(stage), "بدأ العمل في المرحلة")}>
                   بدء العمل
                 </Btn>
@@ -234,7 +238,7 @@ export function StageSheet({
               )}
             </div>
 
-            {isManager && stage.status === "review" && (
+            {manage && stage.status === "review" && (
               <div className="space-y-2 rounded-lg border border-line p-3">
                 <p className="text-[13px] font-medium">مراجعة المشرف</p>
                 <input
@@ -342,7 +346,8 @@ function Line({ label, value }: { label: string; value: React.ReactNode }) {
 
 /** تحديد المراحل المطلوبة لهذا الطلب (بوابة المرحلة السادسة — للمدير والمشرف) */
 function StageScope({ stage }: { stage: OrderStage }) {
-  const { isManager } = useCurrentAccount();
+  const { can } = useCurrentAccount();
+  const canScope = can("stages.manage");
   const { data: order } = useOrder(stage.order_id);
   const { data: stages = [] } = useOrderStages(stage.order_id);
   const setScope = useSetStageScope();
@@ -400,7 +405,7 @@ function StageScope({ stage }: { stage: OrderStage }) {
               <input
                 type="checkbox"
                 className="size-5 accent-current"
-                disabled={!isManager || s.status === "done"}
+                disabled={!canScope || s.status === "done"}
                 checked={picked.includes(s.stage) || s.status === "done"}
                 onChange={() => toggle(s.stage)}
               />
@@ -412,13 +417,13 @@ function StageScope({ stage }: { stage: OrderStage }) {
         )}
       </ul>
 
-      {isManager ? (
+      {canScope ? (
         <Btn variant="gold" onClick={save} disabled={setScope.isPending}>
           حفظ المراحل المطلوبة
         </Btn>
       ) : (
         <p className="text-[12px] text-muted-foreground">
-          التحديد متاح لمدير الورشة أو المشرف فقط.
+          التحديد متاح لمن يملك صلاحية إدارة المراحل.
         </p>
       )}
     </div>

@@ -40,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/stages")({
 });
 
 function BoardPage() {
-  const { isManager } = useCurrentAccount();
+  const { canManageStage } = useCurrentAccount();
   const { data: templates = [] } = useStageTemplates();
   const { data: rows = [] } = useStagesWithOrders();
   const { data: profiles = [] } = useProfiles();
@@ -143,7 +143,7 @@ function BoardPage() {
                             إدارة
                           </button>
                         </div>
-                        {isManager && (
+                        {canManageStage(r.stage) && (
                           <select
                             className="field mt-2 h-9 min-h-0 py-0 text-[11px]"
                             value=""
@@ -157,7 +157,7 @@ function BoardPage() {
                             }}
                           >
                             <option value="">نقل إلى مرحلة…</option>
-                            {columns.map((c) => (
+                            {columns.filter((c) => canManageStage(c.stage)).map((c) => (
                               <option key={c.id} value={c.stage}>
                                 {stageLabel(c.stage)}
                               </option>

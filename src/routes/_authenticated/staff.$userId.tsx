@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, Card, Chip, Empty, Stat, StageStatusChip } from "@/components/kit";
 import { StageSheet } from "@/components/StageWork";
 import { useCurrentAccount } from "@/hooks/useSession";
-import { useAllRoles, useDepartments, useMyTasks, useProfiles } from "@/lib/data";
+import { useAllRoles, useDepartments, useMyTasks, useProfiles, useRoles } from "@/lib/data";
 import {
   OPEN_STATUSES,
   ROLE_LABEL,
@@ -33,10 +33,11 @@ export const Route = createFileRoute("/_authenticated/staff/$userId")({
 
 function StaffProfilePage() {
   const { userId } = Route.useParams();
-  const { isManager, ready } = useCurrentAccount();
+  const { can, ready } = useCurrentAccount();
   const { data: profiles = [] } = useProfiles();
   const { data: departments = [] } = useDepartments();
   const { data: roles = [] } = useAllRoles();
+  const { data: catalog = [] } = useRoles();
   const { data: tasks = [] } = useMyTasks(userId);
   const [active, setActive] = useState<OrderStage | null>(null);
 
@@ -44,10 +45,10 @@ function StaffProfilePage() {
   const role = (roles.find((r) => r.user_id === userId)?.role ?? "staff") as AppRole;
   const dept = departments.find((d) => d.id === profile?.department_id);
 
-  if (ready && !isManager) {
+  if (ready && !can("staff.manage")) {
     return (
       <AppShell title="ملف الموظف">
-        <Empty>هذه الشاشة متاحة للمدير والمشرف فقط.</Empty>
+        <Empty>هذه الشاشة متاحة لمن يملك صلاحية عرض الموظفين.</Empty>
       </AppShell>
     );
   }
@@ -70,7 +71,7 @@ function StaffProfilePage() {
     <AppShell
       eyebrow="ملف موظف"
       title={profile?.full_name || "—"}
-      subtitle={`${ROLE_LABEL[role]}${dept ? ` · ${dept.name}` : ""}${profile?.job_title ? ` · ${profile.job_title}` : ""}`}
+      subtitle={`${catalog.find((r) => r.id === profile?.role_id)?.label ?? ROLE_LABEL[role]}${dept ? ` · ${dept.name}` : ""}${profile?.job_title ? ` · ${profile.job_title}` : ""}`}
       actions={
         <Link to="/staff" className="text-[13px] text-gold">
           كل الموظفين

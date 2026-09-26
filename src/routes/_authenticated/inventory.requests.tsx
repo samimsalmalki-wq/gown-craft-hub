@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/inventory/requests")({
 });
 
 function RequestsPage() {
-  const { isManager, can } = useCurrentAccount();
+  const { can } = useCurrentAccount();
   const { writeBranchId } = useBranchScope();
   const { data: branches = [] } = useBranches();
   const { data: materials = [] } = useMaterials();
@@ -51,8 +51,8 @@ function RequestsPage() {
   const decide = useDecideStockRequest();
 
   const warehouse = warehouseOf(branches);
-  const canApprove = isManager || can("inventory.approve") || can("inventory.transfer");
-  const canRequest = isManager || can("inventory.request") || can("inventory.manage");
+  const canApprove = can("inventory.approve") || can("inventory.transfer");
+  const canRequest = can("inventory.request") || can("inventory.manage");
 
   const [tab, setTab] = useState<"mine" | "pending">(canApprove ? "pending" : "mine");
   const [open, setOpen] = useState(false);

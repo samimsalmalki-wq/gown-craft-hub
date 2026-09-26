@@ -56,7 +56,10 @@ function ResetPasswordPage() {
             <p className="mt-2 text-[14px] text-muted-foreground">
               انتهت صلاحية الرابط أو استُخدم من قبل. اطلب رابطًا جديدًا من صفحة الدخول.
             </p>
-            <button onClick={() => navigate({ to: "/auth" })} className="mt-5 text-[13px] text-gold">
+            <button
+              onClick={() => navigate({ to: "/auth" })}
+              className="mt-5 text-[13px] text-gold"
+            >
               صفحة الدخول
             </button>
           </div>

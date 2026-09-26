@@ -28,7 +28,8 @@ export const Route = createFileRoute("/_authenticated/models/")({
 });
 
 function ModelsPage() {
-  const { isManager } = useCurrentAccount();
+  const { can } = useCurrentAccount();
+  const isManager = can("catalog.manage");
   const { data: models = [] } = useModels();
   const { data: types = [] } = useItemTypes();
   const { data: counts = {} } = useModelMaterialCounts();

@@ -59,6 +59,7 @@ export const createStaffAccount = createServerFn({ method: "POST" })
       .eq("id", data.roleId)
       .maybeSingle();
     if (!role) throw new Error("دور غير معروف");
+    if (role.key === "admin") throw new Error("النظام فيه مدير واحد فقط — اختر دورًا آخر");
     const enumRole = (isBuiltinRole(role.key) ? role.key : "staff") as AppRole;
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
@@ -90,7 +91,9 @@ export const createStaffAccount = createServerFn({ method: "POST" })
 
       const del = await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
       if (del.error) throw del.error;
-      const ins = await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: enumRole });
+      const ins = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: userId, role: enumRole });
       if (ins.error) throw ins.error;
     } catch (err) {
       await supabaseAdmin.auth.admin.deleteUser(userId);

@@ -10,6 +10,7 @@ import {
   setStageCatalog,
 } from "./atelier";
 import { ALL_BRANCHES, useBranchScope } from "./branches";
+import { fetchAll } from "./fetch-all";
 import { setMaterialCategoryCatalog, type MaterialCategory } from "./inventory";
 import type {
   ItemType,
@@ -20,6 +21,7 @@ import type {
   RoleCatalogRow,
   StageKey,
 } from "./atelier";
+import { newId } from "@/lib/utils";
 
 
 export const ordersKey = ["orders"] as const;
@@ -35,12 +37,13 @@ export function useOrders() {
   return useQuery({
     queryKey: [...ordersKey, branchId],
     queryFn: async (): Promise<Order[]> => {
-      const { data, error } = await onBranch(
-        supabase.from("orders").select("*"),
-        branchId,
-      ).order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      // على دفعات حتى لا تنقطع القائمة عند 1000 طلب
+      return fetchAll<Order>((a, b) =>
+        onBranch(supabase.from("orders").select("*"), branchId)
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(a, b),
+      );
     },
   });
 }
@@ -49,6 +52,8 @@ export function useOrders() {
 export function useOrder(orderId: string) {
   return useQuery({
     queryKey: ["order", orderId],
+    // بدون رقم (مثل فاتورة إيجار أو بيع) ما فيه طلب نجيبه
+    enabled: Boolean(orderId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
@@ -213,7 +218,7 @@ export function useUploadFiles(orderId: string) {
     }) => {
       const { data: userData } = await supabase.auth.getUser();
       for (const file of files) {
-        const path = `${orderId}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+        const path = `${orderId}/${newId()}-${file.name.replace(/[^\w.-]/g, "_")}`;
         const up = await supabase.storage.from("order-files").upload(path, file);
         if (up.error) throw up.error;
         const { error } = await supabase.from("order_files").insert({
@@ -448,7 +453,7 @@ export function useRoles() {
     queryFn: async (): Promise<RoleCatalogRow[]> => {
       const { data, error } = await supabase
         .from("roles")
-        .select("id, key, label, position, is_builtin, is_active")
+        .select("id, key, label, position, is_builtin, is_active, material_categories")
         .order("position");
       if (error) throw error;
       return data ?? [];
@@ -629,24 +634,34 @@ function invalidateStageCaches(qc: ReturnType<typeof useQueryClient>, orderId?: 
   }
 }
 
-/** الانتقال للمرحلة المطلوبة التالية فقط (تتخطى المراحل غير المطلوبة لهذا الطلب) */
+/**
+ * الانتقال للمرحلة المطلوبة التالية فقط: تتخطى المراحل غير المطلوبة لهذا الطلب،
+ * والمراحل الموقوفة في إعداد المراحل (باقية في الطلبات القديمة)
+ */
 async function advanceOrder(orderId: string, stage: StageKey) {
-  const { data: rows } = await supabase
-    .from("order_stages")
-    .select("stage, position, is_required")
-    .eq("order_id", orderId)
-    .order("position");
+  const [{ data: rows }, { data: inactive }] = await Promise.all([
+    supabase
+      .from("order_stages")
+      .select("stage, position, is_required")
+      .eq("order_id", orderId)
+      .order("position"),
+    supabase.from("stage_templates").select("stage").eq("is_active", false),
+  ]);
+  const off = new Set((inactive ?? []).map((t) => t.stage));
   const list = rows ?? [];
   const current = list.find((r) => r.stage === stage);
-  const next = list.find((r) => r.is_required && r.position > (current?.position ?? 0));
+  const next = list.find(
+    (r) => r.is_required && !off.has(r.stage) && r.position > (current?.position ?? 0),
+  );
   const target = (next?.stage ?? stage) as StageKey;
-  await supabase
+  const { error } = await supabase
     .from("orders")
     .update({
       current_stage: target,
       state: next ? "active" : "delivered",
     })
     .eq("id", orderId);
+  if (error) throw error;
 }
 
 /** تحديد المراحل المطلوبة لطلب معيّن (للمدير والمشرف) */

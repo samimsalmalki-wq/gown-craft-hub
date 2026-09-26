@@ -6,7 +6,6 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, Btn, Card, Chip, Empty, Field } from "@/components/kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentAccount } from "@/hooks/useSession";
-import { ROLE_LABEL } from "@/lib/atelier";
 import { useUpdateProfile } from "@/lib/data";
 import { branchLabel, useBranches } from "@/lib/branches";
 
@@ -28,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/settings/account")({
 });
 
 function AccountPage() {
-  const { profile, role, userId } = useCurrentAccount();
+  const { profile, roleName, userId } = useCurrentAccount();
   const { data: branches = [] } = useBranches();
   const update = useUpdateProfile();
 
@@ -81,7 +80,7 @@ function AccountPage() {
             <div>
               <p className="text-[14px] font-medium">{profile.full_name}</p>
               <p className="mt-1 flex items-center gap-2 text-[11.5px] text-muted-foreground">
-                <Chip tone="gold">{ROLE_LABEL[role] ?? "موظف"}</Chip>
+                <Chip tone="gold">{roleName}</Chip>
                 {branchLabel(branches, profile.branch_id)}
               </p>
             </div>

@@ -6,10 +6,13 @@ import { FinanceTabs } from "@/components/FinanceTabs";
 import { Card, Chip, Empty, Field, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useOrders } from "@/lib/data";
+import { rentalMoney } from "@/lib/inventory";
 import { useMaterials, useRentalRecords } from "@/lib/inventory-data";
 import {
+  useAccountTotals,
   useAllOrderMaterials,
   useExpenses,
+  useGlAccounts,
   useInvoices,
   usePayments,
   useTaxSettings,
@@ -58,6 +61,8 @@ function FinanceReportsPage() {
 
   const [from, setFrom] = useState(monthStartISO());
   const [to, setTo] = useState(todayISO());
+  const { data: glAccounts = [] } = useGlAccounts();
+  const { data: periodTotals = {} } = useAccountTotals(from, to);
 
   if (ready && !can("finance.reports")) {
     return (
@@ -78,11 +83,13 @@ function FinanceReportsPage() {
   const netTax = outputTax - inputTax;
 
   /* الإيرادات والتحصيل شهريًا */
-  const byMonth = new Map<string, { tailoring: number; rental: number }>();
+  const byMonth = new Map<string, { tailoring: number; rental: number; sale: number }>();
   for (const p of payments) {
+    if (p.is_security_deposit) continue; // التأمين أمانة وليس إيرادًا
     const k = monthKey(p.paid_at);
-    const row = byMonth.get(k) ?? { tailoring: 0, rental: 0 };
+    const row = byMonth.get(k) ?? { tailoring: 0, rental: 0, sale: 0 };
     if (p.scope === "rental") row.rental += Number(p.amount);
+    else if (p.scope === "sale") row.sale += Number(p.amount);
     else row.tailoring += Number(p.amount);
     byMonth.set(k, row);
   }
@@ -100,7 +107,7 @@ function FinanceReportsPage() {
   const costOf = (orderId: string) => orderMaterialCost.get(orderId) ?? 0;
 
   const profitRows = orders
-    .filter((o) => o.state !== "cancelled")
+    .filter((o) => o.state !== "cancelled" && o.order_kind !== "rental_stock")
     .map((o) => {
       const revenue = Number(o.total_amount);
       const cost = costOf(o.id);
@@ -111,26 +118,57 @@ function FinanceReportsPage() {
 
   /* أعمار المستحقات */
   const aging = new Map<string, number>();
-  for (const o of orders.filter((x) => x.state !== "cancelled" && orderDue(x) > 0)) {
+  for (const o of orders.filter(
+    (x) => x.state !== "cancelled" && x.order_kind !== "rental_stock" && orderDue(x) > 0,
+  )) {
     const late = -(daysUntilDue(o) ?? 0);
     const bucket = agingBucket(late);
     aging.set(bucket, (aging.get(bucket) ?? 0) + orderDue(o));
   }
 
   /* الإيجارات منفصلة */
-  const periodRentals = rentals.filter((r) => within(r.out_date));
-  const rentalRevenue = periodRentals.reduce((s, r) => s + Number(r.amount), 0);
-  const rentalDeposits = periodRentals
-    .filter((r) => !r.returned_at)
-    .reduce((s, r) => s + Number(r.deposit_amount), 0);
+  // الإيجار يُحسب إيرادًا يوم تسليم الفستان للعميلة، لا يوم الحجز
+  const periodRentals = rentals.filter(
+    (r) => !r.cancelled_at && r.delivered_at && within(r.delivered_at.slice(0, 10)),
+  );
+  // الحجز الملغي يدخل منه ما بقي للمحل فقط
+  const rentalRevenue =
+    periodRentals.reduce((s, r) => s + Number(r.amount), 0) +
+    rentals
+      .filter((r) => r.cancelled_at && within(r.cancelled_at.slice(0, 10)))
+      .reduce((s, r) => s + Number(r.cancel_kept), 0);
+  const rentalDeposits = rentals
+    .filter((r) => !r.returned_at && !r.cancelled_at)
+    .reduce((s, r) => s + rentalMoney(r).depositHeld, 0);
 
   const tailoringCollected = payments
-    .filter((p) => p.scope === "order" && within(p.paid_at))
+    .filter((p) => p.scope === "order" && !p.is_security_deposit && within(p.paid_at))
     .reduce((s, p) => s + Number(p.amount), 0);
   const rentalCollected = payments
-    .filter((p) => p.scope === "rental" && within(p.paid_at))
+    .filter((p) => p.scope === "rental" && !p.is_security_deposit && within(p.paid_at))
+    .reduce((s, p) => s + Number(p.amount), 0);
+  const saleCollected = payments
+    .filter((p) => p.scope === "sale" && within(p.paid_at))
     .reduce((s, p) => s + Number(p.amount), 0);
   const periodExpenseTotal = periodExpenses.reduce((s, e) => s + Number(e.amount), 0);
+
+  /* قائمة الدخل: من قيود الحسابات للفترة */
+  const incomeSection = (type: "revenue" | "cost" | "expense") =>
+    glAccounts
+      .filter((a) => !a.is_group && a.type === type)
+      .map((a) => {
+        const t = periodTotals[a.id] ?? { debit: 0, credit: 0 };
+        const amount = type === "revenue" ? t.credit - t.debit : t.debit - t.credit;
+        return { id: a.id, code: a.code, name: a.name, amount };
+      })
+      .filter((r) => Math.abs(r.amount) >= 0.01)
+      .sort((a, b) => a.code.localeCompare(b.code));
+  const revenueRows = incomeSection("revenue");
+  const costRows = incomeSection("cost");
+  const opexRows = incomeSection("expense");
+  const totalOf = (rows: { amount: number }[]) => rows.reduce((s, r) => s + r.amount, 0);
+  const grossProfit = totalOf(revenueRows) - totalOf(costRows);
+  const netProfit = grossProfit - totalOf(opexRows);
 
   return (
     <AppShell
@@ -153,13 +191,57 @@ function FinanceReportsPage() {
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="تحصيل التفصيل" value={money(tailoringCollected)} tone="gold" />
-        <Stat label="تحصيل الإيجار" value={money(rentalCollected)} />
+        <Stat
+          label="تحصيل الإيجار"
+          value={money(rentalCollected)}
+          {...(saleCollected > 0 ? { hint: `وبيع البضاعة ${money(saleCollected)}` } : {})}
+        />
         <Stat label="المصروفات" value={money(periodExpenseTotal)} tone="late" />
         <Stat
           label="صافي التدفق"
-          value={money(tailoringCollected + rentalCollected - periodExpenseTotal)}
+          value={money(tailoringCollected + rentalCollected + saleCollected - periodExpenseTotal)}
         />
       </div>
+
+      <Card title="قائمة الدخل للفترة" className="mb-5">
+        <div className="grid gap-5 px-4 py-4 lg:grid-cols-3">
+          {(
+            [
+              ["الإيرادات", revenueRows],
+              ["تكلفة الإيراد", costRows],
+              ["مصاريف التشغيل", opexRows],
+            ] as const
+          ).map(([title, rows]) => (
+            <div key={title}>
+              <p className="mb-2 flex items-center justify-between text-[13px] font-medium">
+                <span>{title}</span>
+                <span className="num">{money(totalOf(rows))}</span>
+              </p>
+              {rows.length === 0 ? (
+                <p className="text-[12px] text-muted-foreground">لا توجد حركة.</p>
+              ) : (
+                <ul className="divide-y divide-line rounded-lg border border-line text-[12px]">
+                  {rows.map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                      <span className="truncate">
+                        <span className="num text-muted-foreground">{r.code}</span> {r.name}
+                      </span>
+                      <span className="num">{money(r.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-line px-4 py-4">
+          <Stat label="مجمل الربح" value={money(grossProfit)} tone="gold" />
+          <Stat label="صافي الربح" value={money(netProfit)} tone={netProfit < 0 ? "late" : "gold"} />
+        </div>
+        <p className="border-t border-line px-4 py-3 text-[11px] text-muted-foreground">
+          الإيراد يُحتسب عند تسليم الطلب أو الفستان، والتأمينات أمانات لا تدخل فيه.
+        </p>
+      </Card>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card title="تقرير ضريبة القيمة المضافة">
@@ -189,6 +271,7 @@ function FinanceReportsPage() {
                   <span className="flex items-center gap-3">
                     <span className="num">{money(v.tailoring)}</span>
                     <Chip tone="neutral">إيجار {money(v.rental)}</Chip>
+                    {v.sale > 0 && <Chip tone="gold">بيع {money(v.sale)}</Chip>}
                   </span>
                 </li>
               ))}

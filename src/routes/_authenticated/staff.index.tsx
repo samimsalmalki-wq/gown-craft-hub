@@ -49,8 +49,9 @@ export const Route = createFileRoute("/_authenticated/staff/")({
 });
 
 function StaffPage() {
-  const { isAdmin, isManager, ready } = useCurrentAccount();
+  const { isAdmin, can, ready } = useCurrentAccount();
   const { data: profiles = [] } = useProfiles();
+  const { data: branches = [] } = useBranches();
   const { data: departments = [] } = useDepartments();
   const { data: roles = [] } = useAllRoles();
   const { data: roleList = [] } = useRoles();
@@ -94,10 +95,10 @@ function StaffPage() {
     }
   }
 
-  if (ready && !isManager) {
+  if (ready && !can("staff.manage")) {
     return (
       <AppShell title="الموظفون">
-        <Empty>هذه الشاشة متاحة للمدير والمشرف فقط.</Empty>
+        <Empty>هذه الشاشة متاحة لمن يملك صلاحية عرض الموظفين.</Empty>
       </AppShell>
     );
   }
@@ -134,6 +135,8 @@ function StaffPage() {
             const admin = enumRoleOf(p.id) === "admin";
             const dept = departments.find((d) => d.id === p.department_id);
             const allowed = p.allowed_stages ?? [];
+            const branch = branches.find((b) => b.id === p.branch_id);
+            const extra = perms.filter((x) => x.user_id === p.id).length;
             return (
               <Card
                 key={p.id}
@@ -155,8 +158,9 @@ function StaffPage() {
                   <div className="min-w-0 flex-1 text-[12px] text-muted-foreground">
                     <p>{dept?.name || "بدون قسم"}{p.job_title ? ` · ${p.job_title}` : ""}</p>
                     <p dir="ltr">{p.phone || "—"}</p>
+                    <p>الفرع: {branch?.name ?? "كل الفروع"}</p>
                     <p>
-                      المراحل المسموحة:{" "}
+                      المراحل:{" "}
                       {allowed.length === 0
                         ? "كل المراحل"
                         : allowed.map((s) => stageLabel(s)).join("، ")}
@@ -178,6 +182,7 @@ function StaffPage() {
                       <select
                         className="field"
                         value={p.role_id ?? ""}
+                        disabled={admin}
                         onChange={(e) =>
                           setRole
                             .mutateAsync({ userId: p.id, roleId: e.target.value })
@@ -189,7 +194,7 @@ function StaffPage() {
                           اختر دورًا
                         </option>
                         {roleList
-                          .filter((r) => r.is_active || r.id === p.role_id)
+                          .filter((r) => (r.is_active && r.key !== "admin") || r.id === p.role_id)
                           .map((r) => (
                             <option key={r.id} value={r.id}>
                               {r.label}
@@ -200,7 +205,12 @@ function StaffPage() {
                   </div>
                 )}
 
-                <ul className="divide-y divide-line">
+                <details className="group">
+                  <summary className="cursor-pointer list-none px-4 py-3 text-[13px] text-gold">
+                    صلاحيات الموظف {extra > 0 ? `(${extra.toLocaleString("ar-EG")} إضافية)` : ""}
+                    <span className="mr-1 text-muted-foreground group-open:hidden">— عرض</span>
+                  </summary>
+                <ul className="divide-y divide-line border-t border-line">
                   {PERMISSIONS.map((perm) => {
                     const fromRole = admin || rolePermsOf(p.role_id).includes(perm.key);
                     const own = perms.some(
@@ -225,7 +235,7 @@ function StaffPage() {
                     );
                   })}
                 </ul>
-
+                </details>
               </Card>
             );
           })}
@@ -321,7 +331,7 @@ function NewStaffSheet({ onClose, onCreated }: { onClose: () => void; onCreated:
               اختر دورًا
             </option>
             {roleList
-              .filter((r) => r.is_active)
+              .filter((r) => r.is_active && r.key !== "admin")
               .map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.label}
@@ -381,7 +391,9 @@ function EditStaffSheet({
 }) {
   const { data: departments = [] } = useDepartments();
   const { data: templates = [] } = useStageTemplates();
+  const { data: branches = [] } = useBranches();
   const [name, setName] = useState(profile.full_name);
+  const [branchId, setBranchId] = useState(profile.branch_id ?? "");
   const [phone, setPhone] = useState(profile.phone ?? "");
   const [job, setJob] = useState(profile.job_title ?? "");
   const [dept, setDept] = useState(profile.department_id ?? "");
@@ -413,6 +425,19 @@ function EditStaffSheet({
             ))}
           </select>
         </Field>
+        <Field label="الفرع" hint="بدون فرع = يرى كل الفروع (للمدير والمحاسب)">
+          <select className="field" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+            <option value="">كل الفروع</option>
+            {branches
+              .filter((b) => b.is_active || b.id === branchId)
+              .map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                  {b.is_warehouse ? " (المستودع)" : ""}
+                </option>
+              ))}
+          </select>
+        </Field>
         <Field label="حالة الموظف">
           <select
             className="field"
@@ -423,7 +448,10 @@ function EditStaffSheet({
             <option value="0">موقوف</option>
           </select>
         </Field>
-        <Field label="المراحل المسموح بها" hint="بدون تحديد = كل المراحل">
+        <Field
+          label="المراحل"
+          hint="لمشرف الفرع: المراحل التي يديرها. للعاملة: المراحل التي تُسند إليها. بدون تحديد = كل المراحل"
+        >
           <div className="flex flex-wrap gap-2">
             {templates.map((s) => (
               <button
@@ -448,6 +476,7 @@ function EditStaffSheet({
                 phone: phone || null,
                 job_title: job || null,
                 department_id: dept || null,
+                branch_id: branchId || null,
                 is_active: active,
                 allowed_stages: stages,
               })

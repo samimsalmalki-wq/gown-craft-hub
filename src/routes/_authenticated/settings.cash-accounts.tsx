@@ -98,7 +98,11 @@ function CashAccountsPage() {
             {rows.map((a) => (
               <li key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3.5">
                 <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{a.name}</span>
-                <Chip>{CASH_KIND_LABEL[a.kind]}</Chip>
+                {a.is_deposit_box ? (
+                  <Chip tone="soon">صندوق تأمينات — أمانات العميلات</Chip>
+                ) : (
+                  <Chip>{CASH_KIND_LABEL[a.kind]}</Chip>
+                )}
                 <Chip tone="neutral">{branchLabel(branches, a.branch_id)}</Chip>
                 <span className="num text-[12px] text-muted-foreground">حساب {a.gl_code}</span>
                 <span className="num text-[13px]">{money(Number(a.opening_balance))}</span>

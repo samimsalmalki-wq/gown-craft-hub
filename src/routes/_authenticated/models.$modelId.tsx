@@ -39,7 +39,8 @@ export const Route = createFileRoute("/_authenticated/models/$modelId")({
 
 function ModelPage() {
   const { modelId } = Route.useParams();
-  const { isManager } = useCurrentAccount();
+  const { can } = useCurrentAccount();
+  const isManager = can("catalog.manage");
   const { data: model, isLoading } = useModel(modelId);
   const { data: types = [] } = useItemTypes();
   const { data: materials = [] } = useMaterials();

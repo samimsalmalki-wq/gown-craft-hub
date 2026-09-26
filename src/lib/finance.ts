@@ -25,6 +25,7 @@ export const INVOICE_STATUS_LABEL: Record<InvoiceStatus, string> = {
 export const FINANCE_SCOPE_LABEL: Record<FinanceScope, string> = {
   order: "تفصيل",
   rental: "إيجار",
+  sale: "بيع بضاعة",
 };
 
 /** المستحق على الطلب = القيمة − ما تم تحصيله */
@@ -106,6 +107,16 @@ export const ENTRY_SOURCE_LABEL: Record<string, string> = {
   invoice: "فاتورة",
   material_out: "صرف خامات",
   order_delivered: "تسليم طلب",
+  rental_delivered: "تسليم فستان إيجار",
+  rental_return: "إرجاع فستان إيجار",
+  rental_cancel: "إلغاء حجز إيجار",
+  invoice_fix: "تصحيح فاتورة",
+  invoice_cancel: "إلغاء فاتورة",
+  transfer: "تحويل بين الصناديق",
+  opening_balance: "رصيد افتتاحي",
+  sale: "بيع بضاعة",
+  sale_return: "مرتجع بيع",
+  material_out_fix: "تصحيح صرف خامات",
 };
 
 /** الرصيد بالطبيعة: الأصول والمصاريف مدينة، والباقي دائن */

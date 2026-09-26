@@ -6,6 +6,7 @@ import { WarehouseScopeNote } from "@/components/WarehouseScopeNote";
 import { OrdersTabs } from "@/components/OrdersTabs";
 import { Card, Chip, Empty, PaymentChip } from "@/components/kit";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { useCurrentAccount } from "@/hooks/useSession";
 import { useItemTypes, useOrders } from "@/lib/data";
 import {
   ORDER_KIND_LABEL,
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/orders/")({
 });
 
 function OrdersPage() {
+  const { can } = useCurrentAccount();
   const { q } = Route.useSearch();
   const { data: orders = [], isLoading } = useOrders();
   useItemTypes();
@@ -64,12 +66,14 @@ function OrdersPage() {
       title="الطلبات"
       subtitle="ابحث برقم الطلب أو اسم العميلة أو رقم الجوال."
       actions={
-        <Link
-          to="/orders/new"
-          className="inline-flex min-h-11 items-center rounded-lg bg-ink px-4 text-sm font-medium text-paper ring-1 ring-black/10"
-        >
-          طلب جديد
-        </Link>
+        can("orders.create") ? (
+          <Link
+            to="/orders/new"
+            className="inline-flex min-h-11 items-center rounded-lg bg-ink px-4 text-sm font-medium text-paper ring-1 ring-black/10"
+          >
+            طلب جديد
+          </Link>
+        ) : undefined
       }
     >
       <OrdersTabs />

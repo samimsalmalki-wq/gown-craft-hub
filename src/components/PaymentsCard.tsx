@@ -37,11 +37,13 @@ export function PaymentsCard({ order }: { order: Order }) {
   const [notes, setNotes] = useState("");
   const [cashAccountId, setCashAccountId] = useState("");
 
-  const canPay = can("finance.payments");
+  // موظفة المبيعات تحصّل على طلباتها دون الدخول للمالية
+  const canPay = can("finance.payments") || can("payments.collect");
   const canInvoice = can("finance.invoices");
   if (!canPay && !canInvoice) return null;
 
-  const paid = collected(payments);
+  // من لا يملك صلاحيات المالية يرى سنداته فقط، فالمدفوع يؤخذ من الطلب نفسه
+  const paid = can("finance.payments") ? collected(payments) : Number(order.deposit_amount ?? 0);
   const due = Math.max(0, Number(order.total_amount) - paid);
   const orderInvoices = invoices.filter((i) => i.order_id === order.id);
 

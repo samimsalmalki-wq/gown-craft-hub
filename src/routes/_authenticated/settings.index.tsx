@@ -3,6 +3,8 @@ import {
   Banknote,
   Boxes,
   Building2,
+  CircleDot,
+  FileText,
   Layers,
   ListTree,
   MessageCircle,
@@ -46,7 +48,7 @@ type Item = {
   show: (a: Access) => boolean;
 };
 
-type Access = { isAdmin: boolean; isManager: boolean; canFinance: boolean };
+type Access = { isAdmin: boolean; can: (permission: string) => boolean; canFinance: boolean };
 
 const GROUPS: { title: string; items: Item[] }[] = [
   {
@@ -64,14 +66,21 @@ const GROUPS: { title: string; items: Item[] }[] = [
         label: "أنواع القطع",
         hint: "فستان زواج، طرحة، فستان سهرة…",
         icon: Shirt,
-        show: (a) => a.isManager,
+        show: (a) => a.can("catalog.manage"),
       },
       {
         to: "/whatsapp",
         label: "رسائل الواتساب",
         hint: "نصوص الرسائل الجاهزة للعميلة",
         icon: MessageCircle,
-        show: (a) => a.isManager,
+        show: (a) => a.can("whatsapp.manage"),
+      },
+      {
+        to: "/settings/rental-statuses",
+        label: "حالات فساتين الإيجار",
+        hint: "أضف حالات واحذفها وغيّر أسماءها وألوانها وترتيبها",
+        icon: CircleDot,
+        show: (a) => a.can("catalog.manage"),
       },
     ],
   },
@@ -83,7 +92,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
         label: "الموظفون",
         hint: "الحسابات والأدوار والفروع والمراحل المسموحة",
         icon: Users,
-        show: (a) => a.isManager,
+        show: (a) => a.can("staff.manage"),
       },
       {
         to: "/roles",
@@ -97,7 +106,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
         label: "الأقسام",
         hint: "أقسام العمل التي يُنسب إليها الموظفون",
         icon: UserCog,
-        show: (a) => a.isManager,
+        show: (a) => a.isAdmin,
       },
     ],
   },
@@ -116,7 +125,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
         label: "تصنيفات الخامات",
         hint: "قماش، دانتيل، خيوط… تظهر في المخزون",
         icon: Boxes,
-        show: (a) => a.isManager,
+        show: (a) => a.can("catalog.manage"),
       },
     ],
   },
@@ -128,6 +137,13 @@ const GROUPS: { title: string; items: Item[] }[] = [
         label: "بيانات المنشأة والضريبة",
         hint: "اسم المنشأة والرقم الضريبي ونسبة الضريبة لكل فرع",
         icon: Building2,
+        show: (a) => a.isAdmin,
+      },
+      {
+        to: "/settings/receipts",
+        label: "نصوص إيصالات التأمين",
+        hint: "عنوان الإيصال وبياناته ونص الإقرار والتوقيعات، مع معاينة",
+        icon: FileText,
         show: (a) => a.isAdmin,
       },
       {
@@ -175,10 +191,10 @@ const GROUPS: { title: string; items: Item[] }[] = [
 ];
 
 function SettingsHub() {
-  const { isAdmin, isManager, can } = useCurrentAccount();
+  const { isAdmin, can } = useCurrentAccount();
   const access: Access = {
     isAdmin,
-    isManager,
+    can,
     canFinance:
       can("finance.payments") ||
       can("finance.invoices") ||

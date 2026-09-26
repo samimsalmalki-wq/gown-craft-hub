@@ -155,7 +155,7 @@ function InvoicePage() {
                   onChange={(e) => setQtyValue(e.target.value)}
                 />
               </Field>
-              <Field label="سعر الوحدة">
+              <Field label="سعر الوحدة شامل الضريبة">
                 <input
                   className="field num"
                   inputMode="decimal"

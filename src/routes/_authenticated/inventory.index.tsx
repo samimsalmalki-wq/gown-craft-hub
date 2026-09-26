@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, Sheet, Stat } from "@/components/kit";
+import { StockTabs } from "@/components/StockTabs";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { useMaterials, useSaveMaterial } from "@/lib/inventory-data";
 import {
@@ -23,9 +24,10 @@ export const Route = createFileRoute("/_authenticated/inventory/")({
 });
 
 function InventoryPage() {
-  const { isManager, can } = useCurrentAccount();
+  const { can, canCategory } = useCurrentAccount();
   const { data: catRows = [] } = useMaterialCategories();
-  const matCats = catRows.filter((c) => c.is_active);
+  // مسؤول المستودع يرى أصناف دوره فقط
+  const matCats = catRows.filter((c) => c.is_active && canCategory(c.key));
   const { data: materials = [], isLoading } = useMaterials();
   const { branchId, isAll } = useBranchScope();
   const { data: branches = [] } = useBranches();
@@ -44,7 +46,7 @@ function InventoryPage() {
   /** كميات المادة في الفرع المعروض (أو كل الفروع مجتمعة) */
   const at = (materialId: string) => stockOf(stock, materialId, isAll ? null : branchId);
 
-  const canTransfer = isManager || can("inventory.transfer");
+  const canTransfer = can("inventory.transfer");
 
   async function submitMove(e: React.FormEvent) {
     e.preventDefault();
@@ -71,7 +73,7 @@ function InventoryPage() {
 
   const emptyForm = {
     name: "",
-    category: "fabric",
+    category: matCats[0]?.key ?? "fabric",
     unit: "متر",
     min_qty: "0",
     unit_cost: "0",
@@ -108,18 +110,24 @@ function InventoryPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    await save.mutateAsync({
-      name: form.name.trim(),
-      category: form.category,
-      unit: form.unit,
-      min_qty: Number(form.min_qty) || 0,
-      unit_cost: Number(form.unit_cost) || 0,
-      supplier: form.supplier.trim() || null,
-      notes: form.notes.trim() || null,
-      opening_qty: Number(form.opening_qty) || 0,
-      opening_branch_id: openingBranch || null,
-      image,
-    });
+    try {
+      await save.mutateAsync({
+        name: form.name.trim(),
+        category: form.category,
+        unit: form.unit,
+        min_qty: Number(form.min_qty) || 0,
+        unit_cost: Number(form.unit_cost) || 0,
+        supplier: form.supplier.trim() || null,
+        notes: form.notes.trim() || null,
+        opening_qty: Number(form.opening_qty) || 0,
+        opening_branch_id: openingBranch || null,
+        image,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر حفظ المادة");
+      return;
+    }
+    toast.success("أُضيفت المادة");
     setOpen(false);
     setImage(null);
     setForm(emptyForm);
@@ -140,10 +148,21 @@ function InventoryPage() {
               نقل بين الفروع
             </Btn>
           )}
-          {isManager && <Btn onClick={() => setOpen(true)}>مادة جديدة</Btn>}
+          {can("inventory.manage") && (
+            <Btn
+              onClick={() => {
+                setForm(emptyForm);
+                setOpen(true);
+              }}
+            >
+              مادة جديدة
+            </Btn>
+          )}
         </div>
       }
     >
+      <StockTabs current="materials" />
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="عدد المواد" value={materials.length} />
         <Stat label="تحت حد التنبيه" value={low.length} tone="late" onClick={() => setLowOnly(true)} active={lowOnly} />

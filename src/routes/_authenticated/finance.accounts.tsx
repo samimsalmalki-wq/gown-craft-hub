@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { FinanceTabs } from "@/components/FinanceTabs";
 import { Btn, Card, Chip, Empty, Field } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
-import { useAddGlAccount, useGlAccounts, useJournalLines, useUpdateGlAccount } from "@/lib/finance-data";
+import { useAccountTotals, useAddGlAccount, useGlAccounts, useUpdateGlAccount } from "@/lib/finance-data";
 import { money } from "@/lib/atelier";
 import { ACCOUNT_TYPE_LABEL, naturalBalance } from "@/lib/finance";
 import type { GlAccountType } from "@/lib/finance";
@@ -36,7 +36,8 @@ export const Route = createFileRoute("/_authenticated/finance/accounts")({
 function AccountsPage() {
   const { can, ready } = useCurrentAccount();
   const { data: accounts = [] } = useGlAccounts();
-  const { data: lines = [] } = useJournalLines();
+  // مجاميع كل الحسابات من قاعدة البيانات (لا تنقطع مع كثرة القيود)
+  const { data: totals = {} } = useAccountTotals();
   const add = useAddGlAccount();
   const update = useUpdateGlAccount();
 
@@ -54,17 +55,11 @@ function AccountsPage() {
   }
 
   const canEdit = can("finance.accounts");
-  const totalsOf = (accountId: string) => {
-    const rows = lines.filter((l) => l.account_id === accountId);
-    return {
-      debit: rows.reduce((s, l) => s + Number(l.debit), 0),
-      credit: rows.reduce((s, l) => s + Number(l.credit), 0),
-    };
-  };
+  const totalsOf = (accountId: string) => totals[accountId] ?? { debit: 0, credit: 0 };
 
   const groups = accounts.filter((a) => a.is_group);
-  const totalDebit = lines.reduce((s, l) => s + Number(l.debit), 0);
-  const totalCredit = lines.reduce((s, l) => s + Number(l.credit), 0);
+  const totalDebit = Object.values(totals).reduce((s, t) => s + t.debit, 0);
+  const totalCredit = Object.values(totals).reduce((s, t) => s + t.credit, 0);
 
   const submit = () => {
     add

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { newId } from "@/lib/utils";
 
 export type Model = Database["public"]["Tables"]["models"]["Row"];
 export type ModelImage = Database["public"]["Tables"]["model_images"]["Row"];
@@ -202,7 +203,7 @@ export function useUploadModelImages() {
         .maybeSingle();
       let pos = (existing?.position ?? 0) + 1;
       for (const file of files) {
-        const path = `models/${modelId}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+        const path = `models/${modelId}/${newId()}-${file.name.replace(/[^\w.-]/g, "_")}`;
         const up = await supabase.storage.from(BUCKET).upload(path, file);
         if (up.error) throw up.error;
         const ins = await supabase
