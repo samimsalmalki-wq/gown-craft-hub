@@ -11,7 +11,6 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type OrderFile = Database["public"]["Tables"]["order_files"]["Row"];
 
 export type Priority = Database["public"]["Enums"]["task_priority"];
-export type AlterationStatus = Database["public"]["Enums"]["alteration_status"];
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
 export const STAGES: { key: StageKey; label: string }[] = [
@@ -117,13 +116,6 @@ export const PRIORITY_ORDER: Record<Priority, number> = {
   low: 3,
 };
 
-export const ALTERATION_STATUS_LABEL: Record<AlterationStatus, string> = {
-  requested: "مطلوب",
-  in_progress: "قيد التنفيذ",
-  done: "منفَّذ",
-  cancelled: "ملغي",
-};
-
 /* ===== سجل المراحل الحيّ: يُحدَّث من قالب المراحل في قاعدة البيانات ===== */
 
 export type StageCatalogRow = {
@@ -222,6 +214,7 @@ export type Permission = { key: string; label: string; hint: string; group: stri
 export const PERMISSION_GROUPS = [
   "الطلبات",
   "الإنتاج",
+  "التعديلات",
   "فساتين الإيجار",
   "المخزون والمستودع",
   "المالية",
@@ -252,6 +245,30 @@ export const PERMISSIONS: Permission[] = [
     hint: "إسناد العاملات وبدء وإنهاء واعتماد المراحل المسموحة له في صفحة الموظف",
   },
   { group: "الإنتاج", key: "stages.edit", label: "تنفيذ مراحلي", hint: "بدء وإنهاء المراحل المسندة إليه فقط" },
+  {
+    group: "التعديلات",
+    key: "alterations.request",
+    label: "طلب التعديلات",
+    hint: "طلب تعديل من صفحة الطلب، واستلامه في الفرع، وتسجيل قبول العميلة",
+  },
+  {
+    group: "التعديلات",
+    key: "alterations.approve",
+    label: "تعميد التعديلات (مشرف الفرع)",
+    hint: "تعميد التعديل والتهميش عليه، وإرساله للمعمل واستلامه في الفرع",
+  },
+  {
+    group: "التعديلات",
+    key: "alterations.review",
+    label: "مراجعة الإدارة للتعديلات",
+    hint: "اعتماد التعديل بعد تهميش المشرف أو إرجاعه له، وإلغاؤه",
+  },
+  {
+    group: "التعديلات",
+    key: "alterations.workshop",
+    label: "تعديلات المعمل",
+    hint: "استلام التعديل وطباعة كرت التشغيل واختيار الخياط والتنفيذ والإرسال للفرع، وأسماء الخياطين",
+  },
   {
     group: "فساتين الإيجار",
     key: "rentals.manage",
@@ -399,7 +416,6 @@ export const dueTone = (o: Pick<Order, "due_date" | "state">) =>
 
 export type Department = Database["public"]["Tables"]["departments"]["Row"];
 export type StageTemplate = Database["public"]["Tables"]["stage_templates"]["Row"];
-export type Alteration = Database["public"]["Tables"]["alterations"]["Row"];
 export type ActivityRow = Database["public"]["Tables"]["activity_log"]["Row"];
 export type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
 

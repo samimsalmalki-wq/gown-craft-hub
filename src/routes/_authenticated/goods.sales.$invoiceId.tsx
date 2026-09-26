@@ -42,19 +42,28 @@ function SaleInvoicePage() {
       <style>{`@page { size: auto; margin: 8mm; }`}</style>
 
       <div className="mx-auto mb-4 flex max-w-md items-center justify-between gap-2 px-4 print:hidden">
-        <Link
-          to="/goods"
-          search={{ loc: invoice.branch_id ?? undefined }}
-          className="text-[13px] text-gold"
-        >
-          رجوع للمخزون
-        </Link>
+        {invoice.scope === "sale" ? (
+          <Link
+            to="/goods"
+            search={{ loc: invoice.branch_id ?? undefined }}
+            className="text-[13px] text-gold"
+          >
+            رجوع للمخزون
+          </Link>
+        ) : (
+          <button className="text-[13px] text-gold" onClick={() => window.history.back()}>
+            رجوع
+          </button>
+        )}
         <div className="flex gap-2">
-          {can("goods.return") && returnable && invoice.status === "issued" && (
-            <Btn variant="quiet" onClick={() => setReturning(true)}>
-              مرتجع
-            </Btn>
-          )}
+          {can("goods.return") &&
+            invoice.scope === "sale" &&
+            returnable &&
+            invoice.status === "issued" && (
+              <Btn variant="quiet" onClick={() => setReturning(true)}>
+                مرتجع
+              </Btn>
+            )}
           <Btn onClick={() => window.print()}>طباعة</Btn>
         </div>
       </div>

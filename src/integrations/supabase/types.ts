@@ -61,6 +61,22 @@ export type Database = {
       }
       alterations: {
         Row: {
+          admin_note: string | null
+          after_delivery: boolean
+          branch_id: string | null
+          client_result: string | null
+          fee: number
+          fee_invoice_id: string | null
+          fee_paid_at: string | null
+          history: Json
+          items: Json
+          pickup_date: string | null
+          printed_at: string | null
+          sketch_path: string | null
+          source_stage: string | null
+          step: string
+          supervisor_note: string | null
+          tailor: string | null
           assignee_id: string | null
           completed_at: string | null
           created_at: string
@@ -76,6 +92,22 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_note?: string | null
+          after_delivery?: boolean
+          branch_id?: string | null
+          client_result?: string | null
+          fee?: number
+          fee_invoice_id?: string | null
+          fee_paid_at?: string | null
+          history?: Json
+          items?: Json
+          pickup_date?: string | null
+          printed_at?: string | null
+          sketch_path?: string | null
+          source_stage?: string | null
+          step?: string
+          supervisor_note?: string | null
+          tailor?: string | null
           assignee_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -91,6 +123,22 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_note?: string | null
+          after_delivery?: boolean
+          branch_id?: string | null
+          client_result?: string | null
+          fee?: number
+          fee_invoice_id?: string | null
+          fee_paid_at?: string | null
+          history?: Json
+          items?: Json
+          pickup_date?: string | null
+          printed_at?: string | null
+          sketch_path?: string | null
+          source_stage?: string | null
+          step?: string
+          supervisor_note?: string | null
+          tailor?: string | null
           assignee_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -106,6 +154,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "alterations_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alterations_fee_invoice_id_fkey"
+            columns: ["fee_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "alterations_assignee_id_fkey"
             columns: ["assignee_id"]
@@ -2607,6 +2669,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tailors: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       tax_settings: {
         Row: {
           branch_id: string | null
@@ -2722,6 +2808,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      alteration_action: {
+        Args: {
+          p_action: string
+          p_fee?: number
+          p_id: string
+          p_note?: string
+          p_parts?: string[]
+          p_tailor?: string
+        }
+        Returns: undefined
+      }
+      collect_alteration_fee: {
+        Args: { p_id: string; p_method?: Database["public"]["Enums"]["payment_method"] }
+        Returns: string
+      }
+      request_alteration: {
+        Args: {
+          p_fee?: number
+          p_items: Json
+          p_order_id: string
+          p_pickup_date: string
+          p_sketch_path?: string
+        }
+        Returns: string
+      }
       cash_box_totals: {
         Args: { p_branch?: string }
         Returns: { account_id: string; total_in: number; total_out: number }[]
@@ -2935,7 +3046,7 @@ export type Database = {
       app_role: "admin" | "staff" | "supervisor" | "cs"
       cash_account_kind: "cash" | "card" | "bank"
       cash_direction: "in" | "out"
-      finance_scope: "order" | "rental" | "sale"
+      finance_scope: "order" | "rental" | "sale" | "alteration"
       gl_account_type:
         | "asset"
         | "liability"
@@ -3114,7 +3225,7 @@ export const Constants = {
       app_role: ["admin", "staff", "supervisor", "cs"],
       cash_account_kind: ["cash", "card", "bank"],
       cash_direction: ["in", "out"],
-      finance_scope: ["order", "rental", "sale"],
+      finance_scope: ["order", "rental", "sale", "alteration"],
       gl_account_type: [
         "asset",
         "liability",

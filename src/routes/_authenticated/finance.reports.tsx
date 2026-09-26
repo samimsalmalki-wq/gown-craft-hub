@@ -147,6 +147,9 @@ function FinanceReportsPage() {
   const rentalCollected = payments
     .filter((p) => p.scope === "rental" && !p.is_security_deposit && within(p.paid_at))
     .reduce((s, p) => s + Number(p.amount), 0);
+  const alterationCollected = payments
+    .filter((p) => p.scope === "alteration" && within(p.paid_at))
+    .reduce((s, p) => s + Number(p.amount), 0);
   const saleCollected = payments
     .filter((p) => p.scope === "sale" && within(p.paid_at))
     .reduce((s, p) => s + Number(p.amount), 0);
@@ -190,7 +193,14 @@ function FinanceReportsPage() {
       </Card>
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="تحصيل التفصيل" value={money(tailoringCollected)} tone="gold" />
+        <Stat
+          label="تحصيل التفصيل"
+          value={money(tailoringCollected + alterationCollected)}
+          tone="gold"
+          {...(alterationCollected > 0
+            ? { hint: `منها رسوم تعديلات ${money(alterationCollected)}` }
+            : {})}
+        />
         <Stat
           label="تحصيل الإيجار"
           value={money(rentalCollected)}

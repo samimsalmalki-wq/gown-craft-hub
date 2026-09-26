@@ -23,6 +23,7 @@ import { Route as AuthenticatedStagesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedWhatsappRouteImport } from './routes/_authenticated/whatsapp'
 import { Route as AuthenticatedWorkflowRouteImport } from './routes/_authenticated/workflow'
+import { Route as AuthenticatedAlterationsIndexRouteImport } from './routes/_authenticated/alterations.index'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance.index'
 import { Route as AuthenticatedFinanceAccountsRouteImport } from './routes/_authenticated/finance.accounts'
 import { Route as AuthenticatedFinanceExpensesRouteImport } from './routes/_authenticated/finance.expenses'
@@ -51,9 +52,11 @@ import { Route as AuthenticatedSettingsMaterialCategoriesRouteImport } from './r
 import { Route as AuthenticatedSettingsReceiptsRouteImport } from './routes/_authenticated/settings.receipts'
 import { Route as AuthenticatedSettingsRentalStatusesRouteImport } from './routes/_authenticated/settings.rental-statuses'
 import { Route as AuthenticatedSettingsSuppliersRouteImport } from './routes/_authenticated/settings.suppliers'
+import { Route as AuthenticatedSettingsTailorsRouteImport } from './routes/_authenticated/settings.tailors'
 import { Route as AuthenticatedSettingsTaxRouteImport } from './routes/_authenticated/settings.tax'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff.index'
 import { Route as AuthenticatedStaffUserIdRouteImport } from './routes/_authenticated/staff.$userId'
+import { Route as AuthenticatedAlterationsAlterationIdPrintRouteImport } from './routes/_authenticated/alterations.$alterationId.print'
 import { Route as AuthenticatedFinanceInvoicesIndexRouteImport } from './routes/_authenticated/finance.invoices.index'
 import { Route as AuthenticatedFinanceInvoicesInvoiceIdRouteImport } from './routes/_authenticated/finance.invoices.$invoiceId'
 import { Route as AuthenticatedGoodsSalesInvoiceIdRouteImport } from './routes/_authenticated/goods.sales.$invoiceId'
@@ -128,6 +131,12 @@ const AuthenticatedWorkflowRoute = AuthenticatedWorkflowRouteImport.update({
   path: '/workflow',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAlterationsIndexRoute =
+  AuthenticatedAlterationsIndexRouteImport.update({
+    id: '/alterations/',
+    path: '/alterations/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFinanceIndexRoute =
   AuthenticatedFinanceIndexRouteImport.update({
     id: '/finance/',
@@ -294,6 +303,12 @@ const AuthenticatedSettingsSuppliersRoute =
     path: '/settings/suppliers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsTailorsRoute =
+  AuthenticatedSettingsTailorsRouteImport.update({
+    id: '/settings/tailors',
+    path: '/settings/tailors',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsTaxRoute =
   AuthenticatedSettingsTaxRouteImport.update({
     id: '/settings/tax',
@@ -309,6 +324,12 @@ const AuthenticatedStaffUserIdRoute =
   AuthenticatedStaffUserIdRouteImport.update({
     id: '/staff/$userId',
     path: '/staff/$userId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAlterationsAlterationIdPrintRoute =
+  AuthenticatedAlterationsAlterationIdPrintRouteImport.update({
+    id: '/alterations/$alterationId/print',
+    path: '/alterations/$alterationId/print',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedFinanceInvoicesIndexRoute =
@@ -371,8 +392,10 @@ export interface FileRoutesByFullPath {
   '/settings/receipts': typeof AuthenticatedSettingsReceiptsRoute
   '/settings/rental-statuses': typeof AuthenticatedSettingsRentalStatusesRoute
   '/settings/suppliers': typeof AuthenticatedSettingsSuppliersRoute
+  '/settings/tailors': typeof AuthenticatedSettingsTailorsRoute
   '/settings/tax': typeof AuthenticatedSettingsTaxRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/alterations/': typeof AuthenticatedAlterationsIndexRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/goods/': typeof AuthenticatedGoodsIndexRoute
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
@@ -381,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
+  '/alterations/$alterationId/print': typeof AuthenticatedAlterationsAlterationIdPrintRoute
   '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/goods/sales/$invoiceId': typeof AuthenticatedGoodsSalesInvoiceIdRoute
   '/orders/$orderId/print': typeof AuthenticatedOrdersOrderIdPrintRoute
@@ -421,8 +445,10 @@ export interface FileRoutesByTo {
   '/settings/receipts': typeof AuthenticatedSettingsReceiptsRoute
   '/settings/rental-statuses': typeof AuthenticatedSettingsRentalStatusesRoute
   '/settings/suppliers': typeof AuthenticatedSettingsSuppliersRoute
+  '/settings/tailors': typeof AuthenticatedSettingsTailorsRoute
   '/settings/tax': typeof AuthenticatedSettingsTaxRoute
   '/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/alterations': typeof AuthenticatedAlterationsIndexRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/goods': typeof AuthenticatedGoodsIndexRoute
   '/inventory': typeof AuthenticatedInventoryIndexRoute
@@ -431,6 +457,7 @@ export interface FileRoutesByTo {
   '/rentals': typeof AuthenticatedRentalsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
+  '/alterations/$alterationId/print': typeof AuthenticatedAlterationsAlterationIdPrintRoute
   '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/goods/sales/$invoiceId': typeof AuthenticatedGoodsSalesInvoiceIdRoute
   '/orders/$orderId/print': typeof AuthenticatedOrdersOrderIdPrintRoute
@@ -473,8 +500,10 @@ export interface FileRoutesById {
   '/_authenticated/settings/receipts': typeof AuthenticatedSettingsReceiptsRoute
   '/_authenticated/settings/rental-statuses': typeof AuthenticatedSettingsRentalStatusesRoute
   '/_authenticated/settings/suppliers': typeof AuthenticatedSettingsSuppliersRoute
+  '/_authenticated/settings/tailors': typeof AuthenticatedSettingsTailorsRoute
   '/_authenticated/settings/tax': typeof AuthenticatedSettingsTaxRoute
   '/_authenticated/staff/$userId': typeof AuthenticatedStaffUserIdRoute
+  '/_authenticated/alterations/': typeof AuthenticatedAlterationsIndexRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/goods/': typeof AuthenticatedGoodsIndexRoute
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
@@ -483,6 +512,7 @@ export interface FileRoutesById {
   '/_authenticated/rentals/': typeof AuthenticatedRentalsIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
+  '/_authenticated/alterations/$alterationId/print': typeof AuthenticatedAlterationsAlterationIdPrintRoute
   '/_authenticated/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/_authenticated/goods/sales/$invoiceId': typeof AuthenticatedGoodsSalesInvoiceIdRoute
   '/_authenticated/orders/$orderId_/print': typeof AuthenticatedOrdersOrderIdPrintRoute
@@ -525,8 +555,10 @@ export interface FileRouteTypes {
     | '/settings/receipts'
     | '/settings/rental-statuses'
     | '/settings/suppliers'
+    | '/settings/tailors'
     | '/settings/tax'
     | '/staff/$userId'
+    | '/alterations/'
     | '/finance/'
     | '/goods/'
     | '/inventory/'
@@ -535,6 +567,7 @@ export interface FileRouteTypes {
     | '/rentals/'
     | '/settings/'
     | '/staff/'
+    | '/alterations/$alterationId/print'
     | '/finance/invoices/$invoiceId'
     | '/goods/sales/$invoiceId'
     | '/orders/$orderId/print'
@@ -575,8 +608,10 @@ export interface FileRouteTypes {
     | '/settings/receipts'
     | '/settings/rental-statuses'
     | '/settings/suppliers'
+    | '/settings/tailors'
     | '/settings/tax'
     | '/staff/$userId'
+    | '/alterations'
     | '/finance'
     | '/goods'
     | '/inventory'
@@ -585,6 +620,7 @@ export interface FileRouteTypes {
     | '/rentals'
     | '/settings'
     | '/staff'
+    | '/alterations/$alterationId/print'
     | '/finance/invoices/$invoiceId'
     | '/goods/sales/$invoiceId'
     | '/orders/$orderId/print'
@@ -626,8 +662,10 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/receipts'
     | '/_authenticated/settings/rental-statuses'
     | '/_authenticated/settings/suppliers'
+    | '/_authenticated/settings/tailors'
     | '/_authenticated/settings/tax'
     | '/_authenticated/staff/$userId'
+    | '/_authenticated/alterations/'
     | '/_authenticated/finance/'
     | '/_authenticated/goods/'
     | '/_authenticated/inventory/'
@@ -636,6 +674,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rentals/'
     | '/_authenticated/settings/'
     | '/_authenticated/staff/'
+    | '/_authenticated/alterations/$alterationId/print'
     | '/_authenticated/finance/invoices/$invoiceId'
     | '/_authenticated/goods/sales/$invoiceId'
     | '/_authenticated/orders/$orderId_/print'
@@ -747,6 +786,13 @@ declare module '@tanstack/react-router' {
       path: '/workflow'
       fullPath: '/workflow'
       preLoaderRoute: typeof AuthenticatedWorkflowRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/alterations/': {
+      id: '/_authenticated/alterations/'
+      path: '/alterations'
+      fullPath: '/alterations/'
+      preLoaderRoute: typeof AuthenticatedAlterationsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/finance/': {
@@ -945,6 +991,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsSuppliersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/tailors': {
+      id: '/_authenticated/settings/tailors'
+      path: '/settings/tailors'
+      fullPath: '/settings/tailors'
+      preLoaderRoute: typeof AuthenticatedSettingsTailorsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/tax': {
       id: '/_authenticated/settings/tax'
       path: '/settings/tax'
@@ -964,6 +1017,13 @@ declare module '@tanstack/react-router' {
       path: '/staff/$userId'
       fullPath: '/staff/$userId'
       preLoaderRoute: typeof AuthenticatedStaffUserIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/alterations/$alterationId/print': {
+      id: '/_authenticated/alterations/$alterationId/print'
+      path: '/alterations/$alterationId/print'
+      fullPath: '/alterations/$alterationId/print'
+      preLoaderRoute: typeof AuthenticatedAlterationsAlterationIdPrintRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/finance/invoices/': {
@@ -1029,8 +1089,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsReceiptsRoute: typeof AuthenticatedSettingsReceiptsRoute
   AuthenticatedSettingsRentalStatusesRoute: typeof AuthenticatedSettingsRentalStatusesRoute
   AuthenticatedSettingsSuppliersRoute: typeof AuthenticatedSettingsSuppliersRoute
+  AuthenticatedSettingsTailorsRoute: typeof AuthenticatedSettingsTailorsRoute
   AuthenticatedSettingsTaxRoute: typeof AuthenticatedSettingsTaxRoute
   AuthenticatedStaffUserIdRoute: typeof AuthenticatedStaffUserIdRoute
+  AuthenticatedAlterationsIndexRoute: typeof AuthenticatedAlterationsIndexRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedGoodsIndexRoute: typeof AuthenticatedGoodsIndexRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
@@ -1039,6 +1101,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRentalsIndexRoute: typeof AuthenticatedRentalsIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
+  AuthenticatedAlterationsAlterationIdPrintRoute: typeof AuthenticatedAlterationsAlterationIdPrintRoute
   AuthenticatedFinanceInvoicesInvoiceIdRoute: typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   AuthenticatedGoodsSalesInvoiceIdRoute: typeof AuthenticatedGoodsSalesInvoiceIdRoute
   AuthenticatedOrdersOrderIdPrintRoute: typeof AuthenticatedOrdersOrderIdPrintRoute
@@ -1081,8 +1144,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRentalStatusesRoute:
     AuthenticatedSettingsRentalStatusesRoute,
   AuthenticatedSettingsSuppliersRoute: AuthenticatedSettingsSuppliersRoute,
+  AuthenticatedSettingsTailorsRoute: AuthenticatedSettingsTailorsRoute,
   AuthenticatedSettingsTaxRoute: AuthenticatedSettingsTaxRoute,
   AuthenticatedStaffUserIdRoute: AuthenticatedStaffUserIdRoute,
+  AuthenticatedAlterationsIndexRoute: AuthenticatedAlterationsIndexRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedGoodsIndexRoute: AuthenticatedGoodsIndexRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
@@ -1091,6 +1156,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRentalsIndexRoute: AuthenticatedRentalsIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
+  AuthenticatedAlterationsAlterationIdPrintRoute:
+    AuthenticatedAlterationsAlterationIdPrintRoute,
   AuthenticatedFinanceInvoicesInvoiceIdRoute:
     AuthenticatedFinanceInvoicesInvoiceIdRoute,
   AuthenticatedGoodsSalesInvoiceIdRoute: AuthenticatedGoodsSalesInvoiceIdRoute,

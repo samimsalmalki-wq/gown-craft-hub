@@ -123,7 +123,11 @@ function InvoicesPage() {
             {rows.map((i) => (
               <li key={i.id}>
                 <Link
-                  to={i.scope === "sale" ? "/goods/sales/$invoiceId" : "/finance/invoices/$invoiceId"}
+                  to={
+                    i.scope === "sale" || i.scope === "alteration"
+                      ? "/goods/sales/$invoiceId"
+                      : "/finance/invoices/$invoiceId"
+                  }
                   params={{ invoiceId: i.id }}
                   className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-ivory"
                 >

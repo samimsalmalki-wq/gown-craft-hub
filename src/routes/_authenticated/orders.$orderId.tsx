@@ -6,19 +6,17 @@ import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, PaymentChip, Sheet } from "@/components/kit";
 import { PaymentsCard } from "@/components/PaymentsCard";
 import { DressPartsCard } from "@/components/goods/DressPartsCard";
+import { OrderAlterationsCard } from "@/components/alterations/OrderAlterationsCard";
 import { branchLabel, useBranches } from "@/lib/branches";
 import { StageRow, StageSheet } from "@/components/StageWork";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import {
   useActivityLog,
-  useAddAlteration,
-  useAlterations,
   useOrder,
   useOrderFiles,
   useOrderStages,
   useProfiles,
   useSignedUrls,
-  useUpdateAlteration,
   useUpdateOrder,
   useUploadFiles,
 } from "@/lib/data";
@@ -46,9 +44,13 @@ import { useItemTypes } from "@/lib/data";
 import { useModel } from "@/lib/models-data";
 import { SketchBoard } from "@/components/SketchBoard";
 import { SKETCH_KIND, emptySketch, pagePngPath, type SketchDoc } from "@/lib/sketch";
-import { loadSketchDoc, useSaveSketch, useSketchDoc } from "@/lib/sketch-data";
 import {
-  ALTERATION_STATUS_LABEL,
+  ALTERATION_SKETCH_KIND,
+  loadSketchDoc,
+  useSaveSketch,
+  useSketchDoc,
+} from "@/lib/sketch-data";
+import {
   measurementLabel,
   ORDER_KIND_LABEL,
   ORDER_STATE_LABEL,
@@ -59,7 +61,6 @@ import {
   money,
   remaining,
   stageLabel,
-  type AlterationStatus,
   type Order,
   type OrderFile,
   type OrderStage,
@@ -88,16 +89,12 @@ function OrderDetailPage() {
   const { data: stages = [] } = useOrderStages(orderId);
   const { data: files = [] } = useOrderFiles(orderId);
   const { data: profiles = [] } = useProfiles();
-  const { data: alterations = [] } = useAlterations(orderId);
   const { data: log = [] } = useActivityLog(orderId);
   const { can } = useCurrentAccount();
   const urls = useSignedUrls(files.map((f) => f.storage_path));
   const updateOrder = useUpdateOrder(orderId);
   const upload = useUploadFiles(orderId);
-  const addAlteration = useAddAlteration(orderId);
-  const updateAlteration = useUpdateAlteration(orderId);
   const [activeStage, setActiveStage] = useState<OrderStage | null>(null);
-  const [altOpen, setAltOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -116,7 +113,9 @@ function OrderDetailPage() {
 
   const measures = (order.measurements ?? {}) as Record<string, unknown>;
   const canUpload = can("files.upload");
-  const attachments = files.filter((f) => f.kind !== SKETCH_KIND);
+  const attachments = files.filter(
+    (f) => f.kind !== SKETCH_KIND && f.kind !== ALTERATION_SKETCH_KIND,
+  );
 
   return (
     <AppShell
@@ -251,85 +250,7 @@ function OrderDetailPage() {
             </ol>
           </Card>
 
-          <Card
-            title="التعديلات والبروفات"
-            action={
-              can("stages.edit") ? (
-                <button className="text-[13px] text-gold" onClick={() => setAltOpen(true)}>
-                  إضافة تعديل
-                </button>
-              ) : undefined
-            }
-          >
-            {alterations.length === 0 ? (
-              <Empty>لا توجد تعديلات مسجّلة.</Empty>
-            ) : (
-              <ul className="divide-y divide-line">
-                {alterations.map((a) => (
-                  <li key={a.id} className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="num text-[12px] text-muted-foreground">#{a.number}</span>
-                      <span className="min-w-0 flex-1 text-[13.5px] font-medium">{a.description}</span>
-                      <Chip tone={a.status === "done" ? "ok" : a.status === "cancelled" ? "neutral" : "soon"}>
-                        {ALTERATION_STATUS_LABEL[a.status]}
-                      </Chip>
-                    </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      طُلب {fmtDateTime(a.requested_at)}
-                      {a.completed_at ? ` · أُنجز ${fmtDateTime(a.completed_at)}` : ""}
-                    </p>
-                    {a.notes && <p className="mt-1 text-[12px] whitespace-pre-wrap">{a.notes}</p>}
-                    {can("stages.edit") && a.status !== "done" && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <select
-                          className="field h-9 min-h-0 py-0 text-[12px]"
-                          value={a.status}
-                          onChange={(e) =>
-                            updateAlteration
-                              .mutateAsync({
-                                id: a.id,
-                                patch: {
-                                  status: e.target.value as AlterationStatus,
-                                  completed_at:
-                                    e.target.value === "done" ? new Date().toISOString() : null,
-                                },
-                              })
-                              .then(() => toast.success("تم تحديث التعديل"))
-                              .catch((err: Error) => toast.error(err.message))
-                          }
-                        >
-                          {(Object.keys(ALTERATION_STATUS_LABEL) as AlterationStatus[]).map((s) => (
-                            <option key={s} value={s}>
-                              {ALTERATION_STATUS_LABEL[s]}
-                            </option>
-                          ))}
-                        </select>
-                        {can("stages.manage") && (
-                          <select
-                            className="field h-9 min-h-0 py-0 text-[12px]"
-                            value={a.assignee_id ?? ""}
-                            onChange={(e) =>
-                              updateAlteration.mutate({
-                                id: a.id,
-                                patch: { assignee_id: e.target.value || null },
-                              })
-                            }
-                          >
-                            <option value="">بدون مسؤول</option>
-                            {profiles.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.full_name}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+          <OrderAlterationsCard order={order} />
 
           <SketchCard
             order={order}
@@ -383,21 +304,6 @@ function OrderDetailPage() {
 
       <StageSheet stage={activeStage} onClose={() => setActiveStage(null)} />
 
-      {altOpen && (
-        <NewAlterationSheet
-          stages={stages}
-          onClose={() => setAltOpen(false)}
-          onSave={(v) =>
-            addAlteration
-              .mutateAsync(v)
-              .then(() => {
-                toast.success("تم تسجيل التعديل");
-                setAltOpen(false);
-              })
-              .catch((err: Error) => toast.error(err.message))
-          }
-        />
-      )}
     </AppShell>
   );
 }
@@ -587,82 +493,6 @@ function SketchCard({
         />
       )}
     </Card>
-  );
-}
-
-function NewAlterationSheet({
-  stages,
-  onClose,
-  onSave,
-}: {
-  stages: OrderStage[];
-  onClose: () => void;
-  onSave: (v: {
-    description: string;
-    notes: string | null;
-    assigneeId: string | null;
-    stageId: string | null;
-  }) => void;
-}) {
-  const { data: profiles = [] } = useProfiles();
-  const [description, setDescription] = useState("");
-  const [notes, setNotes] = useState("");
-  const [assignee, setAssignee] = useState("");
-  const [stageId, setStageId] = useState("");
-
-  return (
-    <Sheet open onClose={onClose} title="تعديل جديد">
-      <div className="space-y-3 px-4 py-4">
-        <Field label="وصف التعديل المطلوب">
-          <input className="field" value={description} onChange={(e) => setDescription(e.target.value)} />
-        </Field>
-        <Field label="ملاحظات">
-          <textarea className="field min-h-20" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        </Field>
-        <Field label="المرحلة المرتبطة">
-          <select className="field" value={stageId} onChange={(e) => setStageId(e.target.value)}>
-            <option value="">بدون ربط</option>
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>
-                {stageLabel(s.stage)}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="الموظف المسؤول">
-          <select className="field" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-            <option value="">بدون مسؤول</option>
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.full_name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <div className="flex gap-2 pt-1">
-          <Btn
-            variant="gold"
-            onClick={() => {
-              if (!description.trim()) {
-                toast.error("اكتب وصف التعديل");
-                return;
-              }
-              onSave({
-                description,
-                notes: notes || null,
-                assigneeId: assignee || null,
-                stageId: stageId || null,
-              });
-            }}
-          >
-            حفظ التعديل
-          </Btn>
-          <Btn variant="quiet" onClick={onClose}>
-            إلغاء
-          </Btn>
-        </div>
-      </div>
-    </Sheet>
   );
 }
 

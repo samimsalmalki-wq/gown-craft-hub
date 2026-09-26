@@ -9,6 +9,7 @@ import {
   ListTree,
   MessageCircle,
   KeyRound,
+  Scissors,
   ShieldCheck,
   Shirt,
   Store,
@@ -67,6 +68,13 @@ const GROUPS: { title: string; items: Item[] }[] = [
         hint: "فستان زواج، طرحة، فستان سهرة…",
         icon: Shirt,
         show: (a) => a.can("catalog.manage"),
+      },
+      {
+        to: "/settings/tailors",
+        label: "خياطين التعديلات",
+        hint: "الأسماء اللي تطلع في كرت تشغيل التعديل والخياط الافتراضي",
+        icon: Scissors,
+        show: (a) => a.can("alterations.workshop") || a.can("catalog.manage"),
       },
       {
         to: "/whatsapp",

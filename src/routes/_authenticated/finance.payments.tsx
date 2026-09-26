@@ -100,6 +100,7 @@ function PaymentsPage() {
                   <div className="flex items-center gap-2">
                     {p.scope === "rental" && <Chip tone="neutral">إيجار</Chip>}
                     {p.scope === "sale" && <Chip tone="gold">بيع بضاعة</Chip>}
+                    {p.scope === "alteration" && <Chip tone="gold">رسوم تعديل</Chip>}
                     {p.is_security_deposit && <Chip tone="soon">تأمين — أمانة</Chip>}
                     {order && (
                       <Link

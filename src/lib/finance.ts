@@ -26,6 +26,7 @@ export const FINANCE_SCOPE_LABEL: Record<FinanceScope, string> = {
   order: "تفصيل",
   rental: "إيجار",
   sale: "بيع بضاعة",
+  alteration: "رسوم تعديل",
 };
 
 /** المستحق على الطلب = القيمة − ما تم تحصيله */
@@ -115,6 +116,7 @@ export const ENTRY_SOURCE_LABEL: Record<string, string> = {
   transfer: "تحويل بين الصناديق",
   opening_balance: "رصيد افتتاحي",
   sale: "بيع بضاعة",
+  alteration: "رسوم تعديل",
   sale_return: "مرتجع بيع",
   material_out_fix: "تصحيح صرف خامات",
 };

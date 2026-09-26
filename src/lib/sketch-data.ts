@@ -22,7 +22,11 @@ export type SketchResult = {
   files: { name: string; file: File }[];
 };
 
-export type SketchSave = SketchResult & { caption: string };
+/** kind: نوع الملف في ملفات الطلب (التصميم افتراضيًا، أو رسمة تعديل) */
+export type SketchSave = SketchResult & { caption: string; kind?: string };
+
+/** رسمة التعديل: تنحفظ مع ملفات الطلب لكن ما تظهر مع التصميم ولا المرفقات */
+export const ALTERATION_SKETCH_KIND = "alteration";
 
 export async function loadSketchDoc(pngPath: string): Promise<SketchDoc> {
   const { data, error } = await supabase.storage.from(BUCKET).download(docPathOf(pngPath));
@@ -45,7 +49,11 @@ export function useSketchDoc(pngPath: string | null | undefined) {
 
 const safeName = (name: string) => name.replace(/[^\w.-]/g, "_");
 
-export async function saveSketch(orderId: string, { doc, pngs, files, caption }: SketchSave) {
+/** يرجع مسار صورة الصفحة الأولى */
+export async function saveSketch(
+  orderId: string,
+  { doc, pngs, files, caption, kind = SKETCH_KIND }: SketchSave,
+): Promise<string> {
   const { data: userData } = await supabase.auth.getUser();
   const base = `${orderId}/sketch-${newId()}`;
   const mainPng = `${base}.png`;
@@ -76,7 +84,7 @@ export async function saveSketch(orderId: string, { doc, pngs, files, caption }:
     const { error } = await supabase.from("order_files").insert({
       order_id: orderId,
       storage_path: mainPng,
-      kind: SKETCH_KIND,
+      kind,
       caption,
       created_by: userData.user?.id ?? null,
     });
@@ -85,12 +93,15 @@ export async function saveSketch(orderId: string, { doc, pngs, files, caption }:
     if (uploaded.length) await supabase.storage.from(BUCKET).remove(uploaded);
     throw err;
   }
+  return mainPng;
 }
 
 export function useSaveSketch(orderId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: SketchSave) => saveSketch(orderId, args),
+    mutationFn: async (args: SketchSave) => {
+      await saveSketch(orderId, args);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["files", orderId] }),
   });
 }
