@@ -1,10 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, Crown, Gem, Package, Search, Shirt, Truck } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  Crown,
+  Gem,
+  Info,
+  Package,
+  Search,
+  Shirt,
+  Truck,
+} from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { ChecklistSheet, type ChecklistGroup } from "@/components/ChecklistSheet";
+import { FittingReturnSheet, LatestFitting } from "@/components/goods/Fitting";
 import { GoodsDetailSheet, type GoodsPlace } from "@/components/goods/GoodsDetailSheet";
 import { GoodsItemSheet } from "@/components/goods/GoodsItemSheet";
 import { SaleSheet } from "@/components/goods/SaleSheet";
@@ -13,7 +24,7 @@ import { StockTabs } from "@/components/StockTabs";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, fmtDateTime, itemTypeLabel } from "@/lib/atelier";
 import { branchLabel, type Branch } from "@/lib/branches";
-import { useItemTypes } from "@/lib/data";
+import { useItemTypes, useStageTemplates } from "@/lib/data";
 import {
   DRESS,
   GOODS_PERMS,
@@ -152,12 +163,20 @@ function GoodsPage() {
   const [draft, setDraft] = useState<SendDraft | null>(null);
   const [receiving, setReceiving] = useState<GoodsTransferWithLines | null>(null);
   const [delivering, setDelivering] = useState<ReadyOrder | null>(null);
+  const [fitting, setFitting] = useState<ReadyOrder | null>(null);
   const [sale, setSale] = useState<{ branchId: string; itemId: string | null } | null>(null);
 
   const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
-  const badges = Object.fromEntries(
-    places.visible.map((b) => [b.id, transfers.filter((t) => t.to_branch_id === b.id).length]),
-  );
+  // الشحنات الواصلة: للفرع، وللمعمل (قطع راجعة من البروفة)
+  const badges: Record<string, number> = {
+    ...Object.fromEntries(
+      places.visible.map((b) => [
+        b.id,
+        transfers.filter((t) => !t.to_workshop && t.to_branch_id === b.id).length,
+      ]),
+    ),
+    [WORKSHOP]: places.workshopOk ? transfers.filter((t) => t.to_workshop).length : 0,
+  };
 
   if (!ready || places.isLoading) {
     return (
@@ -238,9 +257,13 @@ function GoodsPage() {
               : missingParts(l.sent, checked[l.id] ?? []).length > 0,
           );
           toast.success(
-            partial
-              ? "انسجل الاستلام مع النواقص، ويشوفها المعمل للمتابعة"
-              : "تم تأكيد الاستلام ودخلت القطع مخزن الفرع",
+            receiving.to_workshop
+              ? partial
+                ? "انسجل الاستلام في المعمل مع النواقص"
+                : "تم الاستلام في المعمل، والتعديلات في صفحة الطلب"
+              : partial
+                ? "انسجل الاستلام مع النواقص، ويشوفها المعمل للمتابعة"
+                : "تم تأكيد الاستلام ودخلت القطع مخزن الفرع",
           );
           setReceiving(null);
         },
@@ -313,6 +336,7 @@ function GoodsPage() {
           stock={stock}
           orders={orders}
           transfers={transfers.filter((t) => t.from_workshop)}
+          incoming={transfers.filter((t) => t.to_workshop)}
           issues={issues}
           canTransfer={canTransfer && places.workshopOk}
           canResolve={canTransfer || can("orders.edit")}
@@ -323,6 +347,7 @@ function GoodsPage() {
           onSend={(toBranchId, lines) =>
             setDraft({ fromBranchId: toBranchId, fromWorkshop: true, toBranchId, lines })
           }
+          onReceive={setReceiving}
           onResolve={onResolve}
           onSendMissing={onSendMissing}
         />
@@ -335,12 +360,16 @@ function GoodsPage() {
           stock={stock}
           urls={urls}
           orders={orders.filter((o) => o.branch_id === branch.id && o.dress_location === "branch")}
-          incoming={transfers.filter((t) => t.to_branch_id === branch.id)}
+          fittings={orders.filter(
+            (o) => o.branch_id === branch.id && o.dress_location === "fitting",
+          )}
+          incoming={transfers.filter((t) => !t.to_workshop && t.to_branch_id === branch.id)}
           outgoing={transfers.filter((t) => !t.from_workshop && t.from_branch_id === branch.id)}
           issues={issues.filter((x) => x.branch_id === branch.id)}
           canTransfer={canTransfer}
           canDeliver={canDeliver}
           canSell={canSell}
+          canFitting={can("alterations.approve")}
           canResolve={canTransfer || can("orders.edit")}
           canSeeCost={canManage}
           onOpenItem={(item) =>
@@ -348,6 +377,7 @@ function GoodsPage() {
           }
           onReceive={setReceiving}
           onDeliver={setDelivering}
+          onFitting={setFitting}
           onResolve={onResolve}
         />
       ) : (
@@ -414,9 +444,11 @@ function GoodsPage() {
       {receiving && (
         <ChecklistSheet
           title={
-            receiving.from_workshop
-              ? "استلام من المعمل"
-              : `استلام من فرع ${branchLabel(places.branches, receiving.from_branch_id)}`
+            receiving.to_workshop
+              ? `استلام في المعمل — راجع من فرع ${branchLabel(places.branches, receiving.from_branch_id)}`
+              : receiving.from_workshop
+                ? "استلام من المعمل"
+                : `استلام من فرع ${branchLabel(places.branches, receiving.from_branch_id)}`
           }
           hint="أشّر على كل قطعة وصلتك فعلًا."
           groups={receiving.goods_transfer_lines.map((l): ChecklistGroup =>
@@ -431,18 +463,29 @@ function GoodsPage() {
           )}
           okLabel="تأكيد الاستلام"
           partialLabel="استلام مع النواقص"
-          missingNote="ما تأشّر عليه بينسجل إنه ما وصل، ويشوفه المعمل:"
+          missingNote={
+            receiving.to_workshop
+              ? "ما تأشّر عليه بينسجل إنه ما وصل للمعمل:"
+              : "ما تأشّر عليه بينسجل إنه ما وصل، ويشوفه المعمل:"
+          }
           pending={receive.isPending}
           onClose={() => setReceiving(null)}
           onConfirm={confirmReceive}
         >
-          {receiving.notes && (
+          {receiving.to_workshop ? (
+            // نتيجة البروفة والتعديلات وتهميش المشرف
+            receiving.goods_transfer_lines.flatMap((l) =>
+              l.order_id ? [<LatestFitting key={l.id} orderId={l.order_id} />] : [],
+            )
+          ) : receiving.notes ? (
             <p className="rounded-xl bg-ivory px-4 py-3 text-[13px]">
               ملاحظة المرسل: {receiving.notes}
             </p>
-          )}
+          ) : null}
         </ChecklistSheet>
       )}
+
+      {fitting && <FittingReturnSheet order={fitting} onClose={() => setFitting(null)} />}
 
       {delivering && (
         <ChecklistSheet
@@ -492,12 +535,14 @@ function WorkshopView({
   stock,
   orders,
   transfers,
+  incoming,
   issues,
   canTransfer,
   canResolve,
   canSeeCost,
   onOpenItem,
   onSend,
+  onReceive,
   onResolve,
   onSendMissing,
 }: {
@@ -507,12 +552,15 @@ function WorkshopView({
   stock: GoodsStock[];
   orders: ReadyOrder[];
   transfers: GoodsTransferWithLines[];
+  /** قطع راجعة من البروفة في الفروع */
+  incoming: GoodsTransferWithLines[];
   issues: PartIssue[];
   canTransfer: boolean;
   canResolve: boolean;
   canSeeCost: boolean;
   onOpenItem: (item: GoodsItem, branchId: string) => void;
   onSend: (toBranchId: string, lines: DraftLine[]) => void;
+  onReceive: (t: GoodsTransferWithLines) => void;
   onResolve: (issue: PartIssue) => void;
   onSendMissing: (issue: PartIssue) => void;
 }) {
@@ -525,6 +573,33 @@ function WorkshopView({
   return (
     <>
       <Flow />
+
+      {incoming.length > 0 && (
+        <Card title="راجع من البروفة" className="mb-5 border-soon/60 ring-1 ring-soon/20">
+          <ul className="divide-y divide-line">
+            {incoming.map((tr) => (
+              <Row
+                key={tr.id}
+                title={
+                  <>
+                    <span className="num">{tr.transfer_no}</span> — من فرع{" "}
+                    {branchLabel(branches, tr.from_branch_id)}
+                  </>
+                }
+                sub={transferSummary(tr)}
+                chips={<Chip tone="soon">في الطريق للمعمل · {fmtDateTime(tr.sent_at)}</Chip>}
+                action={
+                  canTransfer && (
+                    <Btn className="min-h-9 px-3 text-[13px]" onClick={() => onReceive(tr)}>
+                      <CheckCircle2 className="size-4" strokeWidth={1.75} /> استلام
+                    </Btn>
+                  )
+                }
+              />
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <IssuesCard
         issues={issues}
@@ -598,13 +673,16 @@ function WorkshopView({
                           }
                           sub={partsOrDress(o.parts).join("، ")}
                           chips={
-                            (o.event_date || o.due_date) && (
-                              <Chip tone="gold">
-                                {o.event_date
-                                  ? `المناسبة ${fmtDate(o.event_date)}`
-                                  : `التسليم ${fmtDate(o.due_date)}`}
-                              </Chip>
-                            )
+                            <>
+                              {o.for_fitting && <Chip tone="soon">للبروفة</Chip>}
+                              {(o.event_date || o.due_date) && (
+                                <Chip tone="gold">
+                                  {o.event_date
+                                    ? `المناسبة ${fmtDate(o.event_date)}`
+                                    : `التسليم ${fmtDate(o.due_date)}`}
+                                </Chip>
+                              )}
+                            </>
                           }
                           action={
                             canTransfer && (
@@ -689,27 +767,51 @@ const transferSummary = (t: GoodsTransferWithLines) =>
     )
     .join(" · ");
 
+/**
+ * شرح مختصر لطريق الفستان من المعمل للفرع — بأسماء مرحلتي «التسليم للمحل» و«إرسال للبروفة»
+ * المحددة في إعداد المراحل
+ */
 function Flow() {
+  const { data: templates = [] } = useStageTemplates();
+  const names = (pick: (t: (typeof templates)[number]) => boolean) =>
+    templates
+      .filter((t) => t.is_active && pick(t))
+      .map((t) => `«${t.label}»`)
+      .join(" أو ");
+  const handover = names((t) => t.sends_to_branch);
+  const trip = names((t) => t.sends_for_fitting);
   const steps = [
-    "يوصل الطلب لمرحلة «التسليم للمحل»",
-    "يدخل «جاهز المعمل» لفرعه تلقائيًا",
-    "المعمل يأشّر القطع ويرسلها",
-    "الفرع يأشّر اللي وصله ويأكد الاستلام، وتخلص المرحلة",
+    `لما يوصل الطلب ${handover ? `لمرحلة ${handover}` : "لآخر مرحلة فيه"} يطلع هنا تلقائيًا تحت فرعه.`,
+    "المعمل يؤشّر على القطع اللي بيرسلها ويضغط «إرسال»، فيصير الفستان في الطريق للفرع.",
+    "الفرع يؤشّر على اللي وصله فعلًا ويضغط «تأكيد الاستلام».",
+    "بعد الاستلام تنتهي المرحلة وينتقل الطلب للمرحلة اللي بعدها، وأي قطعة ما وصلت تنسجل في النواقص للمتابعة.",
+    ...(trip
+      ? [
+          `قطعة البروفة (مرحلة ${trip}) تمشي بنفس الطريقة، وتظهر عند الفرع تحت «عندكم للبروفة». بعد البروفة يسجّل المشرف النتيجة والتعديلات ويرجّعها للمعمل، والمعمل يؤكّد استلامها.`,
+        ]
+      : []),
   ];
   return (
-    <ol className="mb-5 flex flex-wrap items-center gap-2 text-[12.5px]">
-      {steps.map((s, i) => (
-        <li key={s} className="flex items-center gap-2">
-          <span className="flex items-center gap-2 rounded-full border border-line bg-paper px-3 py-1.5">
-            <span className="num grid size-5 place-items-center rounded-full bg-goldsoft text-[11px]">
+    <details className="group mb-5 rounded-2xl border border-line bg-paper">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[13px] text-muted-foreground [&::-webkit-details-marker]:hidden">
+        <Info className="size-4 shrink-0" strokeWidth={1.75} />
+        <span className="flex-1">كيف يوصل الفستان الجاهز من المعمل للفرع؟</span>
+        <ChevronDown
+          className="size-4 shrink-0 transition-transform group-open:rotate-180"
+          strokeWidth={1.75}
+        />
+      </summary>
+      <ol className="space-y-2.5 border-t border-line px-4 py-3 text-[13px] leading-relaxed">
+        {steps.map((s, i) => (
+          <li key={i} className="flex gap-2.5">
+            <span className="num mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-goldsoft text-[11px]">
               {i + 1}
             </span>
-            {s}
-          </span>
-          {i < steps.length - 1 && <span className="text-muted-foreground">←</span>}
-        </li>
-      ))}
-    </ol>
+            <span>{s}</span>
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }
 
@@ -722,17 +824,20 @@ function BranchView({
   stock,
   urls,
   orders,
+  fittings,
   incoming,
   outgoing,
   issues,
   canTransfer,
   canDeliver,
   canSell,
+  canFitting,
   canResolve,
   canSeeCost,
   onOpenItem,
   onReceive,
   onDeliver,
+  onFitting,
   onResolve,
 }: {
   branch: Branch;
@@ -741,17 +846,22 @@ function BranchView({
   stock: GoodsStock[];
   urls: Record<string, string>;
   orders: ReadyOrder[];
+  /** قطع البروفة الموجودة في الفرع */
+  fittings: ReadyOrder[];
   incoming: GoodsTransferWithLines[];
   outgoing: GoodsTransferWithLines[];
   issues: PartIssue[];
   canTransfer: boolean;
   canDeliver: boolean;
   canSell: boolean;
+  /** تسجيل نتيجة البروفة وإرجاع القطعة (مشرف الفرع) */
+  canFitting: boolean;
   canResolve: boolean;
   canSeeCost: boolean;
   onOpenItem: (item: GoodsItem) => void;
   onReceive: (t: GoodsTransferWithLines) => void;
   onDeliver: (o: ReadyOrder) => void;
+  onFitting: (o: ReadyOrder) => void;
   onResolve: (issue: PartIssue) => void;
 }) {
   const [purpose, setPurpose] = useState<GoodsPurpose | "all">("all");
@@ -813,20 +923,60 @@ function BranchView({
         onResolve={onResolve}
       />
 
+      {fittings.length > 0 && (
+        <Card title="عندكم للبروفة" className="mb-5">
+          <ul className="divide-y divide-line">
+            {fittings.map((o) => (
+              <Row
+                key={o.id}
+                title={
+                  <Link
+                    to="/orders/$orderId"
+                    params={{ orderId: o.id }}
+                    className="hover:text-gold"
+                  >
+                    <span className="num">{o.order_no}</span> — {o.client_name}
+                  </Link>
+                }
+                sub={partsOrDress(o.parts).join("، ")}
+                chips={<Chip tone="soon">للبروفة</Chip>}
+                action={
+                  canFitting ? (
+                    <SmallBtn onClick={() => onFitting(o)}>نتيجة البروفة</SmallBtn>
+                  ) : (
+                    <span className="text-[12px] text-muted-foreground">بانتظار نتيجة المشرف</span>
+                  )
+                }
+              />
+            ))}
+          </ul>
+          <p className="border-t border-line px-4 py-2.5 text-[12px] text-muted-foreground">
+            بعد البروفة يسجّل المشرف النتيجة والتعديلات، ويؤشّر على القطع الراجعة للمعمل.
+          </p>
+        </Card>
+      )}
+
       {outgoing.length > 0 && (
-        <Card title="أرسلتها لفروع ثانية" className="mb-5">
+        <Card title="أرسلتها وتنتظر الاستلام" className="mb-5">
           <ul className="divide-y divide-line">
             {outgoing.map((tr) => (
               <Row
                 key={tr.id}
                 title={
                   <>
-                    <span className="num">{tr.transfer_no}</span> — إلى فرع{" "}
-                    {branchLabel(branches, tr.to_branch_id)}
+                    <span className="num">{tr.transfer_no}</span> —{" "}
+                    {tr.to_workshop
+                      ? "إلى المعمل"
+                      : `إلى فرع ${branchLabel(branches, tr.to_branch_id)}`}
                   </>
                 }
                 sub={transferSummary(tr)}
-                chips={<Chip tone="soon">بانتظار استلامهم · {fmtDateTime(tr.sent_at)}</Chip>}
+                chips={
+                  <Chip tone="soon">
+                    {tr.to_workshop ? "راجعة من البروفة" : "بانتظار استلامهم"} ·{" "}
+                    {fmtDateTime(tr.sent_at)}
+                  </Chip>
+                }
               />
             ))}
           </ul>

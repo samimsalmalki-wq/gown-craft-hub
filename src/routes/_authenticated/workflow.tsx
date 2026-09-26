@@ -11,7 +11,10 @@ import {
   useSaveTemplate,
   useStageTemplates,
 } from "@/lib/data";
-import type { StageTemplate } from "@/lib/atelier";
+import { ORDER_KIND_LABEL, type OrderKind, type StageTemplate } from "@/lib/atelier";
+import { cn } from "@/lib/utils";
+
+const ORDER_KINDS = Object.keys(ORDER_KIND_LABEL) as OrderKind[];
 
 export const Route = createFileRoute("/_authenticated/workflow")({
   head: () => ({
@@ -85,7 +88,7 @@ function WorkflowPage() {
     <AppShell
       eyebrow="الإعدادات"
       title="مراحل التصنيع"
-      subtitle="اسحب المراحل لترتيبها، عدّل الأسماء، أضف مراحل جديدة، وحدّد المدة والمراجعة. الترتيب يُطبّق على الطلبات الجارية دون المساس بالعمل المنجز."
+      subtitle="اسحب المراحل لترتيبها، عدّل الأسماء، أضف مراحل جديدة، وحدّد المدة والمراجعة وأنواع الطلبات اللي تنطبق عليها كل مرحلة. الترتيب يُطبّق على الطلبات الجارية دون المساس بالعمل المنجز."
       actions={
         <Btn onClick={() => setAdding((v) => !v)}>{adding ? "إلغاء" : "إضافة مرحلة"}</Btn>
       }
@@ -149,50 +152,96 @@ function WorkflowPage() {
                   </button>
                 </div>
 
-                <label className="flex items-center gap-2 text-[12px] text-muted-foreground">
-                  مدة متوقعة
-                  <input
-                    type="number"
-                    min={0}
-                    defaultValue={t.expected_days}
-                    className="field h-9 min-h-0 w-16 py-0 text-center text-[12px]"
-                    onBlur={(e) => {
-                      const v = Number(e.target.value);
-                      if (v !== t.expected_days) patch(t.id, { expected_days: v });
-                    }}
-                  />
-                  يوم
-                </label>
-                <label className="flex items-center gap-2 text-[12px]">
-                  <input
-                    type="checkbox"
-                    className="size-5 accent-current"
+                <div className="flex basis-full flex-wrap items-center gap-x-4 gap-y-2 ps-9">
+                  <label className="flex items-center gap-2 text-[12px] text-muted-foreground">
+                    مدة متوقعة
+                    <input
+                      type="number"
+                      min={0}
+                      defaultValue={t.expected_days}
+                      className="field h-9 min-h-0 w-16 py-0 text-center text-[12px]"
+                      onBlur={(e) => {
+                        const v = Number(e.target.value);
+                        if (v !== t.expected_days) patch(t.id, { expected_days: v });
+                      }}
+                    />
+                    يوم
+                  </label>
+                  <Toggle
+                    label="تحتاج مراجعة"
                     checked={t.requires_review}
-                    onChange={(e) => patch(t.id, { requires_review: e.target.checked })}
+                    onChange={(v) => patch(t.id, { requires_review: v })}
                   />
-                  تحتاج مراجعة
-                </label>
-                <label
-                  className="flex items-center gap-2 text-[12px]"
-                  title="لما يوصل الطلب لهذي المرحلة يدخل «جاهز المعمل» ويُرسل للفرع بقائمة القطع"
-                >
-                  <input
-                    type="checkbox"
-                    className="size-5 accent-current"
+                  <Toggle
+                    label="مرحلة بروفة"
+                    hint="الطلبات الواقفة عليها تنحسب في «تنتظر بروفة» في لوحة التحكم"
+                    checked={t.is_fitting}
+                    onChange={(v) => patch(t.id, { is_fitting: v })}
+                  />
+                  <Toggle
+                    label="إرسال للبروفة"
+                    hint="القطعة تنرسل من المعمل للفرع للبروفة، وبعدها يسجّل المشرف النتيجة ويرجّعها للمعمل"
+                    checked={t.sends_for_fitting}
+                    onChange={(v) =>
+                      patch(
+                        t.id,
+                        v
+                          ? { sends_for_fitting: true, sends_to_branch: false }
+                          : { sends_for_fitting: false },
+                      )
+                    }
+                  />
+                  <Toggle
+                    label="التسليم للمحل"
+                    hint="لما يوصل الطلب لهذي المرحلة يدخل «جاهز المعمل» ويُرسل للفرع بقائمة القطع"
                     checked={t.sends_to_branch}
-                    onChange={(e) => patch(t.id, { sends_to_branch: e.target.checked })}
+                    onChange={(v) =>
+                      patch(
+                        t.id,
+                        v
+                          ? { sends_to_branch: true, sends_for_fitting: false }
+                          : { sends_to_branch: false },
+                      )
+                    }
                   />
-                  التسليم للمحل
-                </label>
-                <label className="flex items-center gap-2 text-[12px]">
-                  <input
-                    type="checkbox"
-                    className="size-5 accent-current"
+                  <Toggle
+                    label="مُفعّلة"
                     checked={t.is_active}
-                    onChange={(e) => patch(t.id, { is_active: e.target.checked })}
+                    onChange={(v) => patch(t.id, { is_active: v })}
                   />
-                  مُفعّلة
-                </label>
+                </div>
+
+                <div className="flex basis-full flex-wrap items-center gap-2 ps-9 text-[12px]">
+                  <span className="text-muted-foreground">تنطبق على:</span>
+                  {ORDER_KINDS.map((k) => {
+                    const on = t.order_kinds.includes(k);
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        aria-pressed={on}
+                        className={cn(
+                          "min-h-8 rounded-full border px-3",
+                          on
+                            ? "border-gold bg-gold/10 text-gold"
+                            : "border-line text-muted-foreground",
+                        )}
+                        onClick={() => {
+                          const next = on
+                            ? t.order_kinds.filter((x) => x !== k)
+                            : [...t.order_kinds, k];
+                          if (next.length === 0) {
+                            toast.error("المرحلة لازم تنطبق على نوع طلب واحد على الأقل");
+                            return;
+                          }
+                          patch(t.id, { order_kinds: ORDER_KINDS.filter((x) => next.includes(x)) });
+                        }}
+                      >
+                        {ORDER_KIND_LABEL[k]}
+                      </button>
+                    );
+                  })}
+                </div>
               </li>
             ))}
           </ul>
@@ -265,5 +314,30 @@ function AddStage({
         </Btn>
       </div>
     </Card>
+  );
+}
+
+/** خيار تشغيل وإيقاف في سطر المرحلة */
+function Toggle({
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-[12px]" title={hint}>
+      <input
+        type="checkbox"
+        className="size-5 accent-current"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      {label}
+    </label>
   );
 }

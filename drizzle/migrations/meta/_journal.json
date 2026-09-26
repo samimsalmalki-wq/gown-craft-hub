@@ -218,6 +218,13 @@
       "when": 1790424000000,
       "tag": "0031_rental_booking_details",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790431200000,
+      "tag": "0032_fitting_trip_stage_kinds",
+      "breakpoints": true
     }
   ]
 }

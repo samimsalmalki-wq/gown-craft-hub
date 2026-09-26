@@ -824,6 +824,7 @@ export type Database = {
           sent_by: string | null
           status: string
           to_branch_id: string
+          to_workshop: boolean
           transfer_no: string
         }
         Insert: {
@@ -837,6 +838,7 @@ export type Database = {
           sent_by?: string | null
           status?: string
           to_branch_id: string
+          to_workshop?: boolean
           transfer_no: string
         }
         Update: {
@@ -850,6 +852,7 @@ export type Database = {
           sent_by?: string | null
           status?: string
           to_branch_id?: string
+          to_workshop?: boolean
           transfer_no?: string
         }
         Relationships: []
@@ -1529,6 +1532,63 @@ export type Database = {
             columns: ["stage_id"]
             isOneToOne: false
             referencedRelation: "order_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_fittings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          items: Json
+          number: number
+          order_id: string
+          result: string
+          returned_parts: string[]
+          stage: string | null
+          supervisor_note: string
+          transfer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          items?: Json
+          number: number
+          order_id: string
+          result: string
+          returned_parts?: string[]
+          stage?: string | null
+          supervisor_note: string
+          transfer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          items?: Json
+          number?: number
+          order_id?: string
+          result?: string
+          returned_parts?: string[]
+          stage?: string | null
+          supervisor_note?: string
+          transfer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_fittings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_fittings_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "goods_transfers"
             referencedColumns: ["id"]
           },
         ]
@@ -2528,10 +2588,13 @@ export type Database = {
           expected_days: number
           id: string
           is_active: boolean
+          is_fitting: boolean
           is_scope_gate: boolean
           label: string
+          order_kinds: Database["public"]["Enums"]["order_kind"][]
           position: number
           requires_review: boolean
+          sends_for_fitting: boolean
           sends_to_branch: boolean
           stage: string
           updated_at: string
@@ -2541,10 +2604,13 @@ export type Database = {
           expected_days?: number
           id?: string
           is_active?: boolean
+          is_fitting?: boolean
           is_scope_gate?: boolean
           label: string
+          order_kinds?: Database["public"]["Enums"]["order_kind"][]
           position: number
           requires_review?: boolean
+          sends_for_fitting?: boolean
           sends_to_branch?: boolean
           stage: string
           updated_at?: string
@@ -2554,10 +2620,13 @@ export type Database = {
           expected_days?: number
           id?: string
           is_active?: boolean
+          is_fitting?: boolean
           is_scope_gate?: boolean
           label?: string
+          order_kinds?: Database["public"]["Enums"]["order_kind"][]
           position?: number
           requires_review?: boolean
+          sends_for_fitting?: boolean
           sends_to_branch?: boolean
           stage?: string
           updated_at?: string
@@ -2909,6 +2978,7 @@ export type Database = {
           dress_location: string
           due_date: string | null
           event_date: string | null
+          for_fitting: boolean
           id: string
           order_kind: Database["public"]["Enums"]["order_kind"]
           order_no: string
@@ -2918,6 +2988,16 @@ export type Database = {
       receive_goods: {
         Args: { p_lines: Json; p_transfer_id: string }
         Returns: undefined
+      }
+      return_from_fitting: {
+        Args: {
+          p_items: Json
+          p_note: string
+          p_order_id: string
+          p_parts: string[]
+          p_result: string
+        }
+        Returns: string
       }
       resolve_part_issue: {
         Args: { p_issue_id: string; p_note?: string }

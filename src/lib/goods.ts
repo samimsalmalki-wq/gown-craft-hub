@@ -66,18 +66,23 @@ export const missingParts = (all: string[], got: string[]) => all.filter((p) => 
 
 /* ===== مكان فستان الطلب ===== */
 
-export type DressLocation = "production" | "workshop" | "transit" | "branch" | "delivered";
+export type DressLocation =
+  "production" | "workshop" | "transit" | "branch" | "fitting" | "returning" | "delivered";
 
 export const DRESS_LOCATION_LABEL: Record<DressLocation, string> = {
   production: "في الإنتاج",
   workshop: "جاهز في المعمل",
   transit: "في الطريق للفرع",
   branch: "في الفرع — جاهز للتسليم",
+  fitting: "في الفرع للبروفة",
+  returning: "راجع للمعمل من البروفة",
   delivered: "مُسلَّم",
 };
 
+const LOCATIONS = Object.keys(DRESS_LOCATION_LABEL) as DressLocation[];
+
 export const dressLocationOf = (v: string | null | undefined): DressLocation =>
-  v === "workshop" || v === "transit" || v === "branch" || v === "delivered" ? v : "production";
+  LOCATIONS.find((l) => l === v) ?? "production";
 
 /* ===== النواقص ===== */
 
@@ -87,6 +92,8 @@ export const ISSUE_STAGE_LABEL: Record<string, string> = {
   deliver: "ما تسلّمته العميلة",
   rental_out: "ما خرج مع فستان الإيجار",
   rental_return: "ما رجع مع فستان الإيجار",
+  fitting_back: "ما رجع من البروفة",
+  workshop_receive: "ما وصل للمعمل",
 };
 
 export const ISSUE_STAGE_CHIP: Record<string, string> = {
@@ -95,7 +102,21 @@ export const ISSUE_STAGE_CHIP: Record<string, string> = {
   deliver: "عند التسليم",
   rental_out: "خروج الإيجار",
   rental_return: "رجوع الإيجار",
+  fitting_back: "رجوع البروفة",
+  workshop_receive: "استلام المعمل",
 };
+
+/* ===== البروفة ===== */
+
+export type OrderFitting = Database["public"]["Tables"]["order_fittings"]["Row"];
+export type FittingResult = "approved" | "redo";
+
+export const FITTING_RESULT_LABEL: Record<FittingResult, string> = {
+  approved: "معتمدة — يكمل الطلب",
+  redo: "إعادة بروفة",
+};
+
+export const fittingResultOf = (v: string): FittingResult => (v === "redo" ? "redo" : "approved");
 
 /* ===== الكميات ===== */
 

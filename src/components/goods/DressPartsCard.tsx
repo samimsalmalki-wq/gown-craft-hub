@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { ChecklistSheet } from "@/components/ChecklistSheet";
+import { FittingReturnSheet } from "@/components/goods/Fitting";
 import { Btn, Card, Chip, Sheet } from "@/components/kit";
 import { PartsPicker } from "@/components/PartsPicker";
 import { useCurrentAccount } from "@/hooks/useSession";
@@ -22,7 +23,16 @@ const LOCATION_TONE: Record<DressLocation, "neutral" | "gold" | "soon" | "ok"> =
   workshop: "gold",
   transit: "soon",
   branch: "ok",
+  fitting: "soon",
+  returning: "soon",
   delivered: "ok",
+};
+
+const LOCATION_NOTE: Partial<Record<DressLocation, string>> = {
+  workshop: "الفستان جاهز في المعمل. التسليم للعميلة يصير بعد ما ينرسل للفرع ويتأكد استلامه — ",
+  transit: "الفستان في الطريق للفرع. التسليم يصير بعد ما يؤكّد الفرع الاستلام — ",
+  fitting: "قطعة البروفة في الفرع. بعد البروفة يسجّل المشرف النتيجة والتعديلات ويرجّعها للمعمل — ",
+  returning: "قطعة البروفة في الطريق للمعمل، وتنتظر تأكيد استلام المعمل — ",
 };
 
 /** بطاقة في صفحة الطلب: مكان الفستان وقطعه، والتسليم للعميلة بقائمة التأشير */
@@ -35,6 +45,7 @@ export function DressPartsCard({ order }: { order: Order }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string[]>([]);
   const [delivering, setDelivering] = useState(false);
+  const [fitting, setFitting] = useState(false);
 
   const loc = dressLocationOf(order.dress_location);
   const parts = partsOrDress(order.parts);
@@ -80,14 +91,17 @@ export function DressPartsCard({ order }: { order: Order }) {
         )}
       </dl>
 
-      {order.state === "active" && (loc === "workshop" || loc === "transit") && (
+      {order.state === "active" && LOCATION_NOTE[loc] && (
         <p className="border-t border-line px-4 py-3 text-[12.5px] text-muted-foreground">
-          {loc === "workshop"
-            ? "الفستان جاهز في المعمل. التسليم للعميلة يصير بعد ما ينرسل للفرع ويتأكد استلامه — "
-            : "الفستان في الطريق للفرع. التسليم يصير بعد ما يأكد الفرع الاستلام — "}
+          {LOCATION_NOTE[loc]}
           <Link
             to="/goods"
-            search={{ loc: loc === "workshop" ? WORKSHOP : (order.branch_id ?? undefined) }}
+            search={{
+              loc:
+                loc === "workshop" || loc === "returning"
+                  ? WORKSHOP
+                  : (order.branch_id ?? undefined),
+            }}
             className="text-gold"
           >
             افتح المخزون
@@ -102,6 +116,16 @@ export function DressPartsCard({ order }: { order: Order }) {
           </Btn>
         </div>
       )}
+
+      {order.state === "active" && loc === "fitting" && can("alterations.approve") && (
+        <div className="border-t border-line p-4">
+          <Btn className="w-full" onClick={() => setFitting(true)}>
+            نتيجة البروفة وإرجاع القطعة للمعمل
+          </Btn>
+        </div>
+      )}
+
+      {fitting && <FittingReturnSheet order={order} onClose={() => setFitting(false)} />}
 
       {editing && (
         <Sheet open onClose={() => setEditing(false)} title="قطع الفستان">

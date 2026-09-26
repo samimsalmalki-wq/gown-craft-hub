@@ -384,7 +384,8 @@ function NewOrderPage() {
               <input className="field" type="date" value={form.booked_at} readOnly disabled />
             </Field>
 
-            <Field label="تاريخ البروفة الأولى">
+            {/* الإيجار ما فيه بروفة مقاسات أولى — بروفة كاملة بس */}
+            <Field label={kind === "own" ? "تاريخ البروفة الأولى" : "تاريخ البروفة الكاملة"}>
               <input className="field" type="date" value={form.fitting1_date} onChange={set("fitting1_date")} />
             </Field>
             {secondFitting ? (

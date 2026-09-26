@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, PaymentChip, Sheet } from "@/components/kit";
 import { PaymentsCard } from "@/components/PaymentsCard";
 import { DressPartsCard } from "@/components/goods/DressPartsCard";
+import { OrderFittingsCard } from "@/components/goods/Fitting";
 import { OrderAlterationsCard } from "@/components/alterations/OrderAlterationsCard";
 import { branchLabel, useBranches } from "@/lib/branches";
 import { StageRow, StageSheet } from "@/components/StageWork";
@@ -155,7 +156,10 @@ function OrderDetailPage() {
           <Card title="المواعيد">
             <dl className="divide-y divide-line text-[13px]">
               <Row label="تاريخ الحجز" value={fmtDate(order.booked_at)} />
-              <Row label="البروفة الأولى" value={fmtDate(order.fitting1_date)} />
+              <Row
+                label={order.order_kind === "own" ? "البروفة الأولى" : "البروفة الكاملة"}
+                value={fmtDate(order.fitting1_date)}
+              />
               <Row label="البروفة الثانية" value={fmtDate(order.fitting2_date)} />
               <Row label="التسليم النهائي" value={fmtDate(order.due_date)} />
               <Row label="تاريخ المناسبة" value={fmtDate(order.event_date)} />
@@ -249,6 +253,8 @@ function OrderDetailPage() {
               ))}
             </ol>
           </Card>
+
+          <OrderFittingsCard orderId={order.id} />
 
           <OrderAlterationsCard order={order} />
 

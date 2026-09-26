@@ -86,6 +86,21 @@ export function useAlterationQueue() {
   });
 }
 
+/** الطلبات اللي عليها تعديل مفتوح (لوحة التحكم) */
+export function useOpenAlterationOrderIds() {
+  return useQuery({
+    queryKey: [...KEY, "open-orders"],
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await supabase
+        .from("alterations")
+        .select("order_id")
+        .not("step", "in", "(done,cancelled)");
+      if (error) throw error;
+      return new Set((data ?? []).map((a) => a.order_id));
+    },
+  });
+}
+
 export function useAlteration(id: string) {
   return useQuery({
     queryKey: [...KEY, "one", id],

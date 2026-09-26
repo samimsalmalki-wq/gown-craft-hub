@@ -6,11 +6,14 @@ import { useCurrentAccount } from "@/hooks/useSession";
 import { salesBranches, useBranchScope, useBranches } from "./branches";
 import { ordersKey } from "./data";
 import type { Invoice, InvoiceLine, PaymentMethod, TaxSettings } from "./finance";
+import type { AlterationItem } from "./alterations";
 import type {
+  FittingResult,
   GoodsItem,
   GoodsMovement,
   GoodsStock,
   GoodsTransferWithLines,
+  OrderFitting,
   PartIssue,
   ReadyOrder,
   SaleReturn,
@@ -28,6 +31,7 @@ const KEYS = {
   issues: ["part-issues"],
   sales: ["sale-invoices"],
   movements: ["goods-movements"],
+  fittings: ["order-fittings"],
 } as const;
 
 /* ===== القراءة ===== */
@@ -341,6 +345,7 @@ export function useSendGoods() {
 
 export function useReceiveGoods() {
   const invalidate = useInvalidateGoods();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: {
       transferId: string;
@@ -353,7 +358,60 @@ export function useReceiveGoods() {
       });
       if (error) throw error;
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      // استلام الفرع يُنهي مرحلة التسليم أو الإرسال للبروفة
+      qc.invalidateQueries({ queryKey: ["order"] });
+      qc.invalidateQueries({ queryKey: ["stages"] });
+    },
+  });
+}
+
+/** نتائج البروفات لطلب (الأحدث أول) */
+export function useOrderFittings(orderId: string | null) {
+  return useQuery({
+    queryKey: [...KEYS.fittings, orderId],
+    enabled: Boolean(orderId),
+    queryFn: async (): Promise<OrderFitting[]> => {
+      const { data, error } = await supabase
+        .from("order_fittings")
+        .select("*")
+        .eq("order_id", orderId ?? "")
+        .order("number", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/** نتيجة البروفة والتعديلات وتهميش المشرف، وإرجاع القطعة للمعمل بالتأشير */
+export function useReturnFromFitting() {
+  const invalidate = useInvalidateGoods();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      orderId: string;
+      result: FittingResult;
+      items: AlterationItem[];
+      note: string;
+      parts: string[];
+    }) => {
+      const { data, error } = await supabase.rpc("return_from_fitting", {
+        p_order_id: v.orderId,
+        p_result: v.result,
+        p_items: v.items as unknown as Json,
+        p_note: v.note.trim(),
+        p_parts: v.parts,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_d, v) => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["order", v.orderId] });
+      qc.invalidateQueries({ queryKey: ["stages"] });
+      qc.invalidateQueries({ queryKey: ["activity", v.orderId] });
+    },
   });
 }
 

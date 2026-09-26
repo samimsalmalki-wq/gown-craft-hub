@@ -3,11 +3,11 @@ import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Card, Chip, Empty, PaymentChip, Stat } from "@/components/kit";
-import { useOrders } from "@/lib/data";
+import { useOpenAlterationOrderIds } from "@/lib/alterations-data";
+import { useOrders, useStageTemplates } from "@/lib/data";
 import { useMaterials, useRentalDresses, useRentalRecords } from "@/lib/inventory-data";
 import { available, isLowStock, isRentalLate, qty, rentalMoney } from "@/lib/inventory";
 import {
-  STAGES,
   fmtDate,
   inProduction,
   isDueSoon,
@@ -37,7 +37,10 @@ type FilterKey =
   | "rental"
   | "rental_stock";
 
-const FILTERS: { key: FilterKey; label: string; test: (o: Order) => boolean }[] = [
+/** مراحل البروفة (من إعداد المراحل) والطلبات اللي عليها تعديل مفتوح */
+type FilterCtx = { fittingStages: Set<string>; openAlterations: Set<string> };
+
+const FILTERS: { key: FilterKey; label: string; test: (o: Order, c: FilterCtx) => boolean }[] = [
   { key: "all", label: "كل الطلبات", test: () => true },
   { key: "new", label: "طلبات جديدة", test: isNew },
   { key: "production", label: "قيد التصنيع", test: inProduction },
@@ -46,12 +49,14 @@ const FILTERS: { key: FilterKey; label: string; test: (o: Order) => boolean }[] 
   {
     key: "fitting",
     label: "تنتظر بروفة",
-    test: (o) => o.state === "active" && (o.current_stage === "fitting1" || o.current_stage === "fitting2"),
+    test: (o, c) =>
+      o.state === "active" &&
+      (c.fittingStages.has(o.current_stage) || o.dress_location === "fitting"),
   },
   {
     key: "alterations",
     label: "تحتاج تعديلات",
-    test: (o) => o.state === "active" && o.current_stage === "alterations",
+    test: (o, c) => c.openAlterations.has(o.id),
   },
   { key: "finance", label: "غير مكتملة ماليًا", test: (o) => isFinanciallyOpen(o) },
   { key: "own", label: "تفصيل ملك", test: (o) => o.order_kind === "own" },
@@ -73,18 +78,31 @@ function DashboardPage() {
     .filter((r) => !r.returned_at && !r.cancelled_at)
     .reduce((s, r) => s + rentalMoney(r).depositHeld, 0);
 
-  const count = (key: FilterKey) =>
-    orders.filter(FILTERS.find((f) => f.key === key)!.test).length;
-
-  const list = useMemo(
-    () => orders.filter(FILTERS.find((f) => f.key === filter)!.test),
-    [orders, filter],
+  const { data: templates = [] } = useStageTemplates();
+  const { data: openAlterations } = useOpenAlterationOrderIds();
+  const ctx = useMemo<FilterCtx>(
+    () => ({
+      fittingStages: new Set(templates.filter((t) => t.is_fitting).map((t) => t.stage)),
+      openAlterations: openAlterations ?? new Set(),
+    }),
+    [templates, openAlterations],
   );
 
-  const perStage = STAGES.map((s) => ({
-    ...s,
-    count: orders.filter((o) => o.state === "active" && o.current_stage === s.key).length,
-  }));
+  const matches = (key: FilterKey) => {
+    const test = FILTERS.find((f) => f.key === key)!.test;
+    return (o: Order) => test(o, ctx);
+  };
+  const count = (key: FilterKey) => orders.filter(matches(key)).length;
+  const list = orders.filter(matches(filter));
+
+  // المراحل المفعّلة بأسمائها الحالية من إعداد المراحل
+  const perStage = templates
+    .filter((t) => t.is_active)
+    .map((t) => ({
+      key: t.stage,
+      label: t.label,
+      count: orders.filter((o) => o.state === "active" && o.current_stage === t.stage).length,
+    }));
 
   return (
     <AppShell
