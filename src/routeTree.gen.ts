@@ -61,6 +61,7 @@ import { Route as AuthenticatedFinanceInvoicesIndexRouteImport } from './routes/
 import { Route as AuthenticatedFinanceInvoicesInvoiceIdRouteImport } from './routes/_authenticated/finance.invoices.$invoiceId'
 import { Route as AuthenticatedGoodsSalesInvoiceIdRouteImport } from './routes/_authenticated/goods.sales.$invoiceId'
 import { Route as AuthenticatedOrdersOrderIdPrintRouteImport } from './routes/_authenticated/orders.$orderId_.print'
+import { Route as AuthenticatedRentalsDressIdBookRouteImport } from './routes/_authenticated/rentals.$dressId_.book'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -356,6 +357,12 @@ const AuthenticatedOrdersOrderIdPrintRoute =
     path: '/orders/$orderId/print',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRentalsDressIdBookRoute =
+  AuthenticatedRentalsDressIdBookRouteImport.update({
+    id: '/rentals/$dressId_/book',
+    path: '/rentals/$dressId/book',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -408,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/goods/sales/$invoiceId': typeof AuthenticatedGoodsSalesInvoiceIdRoute
   '/orders/$orderId/print': typeof AuthenticatedOrdersOrderIdPrintRoute
+  '/rentals/$dressId/book': typeof AuthenticatedRentalsDressIdBookRoute
   '/finance/invoices/': typeof AuthenticatedFinanceInvoicesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -461,6 +469,7 @@ export interface FileRoutesByTo {
   '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/goods/sales/$invoiceId': typeof AuthenticatedGoodsSalesInvoiceIdRoute
   '/orders/$orderId/print': typeof AuthenticatedOrdersOrderIdPrintRoute
+  '/rentals/$dressId/book': typeof AuthenticatedRentalsDressIdBookRoute
   '/finance/invoices': typeof AuthenticatedFinanceInvoicesIndexRoute
 }
 export interface FileRoutesById {
@@ -516,6 +525,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/_authenticated/goods/sales/$invoiceId': typeof AuthenticatedGoodsSalesInvoiceIdRoute
   '/_authenticated/orders/$orderId_/print': typeof AuthenticatedOrdersOrderIdPrintRoute
+  '/_authenticated/rentals/$dressId_/book': typeof AuthenticatedRentalsDressIdBookRoute
   '/_authenticated/finance/invoices/': typeof AuthenticatedFinanceInvoicesIndexRoute
 }
 export interface FileRouteTypes {
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/finance/invoices/$invoiceId'
     | '/goods/sales/$invoiceId'
     | '/orders/$orderId/print'
+    | '/rentals/$dressId/book'
     | '/finance/invoices/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -624,6 +635,7 @@ export interface FileRouteTypes {
     | '/finance/invoices/$invoiceId'
     | '/goods/sales/$invoiceId'
     | '/orders/$orderId/print'
+    | '/rentals/$dressId/book'
     | '/finance/invoices'
   id:
     | '__root__'
@@ -678,6 +690,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/invoices/$invoiceId'
     | '/_authenticated/goods/sales/$invoiceId'
     | '/_authenticated/orders/$orderId_/print'
+    | '/_authenticated/rentals/$dressId_/book'
     | '/_authenticated/finance/invoices/'
   fileRoutesById: FileRoutesById
 }
@@ -1054,6 +1067,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersOrderIdPrintRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rentals/$dressId_/book': {
+      id: '/_authenticated/rentals/$dressId_/book'
+      path: '/rentals/$dressId/book'
+      fullPath: '/rentals/$dressId/book'
+      preLoaderRoute: typeof AuthenticatedRentalsDressIdBookRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -1105,6 +1125,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceInvoicesInvoiceIdRoute: typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   AuthenticatedGoodsSalesInvoiceIdRoute: typeof AuthenticatedGoodsSalesInvoiceIdRoute
   AuthenticatedOrdersOrderIdPrintRoute: typeof AuthenticatedOrdersOrderIdPrintRoute
+  AuthenticatedRentalsDressIdBookRoute: typeof AuthenticatedRentalsDressIdBookRoute
   AuthenticatedFinanceInvoicesIndexRoute: typeof AuthenticatedFinanceInvoicesIndexRoute
 }
 
@@ -1162,6 +1183,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedFinanceInvoicesInvoiceIdRoute,
   AuthenticatedGoodsSalesInvoiceIdRoute: AuthenticatedGoodsSalesInvoiceIdRoute,
   AuthenticatedOrdersOrderIdPrintRoute: AuthenticatedOrdersOrderIdPrintRoute,
+  AuthenticatedRentalsDressIdBookRoute: AuthenticatedRentalsDressIdBookRoute,
   AuthenticatedFinanceInvoicesIndexRoute:
     AuthenticatedFinanceInvoicesIndexRoute,
 }

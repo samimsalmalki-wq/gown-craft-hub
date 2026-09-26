@@ -2180,6 +2180,10 @@ export type Database = {
       }
       rental_records: {
         Row: {
+          event_date: string | null
+          fitting2_date: string | null
+          measurements: Json
+          sketch_path: string | null
           cancel_voucher_no: string | null
           deposit_receipt_no: string | null
           external_invoice_no: string | null
@@ -2221,6 +2225,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          event_date?: string | null
+          fitting2_date?: string | null
+          measurements?: Json
+          sketch_path?: string | null
           cancel_voucher_no?: string | null
           deposit_receipt_no?: string | null
           external_invoice_no?: string | null
@@ -2262,6 +2270,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          event_date?: string | null
+          fitting2_date?: string | null
+          measurements?: Json
+          sketch_path?: string | null
           cancel_voucher_no?: string | null
           deposit_receipt_no?: string | null
           external_invoice_no?: string | null

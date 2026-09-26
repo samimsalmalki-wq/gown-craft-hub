@@ -28,8 +28,11 @@ export type SketchSave = SketchResult & { caption: string; kind?: string };
 /** رسمة التعديل: تنحفظ مع ملفات الطلب لكن ما تظهر مع التصميم ولا المرفقات */
 export const ALTERATION_SKETCH_KIND = "alteration";
 
-export async function loadSketchDoc(pngPath: string): Promise<SketchDoc> {
-  const { data, error } = await supabase.storage.from(BUCKET).download(docPathOf(pngPath));
+/** رسمات حجوزات الإيجار: في مخزن صور المخزون (ملفات الطلبات مربوطة برقم طلب) */
+export const RENTAL_SKETCH_BUCKET = "inventory";
+
+export async function loadSketchDoc(pngPath: string, bucket = BUCKET): Promise<SketchDoc> {
+  const { data, error } = await supabase.storage.from(bucket).download(docPathOf(pngPath));
   if (error || !data) return parseSketch(null);
   try {
     return parseSketch(JSON.parse(await data.text()));
@@ -38,29 +41,28 @@ export async function loadSketchDoc(pngPath: string): Promise<SketchDoc> {
   }
 }
 
-export function useSketchDoc(pngPath: string | null | undefined) {
+export function useSketchDoc(pngPath: string | null | undefined, bucket = BUCKET) {
   return useQuery({
-    queryKey: ["sketch-doc", pngPath],
+    queryKey: ["sketch-doc", bucket, pngPath],
     enabled: Boolean(pngPath),
     staleTime: Infinity,
-    queryFn: () => loadSketchDoc(pngPath!),
+    queryFn: () => loadSketchDoc(pngPath!, bucket),
   });
 }
 
 const safeName = (name: string) => name.replace(/[^\w.-]/g, "_");
 
-/** يرجع مسار صورة الصفحة الأولى */
-export async function saveSketch(
-  orderId: string,
-  { doc, pngs, files, caption, kind = SKETCH_KIND }: SketchSave,
-): Promise<string> {
-  const { data: userData } = await supabase.auth.getUser();
-  const base = `${orderId}/sketch-${newId()}`;
-  const mainPng = `${base}.png`;
+/** يرفع صفحات الرسمة وملفها وصورها المرفقة داخل المجلد، ويرجع مسار الصفحة الأولى */
+async function uploadSketch(
+  bucket: string,
+  folder: string,
+  { doc, pngs, files }: SketchResult,
+): Promise<{ mainPng: string; uploaded: string[] }> {
+  const mainPng = `${folder}/sketch-${newId()}.png`;
   const uploaded: string[] = [];
 
   const put = async (path: string, body: Blob, contentType: string) => {
-    const { error } = await supabase.storage.from(BUCKET).upload(path, body, { contentType });
+    const { error } = await supabase.storage.from(bucket).upload(path, body, { contentType });
     if (error) throw error;
     uploaded.push(path);
   };
@@ -68,7 +70,7 @@ export async function saveSketch(
   try {
     const attachments = [...doc.attachments];
     for (const { name, file } of files) {
-      const path = `${orderId}/sketch-att-${newId()}-${safeName(name)}`;
+      const path = `${folder}/sketch-att-${newId()}-${safeName(name)}`;
       await put(path, file, file.type || "application/octet-stream");
       attachments.push({ path, name });
     }
@@ -80,19 +82,41 @@ export async function saveSketch(
       "application/json",
     );
     for (const [i, png] of pngs.entries()) await put(pagePngPath(mainPng, i), png, "image/png");
-
-    const { error } = await supabase.from("order_files").insert({
-      order_id: orderId,
-      storage_path: mainPng,
-      kind,
-      caption,
-      created_by: userData.user?.id ?? null,
-    });
-    if (error) throw error;
   } catch (err) {
-    if (uploaded.length) await supabase.storage.from(BUCKET).remove(uploaded);
+    if (uploaded.length) await supabase.storage.from(bucket).remove(uploaded);
     throw err;
   }
+  return { mainPng, uploaded };
+}
+
+/** يرجع مسار صورة الصفحة الأولى */
+export async function saveSketch(
+  orderId: string,
+  { caption, kind = SKETCH_KIND, ...result }: SketchSave,
+): Promise<string> {
+  const { data: userData } = await supabase.auth.getUser();
+  const { mainPng, uploaded } = await uploadSketch(BUCKET, orderId, result);
+  const { error } = await supabase.from("order_files").insert({
+    order_id: orderId,
+    storage_path: mainPng,
+    kind,
+    caption,
+    created_by: userData.user?.id ?? null,
+  });
+  if (error) {
+    await supabase.storage.from(BUCKET).remove(uploaded);
+    throw error;
+  }
+  return mainPng;
+}
+
+/** رسمة حجز الإيجار (كل حفظ نسخة جديدة)، ويرجع مسار الصفحة الأولى */
+export async function saveRentalSketch(dressId: string, result: SketchResult): Promise<string> {
+  const { mainPng } = await uploadSketch(
+    RENTAL_SKETCH_BUCKET,
+    `rental-sketches/${dressId}`,
+    result,
+  );
   return mainPng;
 }
 

@@ -24,6 +24,7 @@ import {
 } from "./deposit-receipt";
 import type { PaymentMethod } from "./finance";
 import { fetchAll } from "./fetch-all";
+import { saveRentalSketch, type SketchResult } from "./sketch-data";
 import { newId } from "@/lib/utils";
 
 const BUCKET = "inventory";
@@ -639,6 +640,39 @@ export function useUpdateRentalBooking() {
       patch: { fitting_date?: string | null; external_invoice_no?: string | null };
     }) => {
       const { error } = await supabase.from("rental_records").update(input.patch).eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["rental-records"] }),
+  });
+}
+
+/**
+ * تفاصيل الحجز مثل الطلب الجديد: المقاسات ورسمة لوحة الرسم والبروفة الثانية وتاريخ المناسبة.
+ * الرسمة الجديدة تنرفع نسخة جديدة ويتحدث مسارها في العقد.
+ */
+export function useSaveRentalDetails() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      recordId: string;
+      dressId: string;
+      measurements?: Record<string, string>;
+      sketch?: SketchResult | null;
+      fitting2Date?: string | null;
+      eventDate?: string | null;
+    }) => {
+      const sketchPath = input.sketch ? await saveRentalSketch(input.dressId, input.sketch) : null;
+      const patch = {
+        ...(input.measurements !== undefined ? { measurements: input.measurements } : {}),
+        ...(sketchPath ? { sketch_path: sketchPath } : {}),
+        ...(input.fitting2Date !== undefined ? { fitting2_date: input.fitting2Date } : {}),
+        ...(input.eventDate !== undefined ? { event_date: input.eventDate } : {}),
+      };
+      if (Object.keys(patch).length === 0) return;
+      const { error } = await supabase
+        .from("rental_records")
+        .update(patch)
+        .eq("id", input.recordId);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["rental-records"] }),

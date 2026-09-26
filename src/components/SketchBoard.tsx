@@ -78,6 +78,7 @@ export function SketchBoard({
   onMeasuresChange,
   onClose,
   onSave,
+  bucket,
 }: {
   order: SketchOrder;
   initial: SketchDoc;
@@ -87,6 +88,8 @@ export function SketchBoard({
   onMeasuresChange?: (next: Record<string, string>) => void;
   onClose: () => void;
   onSave: (result: SketchResult) => Promise<void>;
+  /** مخزن الصور المرفقة المحفوظة (ملفات الطلبات افتراضيًا) */
+  bucket?: string;
 }) {
   const svgRefs = useRef(new Map<string, SVGSVGElement>());
   const [pages, setPages] = useState<SketchPage[]>(initial.pages);
@@ -595,6 +598,7 @@ export function SketchBoard({
           {panelOpen && (
             <ExtrasPanel
               attachments={attachments}
+              {...(bucket ? { bucket } : {})}
               links={links}
               onAddFiles={addFiles}
               onRemoveAttachment={removeAttachment}
@@ -696,6 +700,7 @@ function ItemView({ item }: { item: SketchItem }) {
 
 function ExtrasPanel({
   attachments,
+  bucket,
   links,
   onAddFiles,
   onRemoveAttachment,
@@ -704,6 +709,7 @@ function ExtrasPanel({
   onClose,
 }: {
   attachments: BoardAttachment[];
+  bucket?: string;
   links: SketchLink[];
   onAddFiles: (files: FileList | null) => void;
   onRemoveAttachment: (key: string) => void;
@@ -717,7 +723,7 @@ function ExtrasPanel({
     () => attachments.flatMap((a) => (a.path ? [a.path] : [])),
     [attachments],
   );
-  const signed = useSignedUrls(storedPaths);
+  const signed = useSignedUrls(storedPaths, bucket);
 
   function addLink() {
     const clean = normalizeUrl(url);

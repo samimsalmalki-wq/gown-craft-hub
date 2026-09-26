@@ -1,4 +1,5 @@
 import type { Database } from "@/integrations/supabase/types";
+import { MEASUREMENT_FIELDS } from "./atelier";
 
 export type Material = Database["public"]["Tables"]["materials"]["Row"];
 export type MaterialMovement = Database["public"]["Tables"]["material_movements"]["Row"];
@@ -205,3 +206,23 @@ export const returnConditionLabel = (key: string | null | undefined) => {
   if (key === "ok" || key === "available") return "رجع سليم";
   return `بعد الإرجاع: ${dressStatusLabel(key)}`;
 };
+
+/* ===== تفاصيل حجز الإيجار (مثل الطلب الجديد) ===== */
+
+/** المقاسات المكتوبة فقط: الثابتة بترتيبها ثم المضافة باسمها */
+export const measuresOf = (raw: unknown): Record<string, string> => {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const entries = Object.entries(raw as Record<string, unknown>)
+    .map(([k, v]) => [k, v === null || v === undefined ? "" : String(v).trim()] as const)
+    .filter(([, v]) => v !== "");
+  const order = (k: string) => {
+    const i = MEASUREMENT_FIELDS.findIndex(([key]) => key === k);
+    return i < 0 ? MEASUREMENT_FIELDS.length : i;
+  };
+  return Object.fromEntries(entries.sort((a, b) => order(a[0]) - order(b[0])));
+};
+
+/** هل في الحجز مقاسات أو رسمة أو مواعيد إضافية تستاهل زر التفاصيل؟ */
+export const hasRentalDetails = (r: RentalRecord) =>
+  Boolean(r.sketch_path || r.event_date || r.fitting2_date) ||
+  Object.keys(measuresOf(r.measurements)).length > 0;

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ImagePlus, Pencil, Shirt } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -11,32 +11,30 @@ import {
   CancelRequestSheet,
   DeliverSheet,
   DepositReceiptButton,
-  MethodPicker,
   ReturnSheet,
 } from "@/components/RentalMoneySheets";
+import { RentalDetailsSheet } from "@/components/RentalDetailsSheet";
 import { Btn, Card, Chip, Empty, Field, Sheet } from "@/components/kit";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, money } from "@/lib/atelier";
-import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/finance";
+import { PAYMENT_METHOD_LABEL } from "@/lib/finance";
 import {
   dressStatusLabel,
   dressStatusTone,
   effectiveDressStatus,
-  findRentalClash,
+  hasRentalDetails,
   isBookableStatus,
   isOutNow,
   isPickupOverdue,
   isRentalLate,
   isUpcomingRental,
-  localDay,
   manualStatusList,
   rentalMoney,
   returnConditionLabel,
   type RentalRecord,
 } from "@/lib/inventory";
 import {
-  useBookRental,
   useInventoryUrls,
   useRentalDress,
   useRentalRecords,
@@ -46,6 +44,10 @@ import {
 } from "@/lib/inventory-data";
 
 export const Route = createFileRoute("/_authenticated/rentals/$dressId")({
+  validateSearch: (search: Record<string, unknown>): { deliver?: string | undefined } => {
+    const deliver = search["deliver"];
+    return { deliver: typeof deliver === "string" && deliver ? deliver : undefined };
+  },
   head: () => ({
     meta: [
       { title: "فستان إيجار · مَعْمَل" },
@@ -62,31 +64,19 @@ export const Route = createFileRoute("/_authenticated/rentals/$dressId")({
   component: DressPage,
 });
 
-const emptyRental = (day = localDay()) => ({
-  invoice_no: "",
-  client_name: "",
-  client_phone: "",
-  out_date: day,
-  due_date: day,
-  amount: "",
-  deposit_amount: "",
-  paid: "",
-  needs_fitting: false,
-  fitting_date: "",
-  notes: "",
-});
-
-type SheetKind = "deliver" | "return" | "cancel-request" | "cancel-decision" | "fitting";
+type SheetKind =
+  "deliver" | "return" | "cancel-request" | "cancel-decision" | "fitting" | "details";
 
 function DressPage() {
   const { dressId } = Route.useParams();
+  const { deliver } = Route.useSearch();
+  const navigate = useNavigate();
   const { can } = useCurrentAccount();
   useRentalStatuses(); // يحمّل أسماء الحالات وألوانها من الإعدادات
   const isManager = can("rentals.manage");
   const canDecideCancel = can("rentals.cancel");
   const { data: dress, isLoading } = useRentalDress(dressId);
   const { data: records = [] } = useRentalRecords(dressId);
-  const book = useBookRental();
   const setStatus = useSetDressStatus();
 
   const urls = useInventoryUrls([dress?.image_path]);
@@ -103,15 +93,18 @@ function DressPage() {
     records.reduce((sum, r) => sum + Number(r.cancel_kept), 0);
 
   const [editOpen, setEditOpen] = useState(false);
-  const [outOpen, setOutOpen] = useState(false);
-  const [form, setForm] = useState(() => emptyRental());
-  const [method, setMethod] = useState<PaymentMethod>("cash");
-  const [err, setErr] = useState<string | null>(null);
   const [sheet, setSheet] = useState<{ kind: SheetKind; id: string } | null>(null);
 
   const sheetRecord = (kind: SheetKind) =>
     sheet?.kind === kind ? (records.find((r) => r.id === sheet.id) ?? null) : null;
   const closeSheet = () => setSheet(null);
+
+  // بعد الحجز من صفحة الحجز والخروج اليوم: تنفتح نافذة التسليم مباشرة
+  useEffect(() => {
+    if (!deliver || !records.some((r) => r.id === deliver)) return;
+    setSheet({ kind: "deliver", id: deliver });
+    void navigate({ to: "/rentals/$dressId", params: { dressId }, search: {}, replace: true });
+  }, [deliver, records, dressId, navigate]);
 
   if (isLoading) {
     return (
@@ -129,68 +122,13 @@ function DressPage() {
   }
 
   const canBook = isManager && isBookableStatus(effStatus);
-  const rent = Number(form.amount) || Number(dress.rent_price);
-  const paidNow = Math.max(Number(form.paid) || 0, 0);
-
-  function openBooking(day?: string) {
-    setErr(null);
-    setForm(emptyRental(day));
-    setMethod("cash");
-    setOutOpen(true);
-  }
-
-  async function submitOut(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.client_name.trim()) return;
-    setErr(null);
-    if (form.due_date < form.out_date) {
-      setErr("تاريخ الإرجاع لا يمكن أن يكون قبل تاريخ الخروج.");
-      return;
-    }
-    if (paidNow > rent) {
-      setErr("العربون أكبر من قيمة الإيجار.");
-      return;
-    }
-    if (form.needs_fitting && !form.fitting_date) {
-      setErr("حدد موعد البروفة أو شيل علامة «تحتاج بروفة».");
-      return;
-    }
-    if (form.needs_fitting && form.fitting_date > form.out_date) {
-      setErr("موعد البروفة لازم يكون قبل موعد الخروج أو في نفس اليوم.");
-      return;
-    }
-    const clash = findRentalClash(records, form.out_date, form.due_date);
-    if (clash) {
-      setErr(
-        `الفستان محجوز من ${fmtDate(clash.out_date)} إلى ${fmtDate(clash.due_date)} لـ${clash.client_name}.`,
-      );
-      return;
-    }
-    let id: string;
-    try {
-      id = await book.mutateAsync({
-        dressId,
-        clientName: form.client_name.trim(),
-        clientPhone: form.client_phone.trim() || null,
-        outDate: form.out_date,
-        dueDate: form.due_date,
-        amount: rent,
-        depositAmount: Number(form.deposit_amount) || Number(dress!.deposit_amount),
-        notes: form.notes.trim() || null,
-        paid: paidNow,
-        method,
-        invoiceNo: form.invoice_no.trim() || null,
-        fittingDate: form.needs_fitting ? form.fitting_date : null,
-      });
-    } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : "تعذّر تسجيل الحجز.");
-      return;
-    }
-    setOutOpen(false);
-    toast.success(paidNow > 0 ? "تم الحجز وتسجيل العربون" : "تم الحجز");
-    // الخروج اليوم: ننتقل مباشرة للتسليم
-    if (form.out_date <= localDay()) setSheet({ kind: "deliver", id });
-  }
+  /** صفحة الحجز الكاملة (من يوم محدد في التقويم) */
+  const openBooking = (day?: string) =>
+    void navigate({
+      to: "/rentals/$dressId/book",
+      params: { dressId },
+      search: day ? { day } : {},
+    });
 
   const specs = [
     { label: "المقاس", value: dress.size },
@@ -468,6 +406,17 @@ function DressPage() {
                       </p>
                     )}
 
+                    {(r.event_date || r.fitting2_date) && (
+                      <p className="mt-1 text-[12px] text-muted-foreground">
+                        {[
+                          r.event_date && `المناسبة ${fmtDate(r.event_date)}`,
+                          r.fitting2_date && `بروفة ثانية ${fmtDate(r.fitting2_date)}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+
                     <RecordMoney record={r} />
 
                     {(condition || r.order_id) && (
@@ -499,9 +448,23 @@ function DressPage() {
                       <p className="mt-2 text-[12px] text-late">سبب طلب الإلغاء: {r.cancel_reason}</p>
                     )}
                     {r.notes && <p className="mt-2 text-[12px] whitespace-pre-wrap">{r.notes}</p>}
-                    {(actions || r.client_phone || Number(r.deposit_paid) > 0) && (
+                    {(actions ||
+                      r.client_phone ||
+                      Number(r.deposit_paid) > 0 ||
+                      hasRentalDetails(r) ||
+                      isManager) && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {actions}
+                        {(hasRentalDetails(r) ||
+                          (isManager && !r.cancelled_at && !r.returned_at)) && (
+                          <Btn
+                            variant="quiet"
+                            className="min-h-9 px-3 text-[12px]"
+                            onClick={() => setSheet({ kind: "details", id: r.id })}
+                          >
+                            المقاسات والرسمة
+                          </Btn>
+                        )}
                         {Number(r.deposit_paid) > 0 && (
                           <DepositReceiptButton record={r} dress={dress} kind="received" className="min-h-9 px-3 text-[12px]" />
                         )}
@@ -526,160 +489,15 @@ function DressPage() {
         imageUrl={image}
       />
 
-      <Sheet open={outOpen} onClose={() => setOutOpen(false)} title="حجز الفستان">
-        <form onSubmit={submitOut} className="space-y-4 p-4">
-          {err && <p className="rounded-lg bg-late/10 px-3 py-2 text-[13px] text-late">{err}</p>}
-          <p className="text-[12px] text-muted-foreground">
-            الفستان يبقى في المحل كحجز قادم، ويصير «مؤجَّر» لما تضغط «تسليم للعميلة» يوم الاستلام.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="رقم الفاتورة" hint="من نظام المبيعات">
-              <input
-                className="field w-full"
-                dir="ltr"
-                value={form.invoice_no}
-                onChange={(e) => setForm({ ...form, invoice_no: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label="اسم العميلة">
-              <input
-                className="field w-full"
-                value={form.client_name}
-                onChange={(e) => setForm({ ...form, client_name: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label="رقم الجوال">
-              <input
-                type="tel"
-                inputMode="tel"
-                className="field w-full"
-                value={form.client_phone}
-                onChange={(e) => setForm({ ...form, client_phone: e.target.value })}
-              />
-            </Field>
-            <Field label="تاريخ الخروج">
-              <input
-                type="date"
-                className="field w-full"
-                value={form.out_date}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    out_date: e.target.value,
-                    due_date: form.due_date < e.target.value ? e.target.value : form.due_date,
-                  })
-                }
-                required
-              />
-            </Field>
-            <Field label="تاريخ الإرجاع المتوقع">
-              <input
-                type="date"
-                className="field w-full"
-                min={form.out_date}
-                value={form.due_date}
-                onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label="قيمة الإيجار" hint={`الافتراضي ${money(Number(dress.rent_price))}`}>
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="0.01"
-                className="field w-full"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              />
-            </Field>
-            <Field
-              label="التأمين"
-              hint={`يُقبض عند التسليم · الافتراضي ${money(Number(dress.deposit_amount))}`}
-            >
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="0.01"
-                className="field w-full"
-                value={form.deposit_amount}
-                onChange={(e) => setForm({ ...form, deposit_amount: e.target.value })}
-              />
-            </Field>
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-line p-3">
-            <label className="flex min-h-10 items-center gap-2 text-[13px]">
-              <input
-                type="checkbox"
-                className="size-5 accent-current"
-                checked={form.needs_fitting}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    needs_fitting: e.target.checked,
-                    fitting_date: e.target.checked ? form.fitting_date : "",
-                  })
-                }
-              />
-              تحتاج بروفة قبل الاستلام
-            </label>
-            {form.needs_fitting && (
-              <Field label="موعد البروفة">
-                <input
-                  type="date"
-                  className="field w-full"
-                  max={form.out_date}
-                  value={form.fitting_date}
-                  onChange={(e) => setForm({ ...form, fitting_date: e.target.value })}
-                  required
-                />
-              </Field>
-            )}
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-line p-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="العربون المدفوع الآن" hint="سند قبض في صندوق الفرع">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  className="field w-full"
-                  value={form.paid}
-                  onChange={(e) => setForm({ ...form, paid: e.target.value })}
-                  placeholder="0"
-                />
-              </Field>
-              {paidNow > 0 && <MethodPicker value={method} onChange={setMethod} />}
-            </div>
-            <p className="flex items-center justify-between text-[13px]">
-              <span className="text-muted-foreground">المتبقي على العميلة</span>
-              <span className="num font-medium">{money(Math.max(rent - paidNow, 0))}</span>
-            </p>
-          </div>
-
-          <Field label="ملاحظات">
-            <textarea
-              className="field w-full"
-              rows={2}
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            />
-          </Field>
-          <Btn type="submit" className="w-full" disabled={book.isPending}>
-            {book.isPending ? "جاري التسجيل…" : "تسجيل الحجز"}
-          </Btn>
-        </form>
-      </Sheet>
-
       <DeliverSheet record={sheetRecord("deliver")} dress={dress} onClose={closeSheet} />
       <ReturnSheet record={sheetRecord("return")} dress={dress} onClose={closeSheet} />
       <FittingSheet record={sheetRecord("fitting")} onClose={closeSheet} />
+      <RentalDetailsSheet
+        record={sheetRecord("details")}
+        dress={dress}
+        canEdit={isManager}
+        onClose={closeSheet}
+      />
       <CancelRequestSheet record={sheetRecord("cancel-request")} onClose={closeSheet} />
       <CancelDecisionSheet record={sheetRecord("cancel-decision")} onClose={closeSheet} />
     </AppShell>

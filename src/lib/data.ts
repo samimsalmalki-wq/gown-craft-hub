@@ -127,7 +127,8 @@ export function useOrderFiles(orderId: string) {
   });
 }
 
-export function useSignedUrls(paths: string[]) {
+/** روابط مؤقتة لملفات الطلبات (أو مخزن آخر عند تحديده) */
+export function useSignedUrls(paths: string[], bucket = "order-files") {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const key = paths.join("|");
 
@@ -139,7 +140,7 @@ export function useSignedUrls(paths: string[]) {
       return;
     }
     supabase.storage
-      .from("order-files")
+      .from(bucket)
       .createSignedUrls(list, 3600)
       .then(({ data }) => {
         if (cancelled || !data) return;
@@ -152,7 +153,7 @@ export function useSignedUrls(paths: string[]) {
     return () => {
       cancelled = true;
     };
-  }, [key]);
+  }, [key, bucket]);
 
   return urls;
 }
