@@ -6,12 +6,12 @@ import { useGoodsPlaces } from "@/lib/goods-data";
 import { GOODS_PERMS, MATERIALS_PERMS, WORKSHOP } from "@/lib/goods";
 import { cn } from "@/lib/utils";
 
-/** مواقع المخزون: المخزن الرئيسي (المواد)، المعمل، ومخزن كل فرع */
+/** مواقع المخزون: المعمل (خاماته، وجاهزه ونسخ الإيجار فيه)، ومخزن كل فرع */
 export function StockTabs({
   current,
   badges = {},
 }: {
-  /** «materials» للمخزن الرئيسي، «workshop» للمعمل، وإلا معرّف الفرع */
+  /** «materials» لخامات المعمل، «workshop» لجاهز المعمل، وإلا معرّف الفرع */
   current: string;
   badges?: Record<string, number>;
 }) {
@@ -22,11 +22,11 @@ export function StockTabs({
 
   const tabs: { key: string; label: string; hint: string; icon: typeof Boxes }[] = [
     ...(showMaterials
-      ? [{ key: "materials", label: "المخزن الرئيسي", hint: "المواد الخام", icon: Boxes }]
+      ? [{ key: "materials", label: "المعمل · الخامات", hint: "المواد الخام", icon: Boxes }]
       : []),
     ...(showGoods
       ? [
-          { key: WORKSHOP, label: "المعمل", hint: "الجاهز لكل فرع", icon: Factory },
+          { key: WORKSHOP, label: "المعمل · الجاهز", hint: "الجاهز ونسخ الإيجار", icon: Factory },
           ...visible.map((b) => ({
             key: b.id,
             label: `فرع ${b.name}`,

@@ -9,6 +9,7 @@ import {
   type MaterialMovement,
   type MovementKind,
   type OrderMaterial,
+  type RentalBusy,
   type RentalDress,
   type RentalRecord,
   type RentalStatus,
@@ -119,7 +120,7 @@ type MaterialInput = {
   notes: string | null;
   image?: File | null;
   opening_qty?: number;
-  /** موقع الرصيد الافتتاحي (المخزن الرئيسي افتراضيًا) */
+  /** موقع الرصيد الافتتاحي (المعمل افتراضيًا) */
   opening_branch_id?: string | null;
 };
 
@@ -302,14 +303,24 @@ export function useReleaseMaterial() {
 
 /* ================= فساتين الإيجار ================= */
 
+/** كل نسخ الإيجار لكل الفروع (المشاركة بين الفروع)، والشاشة تصفّي على فرعها */
 export function useRentalDresses() {
-  const { opsBranchId: branchId } = useBranchScope();
   return useQuery({
-    queryKey: ["rental-dresses", branchId],
+    queryKey: ["rental-dresses"],
     queryFn: async (): Promise<RentalDress[]> => {
-      let q = supabase.from("rental_dresses").select("*").order("code");
-      if (branchId !== ALL_BRANCHES) q = q.eq("branch_id", branchId);
-      const { data, error } = await q;
+      const { data, error } = await supabase.from("rental_dresses").select("*").order("code");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/** مواعيد حجز كل النسخ لكل الفروع (بدون بيانات العميلات): للتقويم والبحث بالتاريخ */
+export function useRentalBusy() {
+  return useQuery({
+    queryKey: ["rental-busy"],
+    queryFn: async (): Promise<RentalBusy[]> => {
+      const { data, error } = await supabase.rpc("rental_busy");
       if (error) throw error;
       return data ?? [];
     },
@@ -369,19 +380,32 @@ export function useSaveDress() {
       /** قطع الفستان (قائمة التأشير عند الخروج والرجوع) */
       parts?: string[];
       image?: File | null;
+      /** الفرع المالك (للمدير ومن له كل الفروع) */
+      branch_id?: string | null;
+      /** مكان النسخة الجديدة: المعمل أو فرعها المالك */
+      location?: "workshop" | "branch";
     }) => {
       const { data: userData } = await supabase.auth.getUser();
       const image_path = image ? await uploadImage(image, "dresses") : undefined;
-      const payload = { ...input, ...(image_path ? { image_path } : {}) };
+      const { location, branch_id, ...rest } = input;
+      const payload = { ...rest, ...(image_path ? { image_path } : {}) };
 
       if (id) {
-        const { error } = await supabase.from("rental_dresses").update(payload).eq("id", id);
+        const { error } = await supabase
+          .from("rental_dresses")
+          .update({ ...payload, ...(branch_id ? { branch_id } : {}) })
+          .eq("id", id);
         if (error) throw error;
         return id;
       }
       const { data, error } = await supabase
         .from("rental_dresses")
-        .insert({ ...payload, branch_id: writeBranchId, created_by: userData.user?.id ?? null })
+        .insert({
+          ...payload,
+          branch_id: branch_id ?? writeBranchId,
+          location: location ?? "workshop",
+          created_by: userData.user?.id ?? null,
+        })
         .select("id")
         .single();
       if (error) throw error;
@@ -501,8 +525,10 @@ export function useReorderRentalStatuses() {
 function invalidateRentalMoney(qc: ReturnType<typeof useQueryClient>) {
   for (const key of [
     "rental-records",
+    "rental-busy",
     "rental-dresses",
     "rental-dress",
+    "goods-transfers",
     "payments",
     "cash-transactions",
     "cash-accounts",
@@ -532,6 +558,8 @@ export function useBookRental() {
       method: PaymentMethod;
       invoiceNo: string | null;
       fittingDate: string | null;
+      /** فرع الحجز (اللي ياخذ الحجز وماله)، والافتراضي فرع النسخة */
+      branchId?: string | null;
     }) => {
       const { data, error } = await supabase.rpc("book_rental", {
         p_dress_id: input.dressId,
@@ -546,6 +574,7 @@ export function useBookRental() {
         ...(input.notes ? { p_notes: input.notes } : {}),
         ...(input.invoiceNo ? { p_invoice_no: input.invoiceNo } : {}),
         ...(input.fittingDate ? { p_fitting_date: input.fittingDate } : {}),
+        ...(input.branchId ? { p_branch_id: input.branchId } : {}),
       });
       if (error) throw error;
       return data as string;
@@ -777,6 +806,8 @@ export function useCloseRentalReturn() {
       damage?: number;
       note?: string | null;
       method?: PaymentMethod;
+      /** القطع اللي رجعت: تنحفظ مع الإرجاع وترجع بها النسخة للمعمل */
+      parts?: string[];
     }) => {
       const { error } = await supabase.rpc("close_rental_return", {
         p_record_id: input.recordId,
@@ -784,10 +815,50 @@ export function useCloseRentalReturn() {
         p_damage: input.damage ?? 0,
         ...(input.note ? { p_note: input.note } : {}),
         ...(input.method ? { p_method: input.method } : {}),
+        ...(input.parts ? { p_parts: input.parts } : {}),
       });
       if (error) throw error;
     },
     onSuccess: () => invalidateRentalMoney(qc),
+  });
+}
+
+/** إرجاع نسخة من الفرع للمعمل (نسخة عرض خلصت، أو ما رجعت مع الإرجاع) */
+export function useReturnRentalCopy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { dressId: string; parts: string[]; note?: string | null }) => {
+      const { data, error } = await supabase.rpc("return_rental_copy", {
+        p_dress_id: input.dressId,
+        p_parts: input.parts,
+        ...(input.note?.trim() ? { p_note: input.note.trim() } : {}),
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      for (const key of ["rental-dresses", "rental-dress", "goods-transfers", "part-issues"]) {
+        qc.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
+/** تصحيح مكان النسخة (المعمل، أو فرع): للمدير ومن له كل الفروع */
+export function useSetRentalCopyPlace() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { dressId: string; branchId: string | null }) => {
+      const { error } = await supabase.rpc("set_rental_copy_place", {
+        p_dress_id: input.dressId,
+        ...(input.branchId ? { p_branch_id: input.branchId } : {}),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rental-dresses"] });
+      qc.invalidateQueries({ queryKey: ["rental-dress"] });
+    },
   });
 }
 

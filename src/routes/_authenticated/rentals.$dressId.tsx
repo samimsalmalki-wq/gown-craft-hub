@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { DressFormSheet } from "@/components/DressFormSheet";
 import { RentalCalendar } from "@/components/RentalCalendar";
+import { RentalCopyPlaceCard } from "@/components/RentalCopyPlace";
 import {
   CancelDecisionSheet,
   CancelRequestSheet,
@@ -18,8 +19,11 @@ import { Btn, Card, Chip, Empty, Field, Sheet } from "@/components/kit";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, money } from "@/lib/atelier";
+import { branchLabel, useBranchScope, useBranches } from "@/lib/branches";
 import { PAYMENT_METHOD_LABEL } from "@/lib/finance";
 import {
+  busyAsRecord,
+  copyPlaceOf,
   dressStatusLabel,
   dressStatusTone,
   effectiveDressStatus,
@@ -36,6 +40,7 @@ import {
 } from "@/lib/inventory";
 import {
   useInventoryUrls,
+  useRentalBusy,
   useRentalDress,
   useRentalRecords,
   useRentalStatuses,
@@ -71,13 +76,21 @@ function DressPage() {
   const { dressId } = Route.useParams();
   const { deliver } = Route.useSearch();
   const navigate = useNavigate();
-  const { can } = useCurrentAccount();
+  const { can, profile } = useCurrentAccount();
+  const { canAll } = useBranchScope();
+  const { data: branches = [] } = useBranches();
   useRentalStatuses(); // يحمّل أسماء الحالات وألوانها من الإعدادات
   const isManager = can("rentals.manage");
   const canDecideCancel = can("rentals.cancel");
   const { data: dress, isLoading } = useRentalDress(dressId);
   const { data: records = [] } = useRentalRecords(dressId);
+  const { data: busy = [] } = useRentalBusy();
   const setStatus = useSetDressStatus();
+  const name = (id: string | null) => branchLabel(branches, id);
+  // حجوزات الفروع الثانية على النسخة: المواعيد فقط
+  const otherBusy = busy.filter(
+    (b) => b.dress_id === dressId && !records.some((r) => r.id === b.record_id),
+  );
 
   const urls = useInventoryUrls([dress?.image_path]);
   const image = dress?.image_path ? urls[dress.image_path] : undefined;
@@ -86,7 +99,9 @@ function DressPage() {
   const nextUpcoming =
     [...records].filter(isUpcomingRental).sort((a, b) => a.out_date.localeCompare(b.out_date))[0] ??
     null;
-  const effStatus = dress ? effectiveDressStatus(dress, records) : "available";
+  const effStatus = dress
+    ? effectiveDressStatus(dress, [...records, ...otherBusy.map(busyAsRecord)])
+    : "available";
   const wentOut = records.filter((r) => r.delivered_at && !r.cancelled_at);
   const income =
     wentOut.reduce((sum, r) => sum + Number(r.amount), 0) +
@@ -99,12 +114,15 @@ function DressPage() {
     sheet?.kind === kind ? (records.find((r) => r.id === sheet.id) ?? null) : null;
   const closeSheet = () => setSheet(null);
 
-  // بعد الحجز من صفحة الحجز والخروج اليوم: تنفتح نافذة التسليم مباشرة
+  // بعد الحجز من صفحة الحجز والخروج اليوم: تنفتح نافذة التسليم مباشرة لو النسخة في فرع الحجز
   useEffect(() => {
-    if (!deliver || !records.some((r) => r.id === deliver)) return;
-    setSheet({ kind: "deliver", id: deliver });
+    const r = records.find((x) => x.id === deliver);
+    if (!deliver || !r || !dress) return;
+    if (copyPlaceOf(dress.location) === "branch" && dress.location_branch_id === r.branch_id) {
+      setSheet({ kind: "deliver", id: deliver });
+    }
     void navigate({ to: "/rentals/$dressId", params: { dressId }, search: {}, replace: true });
-  }, [deliver, records, dressId, navigate]);
+  }, [deliver, records, dress, dressId, navigate]);
 
   if (isLoading) {
     return (
@@ -121,7 +139,14 @@ function DressPage() {
     );
   }
 
-  const canBook = isManager && isBookableStatus(effStatus);
+  /** نسخة فرع المستخدم (أو له كل الفروع) */
+  const ownCopy = canAll || dress.branch_id === profile?.branch_id;
+  const atWorkshop = branches.some((b) => b.is_warehouse && b.id === profile?.branch_id);
+  const mayBook = ownCopy || can("rentals.share");
+  const canBook = isManager && isBookableStatus(effStatus) && mayBook;
+  /** النسخة في فرع الحجز وتقدر تتسلّم للعميلة */
+  const readyFor = (r: RentalRecord) =>
+    copyPlaceOf(dress.location) === "branch" && dress.location_branch_id === r.branch_id;
   /** صفحة الحجز الكاملة (من يوم محدد في التقويم) */
   const openBooking = (day?: string) =>
     void navigate({
@@ -149,15 +174,20 @@ function DressPage() {
     }
     return (
       <>
-        {!r.cancel_requested_at && (
-          <Btn
-            variant="gold"
-            className={small}
-            onClick={() => setSheet({ kind: "deliver", id: r.id })}
-          >
-            تسليم للعميلة
-          </Btn>
-        )}
+        {!r.cancel_requested_at &&
+          (readyFor(r) ? (
+            <Btn
+              variant="gold"
+              className={small}
+              onClick={() => setSheet({ kind: "deliver", id: r.id })}
+            >
+              تسليم للعميلة
+            </Btn>
+          ) : (
+            <span className="self-center text-[12px] text-soon">
+              التسليم بعد وصول النسخة لفرع {name(r.branch_id)}
+            </span>
+          ))}
         <Btn
           variant="quiet"
           className={small}
@@ -206,12 +236,16 @@ function DressPage() {
                 تسجيل الإرجاع
               </Btn>
             ) : (
-              <Btn onClick={() => openBooking()} disabled={!canBook}>
+              <Btn
+                onClick={() => openBooking()}
+                disabled={!canBook}
+                title={mayBook ? undefined : "حجز نسخ الفروع الأخرى يحتاج صلاحية المشاركة"}
+              >
                 حجز الفستان
               </Btn>
             )
           ) : null}
-          {isManager && (
+          {isManager && ownCopy && (
             <Btn variant="quiet" onClick={() => setEditOpen(true)}>
               <Pencil className="size-4" />
               تعديل البيانات
@@ -239,7 +273,7 @@ function DressPage() {
             <a href={image} target="_blank" rel="noreferrer" className="block">
               <img src={image} alt={dress.code} className="aspect-[3/4] w-full object-cover" />
             </a>
-          ) : isManager ? (
+          ) : isManager && ownCopy ? (
             <button
               type="button"
               onClick={() => setEditOpen(true)}
@@ -262,7 +296,14 @@ function DressPage() {
             <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
               <span className="num text-[20px] font-medium text-gold">{dress.code}</span>
               <Chip tone={dressStatusTone(effStatus)}>{dressStatusLabel(effStatus)}</Chip>
+              {!ownCopy && <Chip>نسخة فرع {name(dress.branch_id)}</Chip>}
             </div>
+            {isManager && !mayBook && (
+              <p className="border-b border-line px-4 py-2.5 text-[12px] text-muted-foreground">
+                النسخة تابعة لفرع {name(dress.branch_id)}، وحجزها لعميلة فرعك يحتاج صلاحية «حجز نسخ
+                الفروع الأخرى».
+              </p>
+            )}
 
             <div className="grid grid-cols-2 divide-x divide-x-reverse divide-line border-b border-line sm:grid-cols-4">
               <Figure label="قيمة الإيجار" value={money(Number(dress.rent_price))} />
@@ -317,7 +358,9 @@ function DressPage() {
             </div>
           )}
 
-          {isManager && !openRecord && (
+          <RentalCopyPlaceCard dress={dress} busy={busy} />
+
+          {isManager && !openRecord && (ownCopy || atWorkshop) && (
             <Card
               title="حالة الفستان في المحل"
               action={
@@ -352,7 +395,16 @@ function DressPage() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.2fr]">
         <Card title="تقويم الحجوزات">
-          <RentalCalendar records={records} onPickDay={canBook ? openBooking : undefined} />
+          <RentalCalendar
+            records={records}
+            others={otherBusy.map((b) => ({
+              out_date: b.out_date,
+              due_date: b.due_date,
+              delivered: b.delivered,
+              label: `حجز فرع ${name(b.branch_id)}`,
+            }))}
+            onPickDay={canBook ? openBooking : undefined}
+          />
         </Card>
 
         <Card title={`سجل الإيجارات (${records.length.toLocaleString("ar-EG")})`}>
@@ -376,7 +428,10 @@ function DressPage() {
                           {r.client_phone}
                         </a>
                       )}
-                      <span className="mr-auto">
+                      <span className="mr-auto flex flex-wrap gap-1.5">
+                        {r.branch_id !== dress.branch_id && (
+                          <Chip tone="soon">مشاركة · حجز فرع {name(r.branch_id)}</Chip>
+                        )}
                         <RecordChip record={r} />
                       </span>
                     </div>

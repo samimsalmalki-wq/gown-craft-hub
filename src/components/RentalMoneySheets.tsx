@@ -393,7 +393,6 @@ export function ReturnSheet({
   onClose: () => void;
 }) {
   const close = useCloseRentalReturn();
-  const recordParts = useRecordRentalParts();
   const [done, setDone] = useState(false);
   const [condition, setCondition] = useState("available");
   const [damage, setDamage] = useState("");
@@ -448,23 +447,24 @@ export function ReturnSheet({
       return;
     }
     try {
+      // القطع تنحفظ مع الإرجاع، والنسخة تنرسل بها للمعمل
       await close.mutateAsync({
         recordId: record.id,
         condition,
         damage: cut,
         note: note.trim() || null,
         method,
+        parts: backParts,
       });
     } catch (e2) {
       setErr(errorText(e2, "تعذّر تسجيل الإرجاع."));
       return;
     }
-    try {
-      await recordParts.mutateAsync({ recordId: record.id, stage: "return", parts: backParts });
-    } catch {
-      toast.error("تم الإرجاع لكن تعذّر حفظ قائمة القطع");
-    }
-    toast.success(m.depositHeld > 0 ? "تم الإرجاع ورد التأمين" : "تم تسجيل الإرجاع");
+    toast.success(
+      m.depositHeld > 0
+        ? "تم الإرجاع ورد التأمين، والنسخة في الطريق للمعمل"
+        : "تم تسجيل الإرجاع، والنسخة في الطريق للمعمل",
+    );
     if (m.depositHeld > 0) setDone(true);
     else onClose();
   }
@@ -539,6 +539,9 @@ export function ReturnSheet({
             onChange={(e) => setNote(e.target.value)}
           />
         </Field>
+        <p className="rounded-lg bg-ivory px-3 py-2 text-[12px] text-muted-foreground">
+          بعد الإرجاع تنرسل النسخة للمعمل تلقائيًا بالقطع اللي رجعت، والمعمل يأكّد استلامها.
+        </p>
         <Btn type="submit" variant="gold" className="w-full" disabled={close.isPending}>
           {close.isPending ? "جاري التسجيل…" : "تأكيد الإرجاع"}
         </Btn>

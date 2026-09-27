@@ -30,10 +30,10 @@ export const Route = createFileRoute("/_authenticated/inventory/requests")({
       { title: "طلبات صرف الخامات | مَعْمَل" },
       {
         name: "description",
-        content: "طلبات صرف الخامات من المخزن الرئيسي إلى الفروع واعتمادها.",
+        content: "طلبات صرف الخامات من المعمل إلى الفروع واعتمادها.",
       },
       { property: "og:title", content: "طلبات صرف الخامات | مَعْمَل" },
-      { property: "og:description", content: "طلب الخامات من المخزن الرئيسي واعتماد الصرف." },
+      { property: "og:description", content: "طلب الخامات من المعمل واعتماد الصرف." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -72,7 +72,7 @@ function RequestsPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!warehouse) {
-      toast.error("لا يوجد مخزن رئيسي");
+      toast.error("ما فيه معمل محدد في الفروع");
       return;
     }
     const to = form.toBranch || writeBranchId;
@@ -107,7 +107,7 @@ function RequestsPage() {
     <AppShell
       eyebrow="المخزون"
       title="طلبات صرف الخامات"
-      subtitle="يطلب الفرع الخامات من المخزن الرئيسي، وعند الاعتماد تُنقل الكمية فعليًا."
+      subtitle="يطلب الفرع الخامات من المعمل، وعند الاعتماد تُنقل الكمية فعليًا."
       actions={canRequest && warehouse ? <Btn onClick={() => setOpen(true)}>طلب صرف</Btn> : undefined}
     >
       <div className="flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ function RequestsPage() {
         )}
       </Card>
 
-      <Sheet open={open} onClose={() => setOpen(false)} title="طلب صرف من المخزن الرئيسي">
+      <Sheet open={open} onClose={() => setOpen(false)} title="طلب صرف من المعمل">
         <form onSubmit={submit} className="space-y-4 p-4">
           <Field
             label="المادة"

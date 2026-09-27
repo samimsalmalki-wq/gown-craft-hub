@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/inventory/")({
 function InventoryPage() {
   const { can, canCategory } = useCurrentAccount();
   const { data: catRows = [] } = useMaterialCategories();
-  // مسؤول المستودع يرى أصناف دوره فقط
+  // مسؤول الخامات يرى أصناف دوره فقط
   const matCats = catRows.filter((c) => c.is_active && canCategory(c.key));
   const { data: materials = [], isLoading } = useMaterials();
   const { branchId, isAll } = useBranchScope();
@@ -85,7 +85,7 @@ function InventoryPage() {
   const [form, setForm] = useState(emptyForm);
   const [image, setImage] = useState<File | null>(null);
 
-  /** الموقع المقترح للرصيد الافتتاحي: المخزن الرئيسي */
+  /** الموقع المقترح للرصيد الافتتاحي: المعمل */
   const openingBranch = form.opening_branch_id || warehouse?.id || branchId;
 
   const list = useMemo(
@@ -221,7 +221,7 @@ function InventoryPage() {
                   {at(m.id).reserved > 0 && <Chip tone="gold">محجوز {qty(at(m.id).reserved)}</Chip>}
                   {warehouse && warehouse.id !== branchId && (
                     <Chip tone="neutral">
-                      بالمخزن الرئيسي {qty(stockOf(stock, m.id, warehouse.id).available)}
+                      بالمعمل {qty(stockOf(stock, m.id, warehouse.id).available)}
                     </Chip>
                   )}
                   {at(m.id).overReserved ? (
@@ -294,7 +294,7 @@ function InventoryPage() {
                   .map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.name}
-                      {b.is_warehouse ? " (المخزن الرئيسي)" : ""}
+                      {b.is_warehouse ? " (المعمل)" : ""}
                     </option>
                   ))}
               </select>

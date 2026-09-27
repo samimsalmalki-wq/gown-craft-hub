@@ -1,7 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/AppShell";
-import { WarehouseScopeNote } from "@/components/WarehouseScopeNote";
 import { FinanceTabs } from "@/components/FinanceTabs";
 
 import { Btn, Card, Chip, Empty, Stat } from "@/components/kit";
@@ -93,7 +92,6 @@ function FinancePage() {
       }
     >
       <FinanceTabs />
-      <WarehouseScopeNote />
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="إجمالي قيمة الطلبات" value={money(totalValue)} />

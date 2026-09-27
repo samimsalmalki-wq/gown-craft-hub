@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { FinanceTabs } from "@/components/FinanceTabs";
 import { Btn, Card, Chip, Empty, Field, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
+import { branchLabel, useBranchScope, useBranches } from "@/lib/branches";
 import { useMaterials } from "@/lib/inventory-data";
 import {
   useAddExpense,
@@ -56,6 +57,8 @@ function ExpensesPage() {
   const boxName = (id: string) => balances.find((b) => b.account.id === id)?.account.name ?? "صندوق";
   const regularBoxes = balances.filter((b) => !b.account.is_deposit_box);
   const add = useAddExpense();
+  const { canAll, costWriteBranchId } = useBranchScope();
+  const { data: branches = [] } = useBranches();
   const addCategory = useAddExpenseCategory();
   const addSupplier = useAddSupplier();
 
@@ -69,6 +72,8 @@ function ExpensesPage() {
   const [reference, setReference] = useState("");
   const [materialId, setMaterialId] = useState("");
   const [materialQty, setMaterialQty] = useState("");
+  // مركز التكلفة: فرع أو المعمل، و«general» مصروف عام بدون فرع
+  const [costCenter, setCostCenter] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [newSupplier, setNewSupplier] = useState("");
 
@@ -86,6 +91,13 @@ function ExpensesPage() {
   const monthTotal = monthExpenses.reduce((s, e) => s + Number(e.amount), 0);
   const vatTotal = monthExpenses.reduce((s, e) => s + Number(e.vat_amount), 0);
 
+  const center = costCenter || costWriteBranchId || "general";
+  const centerName = (id: string | null) => {
+    const b = branches.find((x) => x.id === id);
+    if (!b) return "مصروف عام";
+    return b.is_warehouse ? `${b.name} (المعمل)` : branchLabel(branches, b.id);
+  };
+
   const submit = () => {
     add
       .mutateAsync({
@@ -99,6 +111,7 @@ function ExpensesPage() {
         reference,
         materialId: materialId || undefined,
         materialQty: materialQty ? Number(materialQty) : undefined,
+        ...(canAll ? { branchId: center === "general" ? null : center } : {}),
       })
       .then(() => {
         toast.success("تم تسجيل المصروف");
@@ -205,6 +218,24 @@ function ExpensesPage() {
                     ))}
                   </select>
                 </Field>
+                {canAll && (
+                  <Field label="مركز التكلفة" hint="على من يُحسب المصروف في التقارير">
+                    <select
+                      className="field"
+                      value={center}
+                      onChange={(e) => setCostCenter(e.target.value)}
+                    >
+                      {branches
+                        .filter((b) => b.is_active || b.id === center)
+                        .map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.is_warehouse ? `${b.name} (المعمل)` : `فرع ${b.name}`}
+                          </option>
+                        ))}
+                      <option value="general">مصروف عام (بدون فرع)</option>
+                    </select>
+                  </Field>
+                )}
                 <Field label="المرجع">
                   <input
                     className="field"
@@ -213,7 +244,7 @@ function ExpensesPage() {
                     placeholder="رقم فاتورة المورد"
                   />
                 </Field>
-                <Field label="إدخال خامة للمخزون" hint="اختياري">
+                <Field label="إدخال خامة للمخزون" hint="اختياري — تدخل خامات المعمل">
                   <select
                     className="field"
                     value={materialId}
@@ -436,6 +467,7 @@ function ExpensesPage() {
                       <p className="text-[11px] text-muted-foreground">
                         {e.expense_no} · {fmtDate(e.occurred_at)} ·{" "}
                         {categories.find((c) => c.id === e.category_id)?.name ?? "بدون تصنيف"}
+                        {canAll && ` · ${centerName(e.branch_id)}`}
                       </p>
                     </div>
                     <span className="num text-[14px] text-late">{money(e.amount)}</span>

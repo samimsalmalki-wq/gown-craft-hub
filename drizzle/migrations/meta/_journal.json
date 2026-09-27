@@ -225,6 +225,13 @@
       "when": 1790431200000,
       "tag": "0032_fitting_trip_stage_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790510400000,
+      "tag": "0033_workshop_rental_copies",
+      "breakpoints": true
     }
   ]
 }

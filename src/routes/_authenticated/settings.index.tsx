@@ -123,7 +123,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
     items: [
       {
         to: "/branches",
-        label: "الفروع والمخزن الرئيسي",
+        label: "الفروع والمعمل",
         hint: "الأسماء والرموز والعناوين والأرقام الضريبية",
         icon: Store,
         show: (a) => a.isAdmin,

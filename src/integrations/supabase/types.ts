@@ -765,6 +765,7 @@ export type Database = {
           qty: number
           received: string[] | null
           received_qty: number | null
+          rental_dress_id: string | null
           sent: string[]
           title: string
           transfer_id: string
@@ -781,6 +782,7 @@ export type Database = {
           qty?: number
           received?: string[] | null
           received_qty?: number | null
+          rental_dress_id?: string | null
           sent?: string[]
           title: string
           transfer_id: string
@@ -797,12 +799,20 @@ export type Database = {
           qty?: number
           received?: string[] | null
           received_qty?: number | null
+          rental_dress_id?: string | null
           sent?: string[]
           title?: string
           transfer_id?: string
           units?: string[] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "goods_transfer_lines_rental_dress_id_fkey"
+            columns: ["rental_dress_id"]
+            isOneToOne: false
+            referencedRelation: "rental_dresses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "goods_transfer_lines_transfer_id_fkey"
             columns: ["transfer_id"]
@@ -2169,6 +2179,8 @@ export type Database = {
           deposit_amount: number
           id: string
           image_path: string | null
+          location: string
+          location_branch_id: string | null
           model_no: string | null
           notes: string | null
           parts: string[]
@@ -2187,6 +2199,8 @@ export type Database = {
           deposit_amount?: number
           id?: string
           image_path?: string | null
+          location?: string
+          location_branch_id?: string | null
           model_no?: string | null
           notes?: string | null
           parts?: string[]
@@ -2205,6 +2219,8 @@ export type Database = {
           deposit_amount?: number
           id?: string
           image_path?: string | null
+          location?: string
+          location_branch_id?: string | null
           model_no?: string | null
           notes?: string | null
           parts?: string[]
@@ -2218,6 +2234,13 @@ export type Database = {
           {
             foreignKeyName: "rental_dresses_branch_id_fkey"
             columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_dresses_location_branch_id_fkey"
+            columns: ["location_branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
             referencedColumns: ["id"]
@@ -3027,6 +3050,7 @@ export type Database = {
       book_rental: {
         Args: {
           p_amount: number
+          p_branch_id?: string
           p_client_name: string
           p_client_phone: string
           p_deposit_amount: number
@@ -3100,8 +3124,29 @@ export type Database = {
           p_damage?: number
           p_method?: Database["public"]["Enums"]["payment_method"]
           p_note?: string
+          p_parts?: string[]
           p_record_id: string
         }
+        Returns: undefined
+      }
+      rental_busy: {
+        Args: never
+        Returns: {
+          branch_id: string | null
+          delivered: boolean
+          dress_id: string
+          due_date: string
+          fitting_date: string | null
+          out_date: string
+          record_id: string
+        }[]
+      }
+      return_rental_copy: {
+        Args: { p_dress_id: string; p_note?: string; p_parts: string[] }
+        Returns: string
+      }
+      set_rental_copy_place: {
+        Args: { p_branch_id?: string; p_dress_id: string }
         Returns: undefined
       }
       decide_stock_request: {

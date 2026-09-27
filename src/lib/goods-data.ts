@@ -205,6 +205,9 @@ function useInvalidateGoods() {
   return () => {
     Object.values(KEYS).forEach((key) => qc.invalidateQueries({ queryKey: key }));
     qc.invalidateQueries({ queryKey: ordersKey });
+    // نسخ الإيجار تنتقل بنفس الشحنات
+    qc.invalidateQueries({ queryKey: ["rental-dresses"] });
+    qc.invalidateQueries({ queryKey: ["rental-dress"] });
   };
 }
 
@@ -317,7 +320,9 @@ export function useAdjustGoods() {
 /* ===== الشحنات والتسليم ===== */
 
 export type SendLine =
-  { item_id: string; qty: number; sent: string[] } | { order_id: string; sent: string[] };
+  | { item_id: string; qty: number; sent: string[] }
+  | { order_id: string; sent: string[] }
+  | { dress_id: string; sent: string[] };
 
 export function useSendGoods() {
   const invalidate = useInvalidateGoods();

@@ -10,11 +10,20 @@ import { SketchBoard } from "@/components/SketchBoard";
 import { Btn, Card, Empty, Field } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, money } from "@/lib/atelier";
+import { branchLabel, salesBranches, useBranchScope, useBranches } from "@/lib/branches";
 import type { PaymentMethod } from "@/lib/finance";
-import { effectiveDressStatus, findRentalClash, isBookableStatus, localDay } from "@/lib/inventory";
+import {
+  busyAsRecord,
+  copyPlaceOf,
+  effectiveDressStatus,
+  findRentalClash,
+  isBookableStatus,
+  localDay,
+} from "@/lib/inventory";
 import {
   useBookRental,
   useInventoryUrls,
+  useRentalBusy,
   useRentalDress,
   useRentalRecords,
   useRentalStatuses,
@@ -44,6 +53,12 @@ function BookRentalPage() {
   useRentalStatuses();
   const { data: dress, isLoading } = useRentalDress(dressId);
   const { data: records = [] } = useRentalRecords(dressId);
+  const { data: busyAll = [] } = useRentalBusy();
+  const { opsWriteBranchId, canAll } = useBranchScope();
+  const { data: branches = [] } = useBranches();
+  const sales = salesBranches(branches).filter((b) => b.is_active);
+  // فرع الحجز: فرع الموظف، أو يختاره من له كل الفروع (الافتراضي فرع النسخة)
+  const [branchPick, setBranchPick] = useState("");
   const book = useBookRental();
   const saveDetails = useSaveRentalDetails();
   const urls = useInventoryUrls([dress?.image_path]);
@@ -101,7 +116,28 @@ function BookRentalPage() {
       </AppShell>
     );
   }
-  const status = effectiveDressStatus(dress, records);
+  // حجوزات الفروع الثانية على النسخة: المواعيد فقط
+  const others = busyAll
+    .filter((b) => b.dress_id === dressId && !records.some((r) => r.id === b.record_id))
+    .map(busyAsRecord);
+  const bookingBranch =
+    branchPick ||
+    opsWriteBranchId ||
+    dress.branch_id ||
+    (sales.find((b) => b.is_main) ?? sales[0])?.id ||
+    "";
+  const shared = Boolean(bookingBranch) && bookingBranch !== dress.branch_id;
+  const status = effectiveDressStatus(dress, [...records, ...others]);
+  if (shared && !canAll && !can("rentals.share")) {
+    return (
+      <AppShell title={`حجز فستان ${dress.code}`}>
+        <Empty>
+          هذي النسخة تابعة لفرع {branchLabel(branches, dress.branch_id)}، وحجزها لعميلة فرعك يحتاج
+          صلاحية «حجز نسخ الفروع الأخرى».
+        </Empty>
+      </AppShell>
+    );
+  }
   if (!isBookableStatus(status)) {
     return (
       <AppShell title={`حجز فستان ${dress.code}`}>
@@ -124,6 +160,7 @@ function BookRentalPage() {
     const f1 = form.fitting1_date;
     const f2 = secondFitting ? form.fitting2_date : "";
     const clash = findRentalClash(records, form.out_date, form.due_date);
+    const otherClash = findRentalClash(others, form.out_date, form.due_date);
     const problem = !form.client_name.trim()
       ? "اكتب اسم العميلة"
       : form.due_date < form.out_date
@@ -138,7 +175,11 @@ function BookRentalPage() {
                 ? "البروفة الثانية لازم تكون بعد الأولى وقبل موعد الخروج."
                 : clash
                   ? `الفستان محجوز من ${fmtDate(clash.out_date)} إلى ${fmtDate(clash.due_date)} لـ${clash.client_name}.`
-                  : null;
+                  : otherClash
+                    ? `الفستان محجوز من ${fmtDate(otherClash.out_date)} إلى ${fmtDate(otherClash.due_date)} لفرع ${branchLabel(branches, otherClash.branch_id)}.`
+                    : shared && !can("rentals.share")
+                      ? "حجز نسخة فرع ثاني يحتاج صلاحية «حجز نسخ الفروع الأخرى» — اختر فرع النسخة."
+                      : null;
     if (problem) {
       toast.error(problem);
       return;
@@ -160,6 +201,7 @@ function BookRentalPage() {
         method,
         invoiceNo: form.invoice_no.trim() || null,
         fittingDate: f1 || null,
+        branchId: bookingBranch || null,
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "تعذّر تسجيل الحجز.");
@@ -184,7 +226,12 @@ function BookRentalPage() {
     }
 
     setBusy(false);
-    toast.success(paidNow > 0 ? "تم الحجز وتسجيل العربون" : "تم الحجز");
+    const here =
+      copyPlaceOf(dress.location) === "branch" && dress.location_branch_id === bookingBranch;
+    toast.success(
+      (paidNow > 0 ? "تم الحجز وتسجيل العربون" : "تم الحجز") +
+        (here ? "" : " — النسخة مو في فرع الحجز، والمعمل يرسلها قبل الموعد"),
+    );
     // الخروج اليوم: ننتقل مباشرة للتسليم
     void navigate({
       to: "/rentals/$dressId",
@@ -223,6 +270,10 @@ function BookRentalPage() {
                 <dd className="num text-gold">{dress.code}</dd>
               </div>
               <div>
+                <dt className="text-[11px] text-muted-foreground">ملك فرع</dt>
+                <dd>{branchLabel(branches, dress.branch_id)}</dd>
+              </div>
+              <div>
                 <dt className="text-[11px] text-muted-foreground">الموديل</dt>
                 <dd>{dress.model_no || "—"}</dd>
               </div>
@@ -233,6 +284,36 @@ function BookRentalPage() {
             </dl>
           </div>
         </Card>
+
+        {(canAll || shared) && (
+          <Card title="فرع الحجز">
+            <div className="space-y-3 px-4 py-4">
+              {canAll && (
+                <Field label="الحجز وماله على فرع" hint="الفرع اللي تتعامل معه العميلة">
+                  <select
+                    className="field w-full"
+                    value={bookingBranch}
+                    onChange={(e) => setBranchPick(e.target.value)}
+                  >
+                    {sales.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        فرع {b.name}
+                        {b.id === dress.branch_id ? " (فرع النسخة)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+              {shared && (
+                <p className="rounded-lg bg-soon/10 px-3 py-2 text-[12.5px]">
+                  نسخة مشاركة من فرع {branchLabel(branches, dress.branch_id)}: الحجز والعربون وإيراد
+                  الإيجار لفرع {branchLabel(branches, bookingBranch)}، والنسخة تبقى ملك فرعها.
+                  المعمل يرسلها لفرع الحجز قبل الموعد.
+                </p>
+              )}
+            </div>
+          </Card>
+        )}
 
         <Card title="بيانات العميلة">
           <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">

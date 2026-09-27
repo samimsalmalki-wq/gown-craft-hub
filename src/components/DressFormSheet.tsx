@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { Btn, Field, Sheet } from "@/components/kit";
 import { PartsPicker } from "@/components/PartsPicker";
+import { salesBranches, useBranchScope, useBranches } from "@/lib/branches";
 import { DEFAULT_DRESS_PARTS, partsOrDress } from "@/lib/goods";
 import type { RentalDress } from "@/lib/inventory";
 import { useSaveDress } from "@/lib/inventory-data";
@@ -30,6 +31,12 @@ export function DressFormSheet({
   imageUrl?: string | undefined;
 }) {
   const save = useSaveDress();
+  const { canAll, opsWriteBranchId } = useBranchScope();
+  const { data: branches = [] } = useBranches();
+  const sales = salesBranches(branches).filter((b) => b.is_active || b.id === dress?.branch_id);
+  // الفرع المالك (يختاره من له كل الفروع)، ومكان النسخة الجديدة
+  const [owner, setOwner] = useState("");
+  const [placeAt, setPlaceAt] = useState<"workshop" | "branch">("workshop");
   const [form, setForm] = useState(emptyForm);
   const [parts, setParts] = useState<string[]>(DEFAULT_DRESS_PARTS);
   const [image, setImage] = useState<File | null>(null);
@@ -54,6 +61,8 @@ export function DressFormSheet({
         : emptyForm,
     );
     setParts(dress ? partsOrDress(dress.parts) : DEFAULT_DRESS_PARTS);
+    setOwner(dress?.branch_id ?? "");
+    setPlaceAt("workshop");
   }, [open, dress]);
 
   useEffect(() => {
@@ -69,10 +78,17 @@ export function DressFormSheet({
   const set = (key: keyof typeof emptyForm) => (e: { target: { value: string } }) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const ownerId = owner || opsWriteBranchId || (sales.find((b) => b.is_main) ?? sales[0])?.id || "";
+  const ownerName = sales.find((b) => b.id === ownerId)?.name ?? "";
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.code.trim()) return;
     setErr(null);
+    if (!dress && !canAll && !opsWriteBranchId) {
+      setErr("إضافة النسخ لموظفي الفروع أو المدير: النسخة لازم يكون لها فرع مالك.");
+      return;
+    }
     try {
       await save.mutateAsync({
         ...(dress ? { id: dress.id } : {}),
@@ -86,6 +102,8 @@ export function DressFormSheet({
         notes: form.notes.trim() || null,
         parts,
         image,
+        ...(canAll && ownerId ? { branch_id: ownerId } : {}),
+        ...(dress ? {} : { location: placeAt }),
       });
     } catch (e2) {
       const msg = e2 instanceof Error ? e2.message : "";
@@ -174,6 +192,37 @@ export function DressFormSheet({
             />
           </Field>
         </div>
+        {(canAll || !dress) && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {canAll && (
+              <Field label="الفرع المالك" hint="يؤجّرها ويحجزها، والفروع الثانية بالمشاركة">
+                <select
+                  className="field w-full"
+                  value={ownerId}
+                  onChange={(e) => setOwner(e.target.value)}
+                >
+                  {sales.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      فرع {b.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+            {!dress && (
+              <Field label="مكانها الآن" hint="بعدها تنتقل بالإرسال والاستلام">
+                <select
+                  className="field w-full"
+                  value={placeAt}
+                  onChange={(e) => setPlaceAt(e.target.value === "branch" ? "branch" : "workshop")}
+                >
+                  <option value="workshop">في المعمل</option>
+                  <option value="branch">في فرع {ownerName || "النسخة"}</option>
+                </select>
+              </Field>
+            )}
+          </div>
+        )}
         <Field label="قطع الفستان" hint="تطلع للتأشير عند خروج الفستان مع العميلة ورجوعه">
           <PartsPicker value={parts} onChange={setParts} />
         </Field>

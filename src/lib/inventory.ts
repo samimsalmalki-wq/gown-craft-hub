@@ -179,6 +179,48 @@ export const findRentalClash = <
     (r) => !r.returned_at && !r.cancelled_at && r.out_date <= to && r.due_date >= from,
   );
 
+/* ===== مكان نسخة الإيجار ومواعيد حجزها لكل الفروع ===== */
+
+/** مكان النسخة: في المعمل، في الطريق لفرع، في فرع، راجعة للمعمل */
+export type CopyPlace = "workshop" | "transit" | "branch" | "returning";
+
+export const copyPlaceOf = (v: string | null | undefined): CopyPlace =>
+  v === "transit" || v === "branch" || v === "returning" ? v : "workshop";
+
+/** حجز قائم على نسخة من أي فرع (بدون بيانات العميلة ولا المبالغ) */
+export type RentalBusy = Database["public"]["Functions"]["rental_busy"]["Returns"][number];
+
+/** حجز «rental_busy» بشكل يفهمه حساب الحالة والتعارض */
+export const busyAsRecord = (b: RentalBusy) => ({
+  dress_id: b.dress_id,
+  branch_id: b.branch_id,
+  out_date: b.out_date,
+  due_date: b.due_date,
+  delivered_at: b.delivered ? b.out_date : null,
+  returned_at: null,
+  cancelled_at: null,
+});
+
+/** وصف مكان النسخة الآن (والنسخة الخارجة مع العميلة تُذكر بفرعها) */
+export const copyPlaceLabel = (
+  dress: Pick<RentalDress, "location" | "location_branch_id">,
+  branchName: (id: string | null) => string,
+  withClient = false,
+) => {
+  const name = branchName(dress.location_branch_id);
+  if (withClient) return `مع العميلة (فرع ${name})`;
+  switch (copyPlaceOf(dress.location)) {
+    case "transit":
+      return `في الطريق لفرع ${name}`;
+    case "branch":
+      return `في فرع ${name}`;
+    case "returning":
+      return `راجعة للمعمل من فرع ${name}`;
+    default:
+      return "في المعمل";
+  }
+};
+
 /** مبالغ العقد: الإيجار والمدفوع والمتبقي والتأمين المحفوظ في صندوق التأمينات */
 export const rentalMoney = (r: RentalRecord) => {
   const rent = Number(r.amount);

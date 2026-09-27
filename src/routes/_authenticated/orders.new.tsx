@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMaterials, useReserveMaterial } from "@/lib/inventory-data";
 import { qty } from "@/lib/inventory";
 import {
+  salesBranches,
   useBranchScope,
   useBranches,
   useMaterialStock,
@@ -62,7 +63,7 @@ function NewOrderPage() {
   const navigate = useNavigate();
   const { can, ready } = useCurrentAccount();
   const search = Route.useSearch();
-  const { opsWriteBranchId: writeBranchId } = useBranchScope();
+  const { opsWriteBranchId, canAll } = useBranchScope();
   const { data: itemTypes = [] } = useItemTypes();
   const [busy, setBusy] = useState(false);
   const [kind, setKind] = useState<OrderKind>(search.kind ?? "own");
@@ -108,6 +109,12 @@ function NewOrderPage() {
   const { data: models = [] } = useModels();
   const { data: stock = [] } = useMaterialStock();
   const { data: branches = [] } = useBranches();
+  // فرع الطلب: فرع المستخدم أو المختار من الأعلى، وإلا يختاره (المعمل ما يتسجّل عليه طلب)
+  const sales = salesBranches(branches).filter((b) => b.is_active);
+  const [branchPick, setBranchPick] = useState("");
+  const pickBranch = !opsWriteBranchId && canAll && sales.length > 1;
+  const writeBranchId =
+    opsWriteBranchId ?? (branchPick || (sales.find((b) => b.is_main) ?? sales[0])?.id || null);
   const [modelId, setModelId] = useState("");
   const { data: modelMaterials = [] } = useModelMaterials(newModel ? null : modelId);
   const { data: cashAccounts = [] } = useCashAccounts();
@@ -136,7 +143,7 @@ function NewOrderPage() {
   }, [models, form.model_no, modelId]);
 
   const selectedModel = models.find((m) => m.id === modelId) ?? null;
-  // خامات الطلبات تنحجز من المخزن الرئيسي مباشرة
+  // خامات الطلبات تنحجز من المعمل مباشرة
   const reserveFrom = warehouseOf(branches)?.id ?? writeBranchId;
   const shortMaterials = modelMaterials.filter(
     (r) => stockOf(stock, r.material_id, reserveFrom).available < Number(r.qty),
@@ -236,7 +243,7 @@ function NewOrderPage() {
         !newModel && modelId
           ? modelMaterials.map((r) => ({ materialId: r.material_id, amount: Number(r.qty) }))
           : [];
-      // كل مادة تنحجز لحالها من المخزن الرئيسي، واللي ما تكفي تنذكر بالاسم
+      // كل مادة تنحجز لحالها من المعمل، واللي ما تكفي تنذكر بالاسم
       const failed: string[] = [];
       for (const row of wanted) {
         try {
@@ -246,7 +253,7 @@ function NewOrderPage() {
         }
       }
       if (failed.length) {
-        toast.error(`تم حفظ الطلب، وما انحجز من المخزن الرئيسي: ${failed.join("، ")}`);
+        toast.error(`تم حفظ الطلب، وما انحجز من المعمل: ${failed.join("، ")}`);
       }
 
       toast.success("تم إنشاء الطلب");
@@ -299,6 +306,21 @@ function NewOrderPage() {
                 ))}
               </select>
             </Field>
+            {pickBranch && (
+              <Field label="فرع الطلب" hint="الطلب ومبالغه تتسجّل على هذا الفرع">
+                <select
+                  className="field"
+                  value={writeBranchId ?? ""}
+                  onChange={(e) => setBranchPick(e.target.value)}
+                >
+                  {sales.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
             <Field label="نوع القطعة">
               <select className="field" value={itemTypeId} onChange={(e) => pickItemType(e.target.value)}>
                 <option value="">اختر نوع القطعة</option>
@@ -442,9 +464,8 @@ function NewOrderPage() {
                 <p className="text-[12px] text-muted-foreground">مواد الموديل تُحجز تلقائيًا بعد الحفظ</p>
                 {shortMaterials.length > 0 && (
                   <p className="mt-2 text-[13px] text-late">
-                    ما تكفي في المخزن الرئيسي:{" "}
-                    {shortMaterials.map((r) => nameOf(r.material_id)).join("، ")} — ينحفظ الطلب
-                    وتنحجز باقي المواد، وهذي تحجزها بعد ما تتوفر.
+                    ما تكفي في المعمل: {shortMaterials.map((r) => nameOf(r.material_id)).join("، ")}{" "}
+                    — ينحفظ الطلب وتنحجز باقي المواد، وهذي تحجزها بعد ما تتوفر.
                   </p>
                 )}
               </div>

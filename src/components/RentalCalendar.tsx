@@ -30,12 +30,24 @@ const toneLabel = (t: Tone) =>
         ? "حجز قادم"
         : "إيجار سابق";
 
+/** حجز فرع ثاني على نفس النسخة: المواعيد فقط بدون بيانات العميلة */
+export type OtherBooking = {
+  out_date: string;
+  due_date: string;
+  delivered: boolean;
+  label: string;
+};
+
+type DayBooking = { tone: Tone; title: string; from: string; to: string };
+
 /** تقويم شهري يوضح الأيام المحجوزة للفستان */
 export function RentalCalendar({
   records,
+  others = [],
   onPickDay,
 }: {
   records: RentalRecord[];
+  others?: OtherBooking[];
   onPickDay?: ((day: string) => void) | undefined;
 }) {
   const today = localDay();
@@ -50,23 +62,40 @@ export function RentalCalendar({
     return out;
   }, [month]);
 
-  const bookingOn = (day: string): { record: RentalRecord; tone: Tone } | null => {
+  const bookingOn = (day: string): DayBooking | null => {
     for (const r of records) {
+      const hit = (tone: Tone): DayBooking => ({
+        tone,
+        title: r.client_name,
+        from: r.out_date,
+        to: r.due_date,
+      });
       if (r.cancelled_at) continue;
       if (r.returned_at) {
         const from = r.delivered_at ? localDay(r.delivered_at) : r.out_date;
-        if (from <= day && day <= localDay(r.returned_at)) return { record: r, tone: "past" };
+        if (from <= day && day <= localDay(r.returned_at)) return hit("past");
         continue;
       }
       // لم يُسلَّم بعد: حجز حتى لو فات موعد استلامه
       if (!r.delivered_at) {
-        if (r.out_date <= day && day <= r.due_date) return { record: r, tone: "upcoming" };
+        if (r.out_date <= day && day <= r.due_date) return hit("upcoming");
         continue;
       }
       const from = localDay(r.delivered_at) < r.out_date ? localDay(r.delivered_at) : r.out_date;
       const end = r.due_date < today ? today : r.due_date;
       if (from > day || day > end) continue;
-      return { record: r, tone: day > r.due_date ? "late" : "out" };
+      return hit(day > r.due_date ? "late" : "out");
+    }
+    for (const o of others) {
+      const end = o.delivered && o.due_date < today ? today : o.due_date;
+      if (o.out_date <= day && day <= end) {
+        return {
+          tone: o.delivered ? (day > o.due_date ? "late" : "out") : "upcoming",
+          title: o.label,
+          from: o.out_date,
+          to: o.due_date,
+        };
+      }
     }
     return null;
   };
@@ -141,10 +170,10 @@ export function RentalCalendar({
           {picked ? (
             <>
               <p className="font-medium">
-                {toneLabel(picked.tone)} — {picked.record.client_name}
+                {toneLabel(picked.tone)} — {picked.title}
               </p>
               <p className="mt-0.5 text-[12px] text-muted-foreground">
-                من {fmtDate(picked.record.out_date)} إلى {fmtDate(picked.record.due_date)}
+                من {fmtDate(picked.from)} إلى {fmtDate(picked.to)}
               </p>
             </>
           ) : (

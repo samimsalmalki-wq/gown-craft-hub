@@ -488,7 +488,7 @@ export function useCashTransactions() {
 }
 
 export function useExpenses() {
-  const { opsBranchId: branchId } = useBranchScope();
+  const { costBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["expenses", branchId],
     queryFn: async () => {
@@ -504,7 +504,7 @@ export function useExpenses() {
 
 export function useAddExpense() {
   const qc = useQueryClient();
-  const { opsWriteBranchId: writeBranchId } = useBranchScope();
+  const { costWriteBranchId } = useBranchScope();
   return useMutation({
     mutationFn: async (input: {
       description: string;
@@ -517,6 +517,8 @@ export function useAddExpense() {
       reference?: string | undefined;
       materialId?: string | undefined;
       materialQty?: number | undefined;
+      /** مركز التكلفة: فرع أو المعمل، و«null» مصروف عام */
+      branchId?: string | null | undefined;
     }) => {
       if (!input.description.trim()) throw new Error("اكتب وصف المصروف");
       if (!(input.amount > 0)) throw new Error("اكتب مبلغًا أكبر من صفر");
@@ -532,7 +534,7 @@ export function useAddExpense() {
         reference: input.reference?.trim() || null,
         material_id: input.materialId || null,
         material_qty: input.materialQty ?? null,
-        branch_id: writeBranchId,
+        branch_id: input.branchId === undefined ? costWriteBranchId : input.branchId,
         created_by: auth.user?.id ?? null,
       } as never);
       if (error) throw error;
@@ -593,7 +595,7 @@ export function useUpdateGlAccount() {
 }
 
 export function useJournalEntries() {
-  const { opsBranchId: branchId } = useBranchScope();
+  const { costBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["journal-entries", branchId],
     queryFn: async () => {
@@ -609,7 +611,7 @@ export function useJournalEntries() {
 }
 
 export function useJournalLines() {
-  const { opsBranchId: branchId } = useBranchScope();
+  const { costBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["journal-lines", branchId],
     queryFn: async () => {
@@ -684,7 +686,7 @@ async function accountTotals(
 
 /** مجاميع الحسابات لفترة — لدليل الحسابات وقائمة الدخل */
 export function useAccountTotals(from: string | null = null, to: string | null = null) {
-  const { opsBranchId: branchId } = useBranchScope();
+  const { costBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["account-totals", from, to, branchId],
     queryFn: () => accountTotals(from, to, branchId),
@@ -794,7 +796,7 @@ const LEDGER_SELECT =
 
 /** حركات حساب واحد داخل فترة + رصيد ما قبل الفترة */
 export function useLedger(accountId: string, from: string, to: string) {
-  const { opsBranchId: branchId } = useBranchScope();
+  const { costBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["ledger", accountId, from, to, branchId],
     enabled: Boolean(accountId),
@@ -848,7 +850,7 @@ export function useLedger(accountId: string, from: string, to: string) {
 
 /** مجاميع المدين والدائن لكل حساب داخل فترة — لميزان المراجعة */
 export function useTrialBalance(from: string, to: string) {
-  const { opsBranchId: branchId } = useBranchScope();
+  const { costBranchId: branchId } = useBranchScope();
   return useQuery({
     queryKey: ["trial-balance", from, to, branchId],
     queryFn: async (): Promise<Record<string, { debit: number; credit: number }>> => {

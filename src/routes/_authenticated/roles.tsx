@@ -236,7 +236,7 @@ function RolesPage() {
             </Card>
 
             {usesInventory && (
-              <Card title="أصناف المستودع">
+              <Card title="أصناف الخامات">
                 <div className="space-y-3 px-4 py-4">
                   <p className="text-[12px] text-muted-foreground">
                     الأصناف التي يراها هذا الدور ويديرها في المخزون. بدون تحديد = كل الأصناف.

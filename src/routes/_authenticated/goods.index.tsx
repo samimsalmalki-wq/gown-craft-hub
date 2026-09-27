@@ -62,7 +62,13 @@ import {
   type SendLine,
 } from "@/lib/goods-data";
 import { ALL_BRANCHES, useBranchScope } from "@/lib/branches";
-import { useInventoryUrls } from "@/lib/inventory-data";
+import { copyPlaceOf, type RentalBusy, type RentalDress } from "@/lib/inventory";
+import {
+  useInventoryUrls,
+  useRentalBusy,
+  useRentalDresses,
+  useReturnRentalCopy,
+} from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/goods/")({
@@ -88,7 +94,7 @@ type DraftLine = {
   key: string;
   title: string;
   checklist: string[];
-  payload: { item_id: string; qty: number } | { order_id: string };
+  payload: { item_id: string; qty: number } | { order_id: string } | { dress_id: string };
 };
 
 type SendDraft = {
@@ -111,6 +117,25 @@ const orderLine = (o: ReadyOrder): DraftLine => ({
   checklist: partsOrDress(o.parts),
   payload: { order_id: o.id },
 });
+
+const copyLine = (d: RentalDress): DraftLine => ({
+  key: `dress:${d.id}`,
+  title: `فستان إيجار ${d.code}`,
+  checklist: partsOrDress(d.parts),
+  payload: { dress_id: d.id },
+});
+
+/** الحجز الجاي (ما تسلّم للعميلة) لكل نسخة، من حجوزات كل الفروع */
+const nextBookings = (busy: RentalBusy[]) => {
+  const m = new Map<string, RentalBusy>();
+  [...busy]
+    .filter((b) => !b.delivered)
+    .sort((a, b) => (a.fitting_date ?? a.out_date).localeCompare(b.fitting_date ?? b.out_date))
+    .forEach((b) => {
+      if (!m.has(b.dress_id)) m.set(b.dress_id, b);
+    });
+  return m;
+};
 
 const KIND_ICON = (typeName: string) =>
   typeName.includes("فستان")
@@ -136,6 +161,9 @@ function GoodsPage() {
   const { data: orders = [] } = useReadyOrders();
   const { data: transfers = [] } = useGoodsTransfers();
   const { data: issues = [] } = usePartIssues();
+  const { data: copies = [] } = useRentalDresses();
+  const { data: busy = [] } = useRentalBusy();
+  const backCopyMut = useReturnRentalCopy();
   useItemTypes(); // أسماء الأنواع
   const urls = useInventoryUrls(items.map((i) => i.image_path));
 
@@ -165,6 +193,7 @@ function GoodsPage() {
   const [delivering, setDelivering] = useState<ReadyOrder | null>(null);
   const [fitting, setFitting] = useState<ReadyOrder | null>(null);
   const [sale, setSale] = useState<{ branchId: string; itemId: string | null } | null>(null);
+  const [backCopy, setBackCopy] = useState<RentalDress | null>(null);
 
   const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   // الشحنات الواصلة: للفرع، وللمعمل (قطع راجعة من البروفة)
@@ -260,7 +289,9 @@ function GoodsPage() {
             receiving.to_workshop
               ? partial
                 ? "انسجل الاستلام في المعمل مع النواقص"
-                : "تم الاستلام في المعمل، والتعديلات في صفحة الطلب"
+                : receiving.goods_transfer_lines.some((l) => l.order_id)
+                  ? "تم الاستلام في المعمل، والتعديلات في صفحة الطلب"
+                  : "تم الاستلام في المعمل"
               : partial
                 ? "انسجل الاستلام مع النواقص، ويشوفها المعمل للمتابعة"
                 : "تم تأكيد الاستلام ودخلت القطع مخزن الفرع",
@@ -282,6 +313,20 @@ function GoodsPage() {
           setDelivering(null);
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : "تعذّر التسليم"),
+      },
+    );
+  }
+
+  function confirmBackCopy(checked: Record<string, string[]>, notes: string) {
+    if (!backCopy) return;
+    backCopyMut.mutate(
+      { dressId: backCopy.id, parts: checked[backCopy.id] ?? [], note: notes },
+      {
+        onSuccess: () => {
+          toast.success("انرسلت للمعمل، والمعمل يأكّد الاستلام");
+          setBackCopy(null);
+        },
+        onError: (err) => toast.error(err instanceof Error ? err.message : "تعذّر الإرسال"),
       },
     );
   }
@@ -311,7 +356,7 @@ function GoodsPage() {
       subtitle={
         branch
           ? "الجاهز والعرض والبضاعة والعينات في الفرع، واستلام الشحنات والبيع."
-          : "الجاهز في المعمل لكل فرع: طلبات العميلات اللي خلصت والإنتاج للمخزون."
+          : "الجاهز في المعمل لكل فرع: طلبات العميلات اللي خلصت، ونسخ الإيجار المحجوزة، والإنتاج للمخزون."
       }
       actions={
         <div className="flex flex-wrap gap-2">
@@ -335,6 +380,8 @@ function GoodsPage() {
           items={items}
           stock={stock}
           orders={orders}
+          copies={copies.filter((d) => copyPlaceOf(d.location) === "workshop")}
+          busy={busy}
           transfers={transfers.filter((t) => t.from_workshop)}
           incoming={transfers.filter((t) => t.to_workshop)}
           issues={issues}
@@ -363,6 +410,10 @@ function GoodsPage() {
           fittings={orders.filter(
             (o) => o.branch_id === branch.id && o.dress_location === "fitting",
           )}
+          copies={copies.filter(
+            (d) => copyPlaceOf(d.location) === "branch" && d.location_branch_id === branch.id,
+          )}
+          busy={busy}
           incoming={transfers.filter((t) => !t.to_workshop && t.to_branch_id === branch.id)}
           outgoing={transfers.filter((t) => !t.from_workshop && t.from_branch_id === branch.id)}
           issues={issues.filter((x) => x.branch_id === branch.id)}
@@ -379,6 +430,15 @@ function GoodsPage() {
           onDeliver={setDelivering}
           onFitting={setFitting}
           onResolve={onResolve}
+          onSendCopy={(d, toBranchId) =>
+            setDraft({
+              fromBranchId: branch.id,
+              fromWorkshop: false,
+              toBranchId,
+              lines: [copyLine(d)],
+            })
+          }
+          onReturnCopy={setBackCopy}
         />
       ) : (
         <Empty>اختر موقعًا من الأعلى.</Empty>
@@ -487,6 +547,28 @@ function GoodsPage() {
 
       {fitting && <FittingReturnSheet order={fitting} onClose={() => setFitting(null)} />}
 
+      {backCopy && (
+        <ChecklistSheet
+          title={`إرجاع فستان ${backCopy.code} للمعمل`}
+          hint="أشّر على القطع اللي بترجع للمعمل."
+          groups={[
+            {
+              key: backCopy.id,
+              title: `فستان إيجار ${backCopy.code}`,
+              items: partsOrDress(backCopy.parts),
+            },
+          ]}
+          okLabel="إرسال للمعمل"
+          partialLabel="إرسال مع النواقص"
+          missingNote="ما تأشّر عليه بينسجل إنه ما رجع:"
+          requireEach
+          withNotes
+          pending={backCopyMut.isPending}
+          onClose={() => setBackCopy(null)}
+          onConfirm={confirmBackCopy}
+        />
+      )}
+
       {delivering && (
         <ChecklistSheet
           title={`تسليم طلب ${delivering.order_no} للعميلة`}
@@ -534,6 +616,8 @@ function WorkshopView({
   items,
   stock,
   orders,
+  copies,
+  busy,
   transfers,
   incoming,
   issues,
@@ -551,8 +635,12 @@ function WorkshopView({
   items: GoodsItem[];
   stock: GoodsStock[];
   orders: ReadyOrder[];
+  /** نسخ الإيجار الموجودة في المعمل */
+  copies: RentalDress[];
+  /** حجوزات كل الفروع (المواعيد فقط) */
+  busy: RentalBusy[];
   transfers: GoodsTransferWithLines[];
-  /** قطع راجعة من البروفة في الفروع */
+  /** قطع راجعة للمعمل: قطع البروفة ونسخ الإيجار */
   incoming: GoodsTransferWithLines[];
   issues: PartIssue[];
   canTransfer: boolean;
@@ -566,6 +654,9 @@ function WorkshopView({
 }) {
   const itemById = new Map(items.map((i) => [i.id, i]));
   const ready = orders.filter((o) => o.dress_location === "workshop");
+  const next = nextBookings(busy);
+  // النسخ اللي ما عليها حجز جاي تبقى في المعمل، وتقدر تنرسل لفرعها للعرض
+  const idle = copies.filter((d) => !next.has(d.id));
   const wsStock = stock.filter((s) => s.at_workshop && s.qty > 0);
   const pieces = wsStock.reduce((s, r) => s + r.qty, 0);
   const value = wsStock.reduce((s, r) => s + r.qty * Number(itemById.get(r.item_id)?.cost ?? 0), 0);
@@ -575,7 +666,7 @@ function WorkshopView({
       <Flow />
 
       {incoming.length > 0 && (
-        <Card title="راجع من البروفة" className="mb-5 border-soon/60 ring-1 ring-soon/20">
+        <Card title="راجع للمعمل" className="mb-5 border-soon/60 ring-1 ring-soon/20">
           <ul className="divide-y divide-line">
             {incoming.map((tr) => (
               <Row
@@ -610,8 +701,9 @@ function WorkshopView({
         {...(canTransfer ? { onSendMissing } : {})}
       />
 
-      <div className="mb-5 grid grid-cols-3 gap-3">
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="طلبات عميلات جاهزة" value={ready.length} tone="gold" />
+        <Stat label="نسخ إيجار في المعمل" value={copies.length} />
         <Stat
           label="قطع إنتاج جاهزة"
           value={pieces}
@@ -629,8 +721,11 @@ function WorkshopView({
           {sections.map((b) => {
             const bOrders = ready.filter((o) => o.branch_id === b.id);
             const bStock = wsStock.filter((s) => s.branch_id === b.id);
+            // نسخ إيجار محجوزة لهذا الفرع (بروفة أو خروج) وهي في المعمل
+            const bCopies = copies.filter((d) => next.get(d.id)?.branch_id === b.id);
             const all: DraftLine[] = [
               ...bOrders.map(orderLine),
+              ...bCopies.map(copyLine),
               ...bStock.flatMap((s) => {
                 const item = itemById.get(s.item_id);
                 return item ? [itemLine(item, s.qty)] : [];
@@ -694,6 +789,45 @@ function WorkshopView({
                         />
                       ))}
                     </ul>
+                    {bCopies.length > 0 && <SubHead>نسخ إيجار محجوزة</SubHead>}
+                    <ul className="divide-y divide-line">
+                      {bCopies.map((d) => {
+                        const bk = next.get(d.id);
+                        return (
+                          <Row
+                            key={d.id}
+                            title={
+                              <Link
+                                to="/rentals/$dressId"
+                                params={{ dressId: d.id }}
+                                className="hover:text-gold"
+                              >
+                                فستان إيجار <span className="num">{d.code}</span>
+                              </Link>
+                            }
+                            sub={partsOrDress(d.parts).join("، ")}
+                            chips={
+                              <>
+                                {bk?.fitting_date && (
+                                  <Chip tone="soon">بروفة {fmtDate(bk.fitting_date)}</Chip>
+                                )}
+                                {bk && <Chip tone="gold">يخرج {fmtDate(bk.out_date)}</Chip>}
+                                {d.branch_id !== b.id && (
+                                  <Chip>نسخة فرع {branchLabel(branches, d.branch_id)}</Chip>
+                                )}
+                              </>
+                            }
+                            action={
+                              canTransfer && (
+                                <SmallBtn onClick={() => onSend(b.id, [copyLine(d)])}>
+                                  إرسال
+                                </SmallBtn>
+                              )
+                            }
+                          />
+                        );
+                      })}
+                    </ul>
                     {bStock.length > 0 && <SubHead>إنتاج للمخزون</SubHead>}
                     <ul className="divide-y divide-line">
                       {bStock.map((s) => {
@@ -735,6 +869,39 @@ function WorkshopView({
             );
           })}
         </div>
+      )}
+
+      {idle.length > 0 && (
+        <Card title={`نسخ إيجار في المعمل بدون حجز قريب (${idle.length})`} className="mt-5">
+          <ul className="divide-y divide-line">
+            {idle.map((d) => (
+              <Row
+                key={d.id}
+                title={
+                  <Link
+                    to="/rentals/$dressId"
+                    params={{ dressId: d.id }}
+                    className="hover:text-gold"
+                  >
+                    فستان إيجار <span className="num">{d.code}</span>
+                  </Link>
+                }
+                sub={[d.model_no && `موديل ${d.model_no}`, d.size && `مقاس ${d.size}`]
+                  .filter(Boolean)
+                  .join(" · ")}
+                chips={<Chip>فرع {branchLabel(branches, d.branch_id)}</Chip>}
+                action={
+                  canTransfer &&
+                  d.branch_id && (
+                    <SmallBtn onClick={() => onSend(d.branch_id!, [copyLine(d)])}>
+                      إرسال لفرعها
+                    </SmallBtn>
+                  )
+                }
+              />
+            ))}
+          </ul>
+        </Card>
       )}
 
       {transfers.length > 0 && (
@@ -790,6 +957,7 @@ function Flow() {
           `قطعة البروفة (مرحلة ${trip}) تمشي بنفس الطريقة، وتظهر عند الفرع تحت «عندكم للبروفة». بعد البروفة يسجّل المشرف النتيجة والتعديلات ويرجّعها للمعمل، والمعمل يؤكّد استلامها.`,
         ]
       : []),
+    "نسخ الإيجار المحجوزة تطلع هنا تحت فرع الحجز قبل موعد البروفة أو الخروج، وتنرسل بنفس الطريقة. وبعد ما ترجّع العميلة الفستان ترجع النسخة للمعمل تلقائيًا، والمعمل يؤكّد استلامها من «راجع للمعمل».",
   ];
   return (
     <details className="group mb-5 rounded-2xl border border-line bg-paper">
@@ -825,6 +993,8 @@ function BranchView({
   urls,
   orders,
   fittings,
+  copies,
+  busy,
   incoming,
   outgoing,
   issues,
@@ -839,6 +1009,8 @@ function BranchView({
   onDeliver,
   onFitting,
   onResolve,
+  onSendCopy,
+  onReturnCopy,
 }: {
   branch: Branch;
   branches: Branch[];
@@ -848,6 +1020,9 @@ function BranchView({
   orders: ReadyOrder[];
   /** قطع البروفة الموجودة في الفرع */
   fittings: ReadyOrder[];
+  /** نسخ الإيجار الموجودة في الفرع (ومنها اللي مع العميلات) */
+  copies: RentalDress[];
+  busy: RentalBusy[];
   incoming: GoodsTransferWithLines[];
   outgoing: GoodsTransferWithLines[];
   issues: PartIssue[];
@@ -863,8 +1038,14 @@ function BranchView({
   onDeliver: (o: ReadyOrder) => void;
   onFitting: (o: ReadyOrder) => void;
   onResolve: (issue: PartIssue) => void;
+  /** إرسال نسخة لفرع حجزها المشترك */
+  onSendCopy: (d: RentalDress, toBranchId: string) => void;
+  /** إرجاع نسخة للمعمل */
+  onReturnCopy: (d: RentalDress) => void;
 }) {
   const [purpose, setPurpose] = useState<GoodsPurpose | "all">("all");
+  const next = nextBookings(busy);
+  const outNow = new Set(busy.filter((b) => b.delivered).map((b) => b.dress_id));
   const [type, setType] = useState("all");
   const [term, setTerm] = useState("");
   const { data: sales = [] } = useSaleInvoices(canSell ? branch.id : null);
@@ -956,6 +1137,65 @@ function BranchView({
         </Card>
       )}
 
+      {copies.length > 0 && (
+        <Card title={`نسخ الإيجار في الفرع (${copies.length})`} className="mb-5">
+          <ul className="divide-y divide-line">
+            {copies.map((d) => {
+              const bk = next.get(d.id);
+              const away = bk?.branch_id && bk.branch_id !== branch.id ? bk.branch_id : null;
+              return (
+                <Row
+                  key={d.id}
+                  title={
+                    <Link
+                      to="/rentals/$dressId"
+                      params={{ dressId: d.id }}
+                      className="hover:text-gold"
+                    >
+                      فستان إيجار <span className="num">{d.code}</span>
+                    </Link>
+                  }
+                  {...(d.branch_id !== branch.id
+                    ? { sub: `نسخة فرع ${branchLabel(branches, d.branch_id)}` }
+                    : {})}
+                  chips={
+                    outNow.has(d.id) ? (
+                      <Chip tone="gold">مع العميلة</Chip>
+                    ) : bk ? (
+                      <Chip tone="soon">
+                        {away ? `محجوزة لفرع ${branchLabel(branches, away)} · ` : "محجوزة · "}
+                        {bk.fitting_date
+                          ? `بروفة ${fmtDate(bk.fitting_date)}`
+                          : `تخرج ${fmtDate(bk.out_date)}`}
+                      </Chip>
+                    ) : (
+                      <Chip>بدون حجز</Chip>
+                    )
+                  }
+                  action={
+                    !outNow.has(d.id) && (
+                      <div className="flex flex-wrap gap-2">
+                        {away && canTransfer && (
+                          <SmallBtn onClick={() => onSendCopy(d, away)}>
+                            إرسال لفرع {branchLabel(branches, away)}
+                          </SmallBtn>
+                        )}
+                        {canTransfer && (
+                          <SmallBtn onClick={() => onReturnCopy(d)}>إرجاع للمعمل</SmallBtn>
+                        )}
+                      </div>
+                    )
+                  }
+                />
+              );
+            })}
+          </ul>
+          <p className="border-t border-line px-4 py-2.5 text-[12px] text-muted-foreground">
+            بعد ما ترجّع العميلة الفستان تنرسل النسخة للمعمل تلقائيًا من شاشة الإيجار.
+          </p>
+        </Card>
+      )}
+
       {outgoing.length > 0 && (
         <Card title="أرسلتها وتنتظر الاستلام" className="mb-5">
           <ul className="divide-y divide-line">
@@ -973,7 +1213,7 @@ function BranchView({
                 sub={transferSummary(tr)}
                 chips={
                   <Chip tone="soon">
-                    {tr.to_workshop ? "راجعة من البروفة" : "بانتظار استلامهم"} ·{" "}
+                    {tr.to_workshop ? "راجعة للمعمل" : "بانتظار استلامهم"} ·{" "}
                     {fmtDateTime(tr.sent_at)}
                   </Chip>
                 }

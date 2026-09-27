@@ -61,7 +61,7 @@ function MaterialPage() {
     branch: "",
   });
 
-  // الموقع الافتراضي للحركة: الفرع المختار، وإلا المخزن الرئيسي
+  // الموقع الافتراضي للحركة: الفرع المختار، وإلا المعمل
   const defaultBranch =
     branchId !== ALL_BRANCHES ? branchId : (warehouseOf(branches)?.id ?? branches[0]?.id ?? "");
   const moveBranch = move.branch || defaultBranch;
@@ -136,7 +136,7 @@ function MaterialPage() {
                 <li key={l.branch.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
                   <span className="min-w-0 flex-1 font-medium">
                     {l.branch.name}
-                    {l.branch.is_warehouse ? " (المخزن الرئيسي)" : ""}
+                    {l.branch.is_warehouse ? " (المعمل)" : ""}
                   </span>
                   <span className="num">
                     متاح {qty(Math.max(0, l.available))} {material.unit}
@@ -245,7 +245,7 @@ function MaterialPage() {
                 .map((b) => (
                   <option key={b.id} value={b.id}>
                     {branchLabel(branches, b.id)}
-                    {b.is_warehouse ? " (المخزن الرئيسي)" : ""}
+                    {b.is_warehouse ? " (المعمل)" : ""}
                   </option>
                 ))}
             </select>

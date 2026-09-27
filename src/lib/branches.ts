@@ -44,7 +44,7 @@ export function useBranchScope() {
   const canAll = isAdmin || can("branches.all") || !profile?.branch_id;
   const warehouseIds = (branches ?? []).filter((b) => b.is_warehouse).map((b) => b.id).join(",");
 
-  // إصلاح لمرة واحدة: اختيار محفوظ على المخزن الرئيسي كان يفرّغ شاشات الطلبات
+  // إصلاح لمرة واحدة: اختيار محفوظ على المعمل كان يفرّغ شاشات الطلبات
   useEffect(() => {
     if (typeof window === "undefined" || !warehouseIds) return;
     if (window.localStorage.getItem(RESET_KEY)) return;
@@ -54,11 +54,15 @@ export function useBranchScope() {
 
   return useMemo(() => {
     void tick;
+    const isWarehouse = (id: string | null | undefined) =>
+      Boolean(id) && warehouseIds.split(",").includes(id ?? "");
     const branchId = canAll ? selected : (profile?.branch_id ?? ALL_BRANCHES);
-    const selectedIsWarehouse =
-      branchId !== ALL_BRANCHES && warehouseIds.split(",").includes(branchId);
-    /** نطاق العمليات (طلبات وماليات): المخزن الرئيسي ليس فرع بيع، فيُعرض الكل */
+    const selectedIsWarehouse = branchId !== ALL_BRANCHES && isWarehouse(branchId);
+    /** نطاق العمليات (طلبات وسندات وإيجار): المعمل ليس فرع بيع، فيُعرض الكل */
     const opsBranchId = selectedIsWarehouse ? ALL_BRANCHES : branchId;
+    /** معرّف الموقع للكتابة (مخزون): عند «الكل» يستخدم فرع المستخدم إن وُجد */
+    const writeBranchId = branchId === ALL_BRANCHES ? (profile?.branch_id ?? null) : branchId;
+    const opsWrite = opsBranchId === ALL_BRANCHES ? (profile?.branch_id ?? null) : opsBranchId;
     return {
       canAll,
       branchId,
@@ -66,11 +70,13 @@ export function useBranchScope() {
       opsBranchId,
       opsIsAll: opsBranchId === ALL_BRANCHES,
       selectedIsWarehouse,
-      /** معرّف الموقع للكتابة (مخزون): عند «الكل» يستخدم فرع المستخدم إن وُجد */
-      writeBranchId: branchId === ALL_BRANCHES ? (profile?.branch_id ?? null) : branchId,
-      /** معرّف فرع البيع للكتابة (طلبات وماليات): يتجاهل المخزن الرئيسي */
-      opsWriteBranchId:
-        opsBranchId === ALL_BRANCHES ? (profile?.branch_id ?? null) : opsBranchId,
+      writeBranchId,
+      /** معرّف فرع البيع للكتابة (طلبات وسندات): المعمل ما يتسجّل عليه بيع */
+      opsWriteBranchId: isWarehouse(opsWrite) ? null : opsWrite,
+      /** نطاق التكاليف (المصروفات والقيود وقائمة الدخل): المعمل مركز تكلفة يُختار مثل الفرع */
+      costBranchId: branchId,
+      /** مركز التكلفة الافتراضي للمصروف: الموقع المختار، وإلا موقع المستخدم */
+      costWriteBranchId: writeBranchId,
       setBranch: setSelectedBranch,
     };
   }, [tick, canAll, profile?.branch_id, warehouseIds]);
@@ -154,7 +160,7 @@ export function useTransferMaterial() {
   });
 }
 
-/* ===== المخزن الرئيسي وطلبات الصرف ===== */
+/* ===== المعمل (المخزن الرئيسي) وطلبات الصرف ===== */
 
 export type StockRequest = Database["public"]["Tables"]["stock_requests"]["Row"];
 
@@ -164,7 +170,7 @@ export const STOCK_REQUEST_LABEL: Record<string, string> = {
   rejected: "مرفوض",
 };
 
-/** موقع المخزن الرئيسي (إن وُجد) */
+/** المعمل: موقع الخامات ونسخ الإيجار والإنتاج، وهو المخزن الرئيسي (إن وُجد) */
 export const warehouseOf = (branches: Branch[]) => branches.find((b) => b.is_warehouse) ?? null;
 
 /** فروع البيع فقط (بدون مواقع المخزون) */

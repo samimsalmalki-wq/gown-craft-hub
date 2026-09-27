@@ -27,7 +27,7 @@ export function BranchSwitcher() {
       ))}
       </optgroup>
       {stores.length > 0 && (
-        <optgroup label="مواقع المخزون (خامات فقط)">
+        <optgroup label="المعمل (خامات وتكاليف، ما فيه بيع)">
           {stores.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}

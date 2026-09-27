@@ -8,8 +8,12 @@ import { OrdersTabs } from "@/components/OrdersTabs";
 import { Btn, Card, Chip, Empty, Stat } from "@/components/kit";
 import { useCurrentAccount } from "@/hooks/useSession";
 import { fmtDate, money } from "@/lib/atelier";
+import { ALL_BRANCHES, branchLabel, useBranchScope, useBranches } from "@/lib/branches";
 import { PAYMENT_METHOD_LABEL } from "@/lib/finance";
 import {
+  busyAsRecord,
+  copyPlaceLabel,
+  copyPlaceOf,
   daysFromToday,
   dressStatusLabel,
   dressStatusTone,
@@ -29,6 +33,7 @@ import {
 } from "@/lib/inventory";
 import {
   useInventoryUrls,
+  useRentalBusy,
   useRentalDresses,
   useRentalRecords,
   useRentalStatuses,
@@ -56,9 +61,17 @@ const inDays = (day: string) => {
 function RentalsPage() {
   const { can } = useCurrentAccount();
   const isManager = can("rentals.manage");
-  const { data: dresses = [], isLoading } = useRentalDresses();
+  const { data: allDresses = [], isLoading } = useRentalDresses();
   const { data: records = [] } = useRentalRecords();
+  const { data: busy = [] } = useRentalBusy();
+  const { opsBranchId } = useBranchScope();
+  const { data: branches = [] } = useBranches();
   useRentalStatuses(); // يحمّل أسماء الحالات وألوانها من الإعدادات
+  const name = (id: string | null) => branchLabel(branches, id);
+  // نسخ فرعنا، أو كل الفروع للمشاركة
+  const home = opsBranchId !== ALL_BRANCHES ? opsBranchId : null;
+  const [scope, setScope] = useState<"home" | "all">("home");
+  const dresses = allDresses.filter((d) => !home || scope === "all" || d.branch_id === home);
 
   const [term, setTerm] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -73,6 +86,12 @@ function RentalsPage() {
     records.forEach((r) => m.set(r.dress_id, [...(m.get(r.dress_id) ?? []), r]));
     return m;
   }, [records]);
+  // حجوزات كل الفروع (المواعيد فقط): للحالة والتعارض والحجز الجاي
+  const busyByDress = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof busyAsRecord>[]>();
+    busy.forEach((b) => m.set(b.dress_id, [...(m.get(b.dress_id) ?? []), busyAsRecord(b)]));
+    return m;
+  }, [busy]);
 
   const outNow = records.filter(isOutNow).sort((a, b) => a.due_date.localeCompare(b.due_date));
   const upcoming = records
@@ -82,12 +101,16 @@ function RentalsPage() {
   const heldDeposits = records.filter(
     (r) => !r.returned_at && !r.cancelled_at && rentalMoney(r).depositHeld > 0,
   );
-  const nextBooking = new Map<string, RentalRecord>();
-  upcoming.forEach((r) => {
-    if (!nextBooking.has(r.dress_id)) nextBooking.set(r.dress_id, r);
-  });
+  const nextBooking = new Map<string, { out_date: string; branch_id: string | null }>();
+  [...busy]
+    .filter((b) => !b.delivered)
+    .sort((a, b) => a.out_date.localeCompare(b.out_date))
+    .forEach((b) => {
+      if (!nextBooking.has(b.dress_id)) nextBooking.set(b.dress_id, b);
+    });
 
-  const statusOf = (d: RentalDress) => effectiveDressStatus(d, records);
+  const statusOf = (d: RentalDress) =>
+    effectiveDressStatus(d, [...records, ...(busyByDress.get(d.id) ?? [])]);
   const countOf = (s: DressStatus) => dresses.filter((d) => statusOf(d) === s).length;
 
   const dateTo = to && to >= from ? to : from;
@@ -95,7 +118,7 @@ function RentalsPage() {
     if (filter !== "all" && statusOf(d) !== filter) return false;
     if (from) {
       if (!isBookableStatus(statusOf(d))) return false;
-      if (findRentalClash(recordsByDress.get(d.id) ?? [], from, dateTo)) return false;
+      if (findRentalClash(busyByDress.get(d.id) ?? [], from, dateTo)) return false;
     }
     const t = term.trim();
     if (!t) return true;
@@ -230,6 +253,30 @@ function RentalsPage() {
       ) : null}
 
       <section className="mt-5 rounded-xl border border-line bg-paper p-4">
+        {home && (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {(
+              [
+                ["home", `نسخ فرع ${name(home)}`],
+                ["all", "كل الفروع (للمشاركة)"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setScope(key)}
+                className={cn(
+                  "min-h-10 rounded-lg border px-3 text-[13px]",
+                  scope === key
+                    ? "border-gold bg-goldsoft/60 font-medium"
+                    : "border-line text-muted-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="grid gap-3 md:grid-cols-[1fr_auto]">
           <label className="relative block">
             <Search className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -349,6 +396,9 @@ function RentalsPage() {
                         <Chip tone={dressStatusTone(st)} className="bg-paper/90 backdrop-blur">
                           {dressStatusLabel(st)}
                         </Chip>
+                        {(!home || d.branch_id !== home) && (
+                          <Chip className="bg-paper/90 backdrop-blur">فرع {name(d.branch_id)}</Chip>
+                        )}
                       </div>
                     </div>
                     <div className="space-y-1 p-3">
@@ -361,9 +411,19 @@ function RentalsPage() {
                           .filter(Boolean)
                           .join(" · ") || "—"}
                       </p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {copyPlaceLabel(d, name, st === "rented" || st === "late_return")}
+                      </p>
                       {booking && (
                         <p className="truncate text-[11px] text-soon">
                           محجوز من {fmtDate(booking.out_date)}
+                          {booking.branch_id && booking.branch_id !== d.branch_id
+                            ? ` لفرع ${name(booking.branch_id)}`
+                            : ""}
+                          {copyPlaceOf(d.location) !== "branch" ||
+                          d.location_branch_id !== booking.branch_id
+                            ? " · لازم توصل الفرع"
+                            : ""}
                         </p>
                       )}
                     </div>

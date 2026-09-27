@@ -425,7 +425,10 @@ function EditStaffSheet({
             ))}
           </select>
         </Field>
-        <Field label="الفرع" hint="بدون فرع = يرى كل الفروع (للمدير والمحاسب)">
+        <Field
+          label="الفرع"
+          hint="بدون فرع = يرى كل الفروع (للمدير والمحاسب). موظفو المعمل على «المعمل»"
+        >
           <select className="field" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
             <option value="">كل الفروع</option>
             {branches
@@ -433,7 +436,7 @@ function EditStaffSheet({
               .map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
-                  {b.is_warehouse ? " (المستودع)" : ""}
+                  {b.is_warehouse ? " (المعمل)" : ""}
                 </option>
               ))}
           </select>
