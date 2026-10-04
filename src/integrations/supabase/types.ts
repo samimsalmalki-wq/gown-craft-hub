@@ -3002,10 +3002,13 @@ export type Database = {
           due_date: string | null
           event_date: string | null
           for_fitting: boolean
+          has_due: boolean
           id: string
           order_kind: Database["public"]["Enums"]["order_kind"]
           order_no: string
+          paid_amount: number | null
           parts: string[]
+          total_amount: number | null
         }[]
       }
       receive_goods: {

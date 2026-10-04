@@ -18,6 +18,7 @@ import {
   remaining,
   stageLabel,
   type OrderKind,
+  type OrderState,
 } from "@/lib/atelier";
 
 const KIND_FILTERS: { key: "all" | OrderKind; label: string }[] = [
@@ -25,6 +26,14 @@ const KIND_FILTERS: { key: "all" | OrderKind; label: string }[] = [
   { key: "own", label: ORDER_KIND_LABEL.own },
   { key: "rental", label: ORDER_KIND_LABEL.rental },
   { key: "rental_stock", label: ORDER_KIND_LABEL.rental_stock },
+];
+
+// الطلب المسلَّم أو الملغي يختفي من القائمة، ويظهر بفلتر الحالة
+const STATE_FILTERS: { key: "all" | OrderState; label: string }[] = [
+  { key: "active", label: ORDER_STATE_LABEL.active },
+  { key: "delivered", label: "المسلَّمة" },
+  { key: "cancelled", label: "الملغاة" },
+  { key: "all", label: "كل الحالات" },
 ];
 
 export const Route = createFileRoute("/_authenticated/orders/")({
@@ -42,9 +51,10 @@ function OrdersPage() {
   useItemTypes();
   const [term, setTerm] = useState(q ?? "");
   const [kind, setKind] = useState<"all" | OrderKind>("all");
+  const [state, setState] = useState<"all" | OrderState>("active");
 
   const needle = (term || "").trim().toLowerCase();
-  const list = orders
+  const matches = orders
     .filter((o) => kind === "all" || o.order_kind === kind)
     .filter((o) =>
       !needle
@@ -59,6 +69,11 @@ function OrdersPage() {
             v.toLowerCase().includes(needle),
           ),
     );
+  const list = matches.filter((o) => state === "all" || o.state === state);
+  const countOf = (s: "all" | OrderState) =>
+    s === "all" ? matches.length : matches.filter((o) => o.state === s).length;
+  /** طلبات تطابق البحث لكنها مخفية بفلتر الحالة */
+  const hidden = matches.length - list.length;
 
   return (
     <AppShell
@@ -102,13 +117,40 @@ function OrdersPage() {
             </button>
           ))}
         </div>
+        <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-paper p-1">
+          {STATE_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setState(f.key)}
+              className={`flex-1 rounded-lg px-3 py-2 text-center text-[13px] ${
+                state === f.key
+                  ? "bg-goldsoft/60 font-medium text-ink ring-1 ring-black/5"
+                  : "text-muted-foreground hover:text-ink"
+              }`}
+            >
+              {f.label} <span className="num">({countOf(f.key).toLocaleString("ar-EG")})</span>
+            </button>
+          ))}
+        </div>
+        {needle && hidden > 0 && state !== "all" && (
+          <button type="button" onClick={() => setState("all")} className="text-[13px] text-gold">
+            فيه {hidden.toLocaleString("ar-EG")} طلب بحالة ثانية يطابق البحث — اعرضها
+          </button>
+        )}
       </div>
 
       <Card>
         {isLoading ? (
           <Empty>جاري التحميل…</Empty>
         ) : list.length === 0 ? (
-          <Empty>لا توجد نتائج مطابقة.</Empty>
+          <Empty>
+            {needle
+              ? "لا توجد نتائج مطابقة."
+              : state === "active"
+                ? "ما فيه طلبات قيد التنفيذ. الطلبات المسلَّمة تحت «المسلَّمة»."
+                : "لا توجد طلبات بهذي الحالة."}
+          </Empty>
         ) : (
           <ul className="divide-y divide-line">
             {list.map((o) => (

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { ChecklistSheet, type ChecklistGroup } from "@/components/ChecklistSheet";
+import { DeliveryDue } from "@/components/goods/DeliveryDue";
 import { FittingReturnSheet, LatestFitting } from "@/components/goods/Fitting";
 import { GoodsDetailSheet, type GoodsPlace } from "@/components/goods/GoodsDetailSheet";
 import { GoodsItemSheet } from "@/components/goods/GoodsItemSheet";
@@ -22,7 +23,7 @@ import { SaleSheet } from "@/components/goods/SaleSheet";
 import { Btn, Card, Chip, Empty, Stat } from "@/components/kit";
 import { StockTabs } from "@/components/StockTabs";
 import { useCurrentAccount } from "@/hooks/useSession";
-import { fmtDate, fmtDateTime, itemTypeLabel } from "@/lib/atelier";
+import { fmtDate, fmtDateTime, itemTypeLabel, money } from "@/lib/atelier";
 import { branchLabel, type Branch } from "@/lib/branches";
 import { useItemTypes, useStageTemplates } from "@/lib/data";
 import {
@@ -587,7 +588,22 @@ function GoodsPage() {
           pending={deliver.isPending}
           onClose={() => setDelivering(null)}
           onConfirm={confirmDeliver}
-        />
+        >
+          <DeliveryDue
+            total={delivering.total_amount}
+            paid={delivering.paid_amount}
+            hasDue={delivering.has_due}
+          />
+          {delivering.has_due && (
+            <Link
+              to="/orders/$orderId"
+              params={{ orderId: delivering.id }}
+              className="inline-block text-[13px] text-gold"
+            >
+              تسجيل الدفعة من صفحة الطلب
+            </Link>
+          )}
+        </ChecklistSheet>
       )}
 
       {sale && (
@@ -1269,7 +1285,18 @@ function BranchView({
                   </Link>
                 }
                 sub={partsOrDress(o.parts).join("، ")}
-                chips={o.event_date && <Chip tone="gold">المناسبة {fmtDate(o.event_date)}</Chip>}
+                chips={
+                  <>
+                    {o.has_due && (
+                      <Chip tone="late">
+                        {o.total_amount !== null && o.paid_amount !== null
+                          ? `المتبقي ${money(Number(o.total_amount) - Number(o.paid_amount))}`
+                          : "عليها مبلغ متبقي"}
+                      </Chip>
+                    )}
+                    {o.event_date && <Chip tone="gold">المناسبة {fmtDate(o.event_date)}</Chip>}
+                  </>
+                }
                 action={
                   canDeliver &&
                   (o.order_kind === "own" ? (

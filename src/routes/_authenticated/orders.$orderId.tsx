@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { Btn, Card, Chip, Empty, Field, PaymentChip, Sheet } from "@/components/kit";
 import { PaymentsCard } from "@/components/PaymentsCard";
 import { DressPartsCard } from "@/components/goods/DressPartsCard";
+import { DeliveryDue } from "@/components/goods/DeliveryDue";
 import { OrderFittingsCard } from "@/components/goods/Fitting";
 import { OrderAlterationsCard } from "@/components/alterations/OrderAlterationsCard";
 import { branchLabel, useBranches } from "@/lib/branches";
@@ -521,6 +522,7 @@ function ItemTypeValue({ id }: { id: string | null }) {
 
 /** بطاقة الإيجار: إدخال الفستان المخزون بعد التسليم، والإرجاع ورد التأمين */
 function RentalOrderCard({ order, canEdit }: { order: Order; canEdit: boolean }) {
+  const { can } = useCurrentAccount();
   const { data: dresses = [] } = useDressesOfOrder(order.id);
   const { data: records = [] } = useRecordsOfOrder(order.id);
   useRentalStatuses();
@@ -613,6 +615,11 @@ function RentalOrderCard({ order, canEdit }: { order: Order; canEdit: boolean })
                     </Field>
                     <MethodPicker value={depositMethod} onChange={setDepositMethod} />
                   </div>
+                  <DeliveryDue
+                    total={can("finance.view") ? Number(order.total_amount) : null}
+                    paid={can("finance.view") ? Number(order.deposit_amount) : null}
+                    hasDue={remaining(order) > 0}
+                  />
                 </>
               )}
               <Btn

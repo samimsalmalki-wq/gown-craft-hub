@@ -3,11 +3,12 @@ import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { ChecklistSheet } from "@/components/ChecklistSheet";
+import { DeliveryDue } from "@/components/goods/DeliveryDue";
 import { FittingReturnSheet } from "@/components/goods/Fitting";
 import { Btn, Card, Chip, Sheet } from "@/components/kit";
 import { PartsPicker } from "@/components/PartsPicker";
 import { useCurrentAccount } from "@/hooks/useSession";
-import type { Order } from "@/lib/atelier";
+import { remaining, type Order } from "@/lib/atelier";
 import {
   DRESS_LOCATION_LABEL,
   WORKSHOP,
@@ -180,7 +181,13 @@ export function DressPartsCard({ order }: { order: Order }) {
               },
             )
           }
-        />
+        >
+          <DeliveryDue
+            total={can("finance.view") ? Number(order.total_amount) : null}
+            paid={can("finance.view") ? Number(order.deposit_amount) : null}
+            hasDue={remaining(order) > 0}
+          />
+        </ChecklistSheet>
       )}
     </Card>
   );
