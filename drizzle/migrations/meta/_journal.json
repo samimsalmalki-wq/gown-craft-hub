@@ -239,6 +239,13 @@
       "when": 1791108000000,
       "tag": "0034_ready_orders_due",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1791111600000,
+      "tag": "0035_block_delivery_with_due",
+      "breakpoints": true
     }
   ]
 }

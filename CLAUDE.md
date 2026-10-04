@@ -61,6 +61,7 @@ TanStack Start (React 19, file-based routing, SSR via nitro), TanStack Query, Su
 - Rental copies (`rental_dresses`) have an owning branch (`branch_id`) and a current place (`location`: `workshop`, `transit`, `branch` or `returning`, with `location_branch_id`). They move in goods transfers (`goods_transfer_lines.rental_dress_id`, `send_goods`/`receive_goods`), must be at the booking branch before `deliver_rental`, and go back to the workshop automatically when `close_rental_return` gets the returned parts. Only admins/`branches.all` correct a place directly (`set_rental_copy_place`).
 - Sharing between branches: every team member sees all copies and their booking dates (`rental_busy`, no client data). Booking another branch's copy needs `rentals.share`; the booking and its money belong to the booking branch (`rental_records.branch_id`), and the copy stays owned by its branch.
 - Material cost of an issue linked to an order is posted on the order's branch (`post_material_entry`), next to the order's revenue.
+- An order is not delivered while money is due (`total_amount` > `deposit_amount`, except `rental_stock`): `private.guard_delivery_stage` rejects completing the last required stage and `private.guard_order_delivery` rejects any change to `delivered`. The delivery sheets show the remaining amount (`DeliveryDue`).
 - Files and images go in the Supabase storage bucket `order-files`, read via signed URLs (`useSignedUrls`).
 - WhatsApp is template-based `wa.me` links (`src/lib/whatsapp.ts`). Phones are normalized to the 966 country code.
 

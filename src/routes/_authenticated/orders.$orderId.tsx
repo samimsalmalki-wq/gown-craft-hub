@@ -624,7 +624,7 @@ function RentalOrderCard({ order, canEdit }: { order: Order; canEdit: boolean })
               )}
               <Btn
                 variant="gold"
-                disabled={deliver.isPending}
+                disabled={deliver.isPending || (!isStock && remaining(order) > 0)}
                 onClick={() =>
                   deliver
                     .mutateAsync({

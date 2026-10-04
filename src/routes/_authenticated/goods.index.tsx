@@ -1299,7 +1299,16 @@ function BranchView({
                 }
                 action={
                   canDeliver &&
-                  (o.order_kind === "own" ? (
+                  (o.has_due ? (
+                    // ما ينسلّم الطلب قبل ما يكتمل الدفع
+                    <Link
+                      to="/orders/$orderId"
+                      params={{ orderId: o.id }}
+                      className="btn-quiet min-h-9 px-3 text-[13px] text-late"
+                    >
+                      تحصيل المتبقي أول
+                    </Link>
+                  ) : o.order_kind === "own" ? (
                     <SmallBtn onClick={() => onDeliver(o)}>تسليم للعميلة</SmallBtn>
                   ) : (
                     <Link

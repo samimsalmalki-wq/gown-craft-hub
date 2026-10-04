@@ -49,6 +49,8 @@ export function DressPartsCard({ order }: { order: Order }) {
   const [fitting, setFitting] = useState(false);
 
   const loc = dressLocationOf(order.dress_location);
+  /** عليها مبلغ متبقي: ما ينسلّم الطلب قبل ما يكتمل الدفع */
+  const due = remaining(order) > 0;
   const parts = partsOrDress(order.parts);
   const notGiven = order.delivered_parts ? missingParts(parts, order.delivered_parts) : [];
 
@@ -111,9 +113,16 @@ export function DressPartsCard({ order }: { order: Order }) {
       )}
 
       {order.state === "active" && loc === "branch" && order.order_kind === "own" && canDeliver && (
-        <div className="border-t border-line p-4">
-          <Btn className="w-full" onClick={() => setDelivering(true)}>
-            تسليم للعميلة بقائمة القطع
+        <div className="space-y-3 border-t border-line p-4">
+          {due && (
+            <DeliveryDue
+              total={can("finance.view") ? Number(order.total_amount) : null}
+              paid={can("finance.view") ? Number(order.deposit_amount) : null}
+              hasDue
+            />
+          )}
+          <Btn className="w-full" disabled={due} onClick={() => setDelivering(true)}>
+            {due ? "التسليم بعد سداد المتبقي" : "تسليم للعميلة بقائمة القطع"}
           </Btn>
         </div>
       )}
@@ -185,7 +194,7 @@ export function DressPartsCard({ order }: { order: Order }) {
           <DeliveryDue
             total={can("finance.view") ? Number(order.total_amount) : null}
             paid={can("finance.view") ? Number(order.deposit_amount) : null}
-            hasDue={remaining(order) > 0}
+            hasDue={due}
           />
         </ChecklistSheet>
       )}
