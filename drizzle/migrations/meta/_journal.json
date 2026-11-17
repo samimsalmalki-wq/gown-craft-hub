@@ -225,6 +225,13 @@
       "when": 1790431200000,
       "tag": "0032_fitting_trip_stage_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794955602802,
+      "tag": "0033_tighten_roles_permissions_whatsapp_read",
+      "breakpoints": true
     }
   ]
 }
