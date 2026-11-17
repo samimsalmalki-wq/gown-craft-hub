@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -61,22 +61,6 @@ export type Database = {
       }
       alterations: {
         Row: {
-          admin_note: string | null
-          after_delivery: boolean
-          branch_id: string | null
-          client_result: string | null
-          fee: number
-          fee_invoice_id: string | null
-          fee_paid_at: string | null
-          history: Json
-          items: Json
-          pickup_date: string | null
-          printed_at: string | null
-          sketch_path: string | null
-          source_stage: string | null
-          step: string
-          supervisor_note: string | null
-          tailor: string | null
           assignee_id: string | null
           completed_at: string | null
           created_at: string
@@ -92,22 +76,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          admin_note?: string | null
-          after_delivery?: boolean
-          branch_id?: string | null
-          client_result?: string | null
-          fee?: number
-          fee_invoice_id?: string | null
-          fee_paid_at?: string | null
-          history?: Json
-          items?: Json
-          pickup_date?: string | null
-          printed_at?: string | null
-          sketch_path?: string | null
-          source_stage?: string | null
-          step?: string
-          supervisor_note?: string | null
-          tailor?: string | null
           assignee_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -123,22 +91,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          admin_note?: string | null
-          after_delivery?: boolean
-          branch_id?: string | null
-          client_result?: string | null
-          fee?: number
-          fee_invoice_id?: string | null
-          fee_paid_at?: string | null
-          history?: Json
-          items?: Json
-          pickup_date?: string | null
-          printed_at?: string | null
-          sketch_path?: string | null
-          source_stage?: string | null
-          step?: string
-          supervisor_note?: string | null
-          tailor?: string | null
           assignee_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -154,20 +106,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "alterations_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "alterations_fee_invoice_id_fkey"
-            columns: ["fee_invoice_id"]
-            isOneToOne: false
-            referencedRelation: "invoices"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "alterations_assignee_id_fkey"
             columns: ["assignee_id"]
@@ -248,7 +186,6 @@ export type Database = {
       }
       cash_accounts: {
         Row: {
-          is_deposit_box: boolean
           branch_id: string | null
           created_at: string
           gl_code: string
@@ -261,7 +198,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          is_deposit_box?: boolean
           branch_id?: string | null
           created_at?: string
           gl_code?: string
@@ -274,7 +210,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          is_deposit_box?: boolean
           branch_id?: string | null
           created_at?: string
           gl_code?: string
@@ -296,57 +231,8 @@ export type Database = {
           },
         ]
       }
-      cash_vouchers: {
-        Row: {
-          amount: number
-          branch_id: string | null
-          cash_account_id: string
-          created_at: string
-          created_by: string | null
-          id: string
-          invoice_id: string | null
-          kind: string
-          method: Database["public"]["Enums"]["payment_method"]
-          notes: string | null
-          paid_at: string
-          rental_record_id: string | null
-          voucher_no: string
-        }
-        Insert: {
-          amount: number
-          branch_id?: string | null
-          cash_account_id: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          invoice_id?: string | null
-          kind: string
-          method?: Database["public"]["Enums"]["payment_method"]
-          notes?: string | null
-          paid_at?: string
-          rental_record_id?: string | null
-          voucher_no: string
-        }
-        Update: {
-          amount?: number
-          branch_id?: string | null
-          cash_account_id?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          invoice_id?: string | null
-          kind?: string
-          method?: Database["public"]["Enums"]["payment_method"]
-          notes?: string | null
-          paid_at?: string
-          rental_record_id?: string | null
-          voucher_no?: string
-        }
-        Relationships: []
-      }
       cash_transactions: {
         Row: {
-          method: Database["public"]["Enums"]["payment_method"] | null
           account_id: string
           amount: number
           created_at: string
@@ -359,7 +245,6 @@ export type Database = {
           source_id: string | null
         }
         Insert: {
-          method?: Database["public"]["Enums"]["payment_method"] | null
           account_id: string
           amount: number
           created_at?: string
@@ -372,7 +257,6 @@ export type Database = {
           source_id?: string | null
         }
         Update: {
-          method?: Database["public"]["Enums"]["payment_method"] | null
           account_id?: string
           amount?: number
           created_at?: string
@@ -596,306 +480,33 @@ export type Database = {
           },
         ]
       }
-      goods_items: {
-        Row: {
-          code: string
-          color: string | null
-          cost: number
-          created_at: string
-          created_by: string | null
-          id: string
-          image_path: string | null
-          is_active: boolean
-          item_type_id: string | null
-          name: string
-          notes: string | null
-          parts: string[]
-          price: number
-          purpose: string
-          sellable: boolean
-          size: string | null
-          updated_at: string
-        }
-        Insert: {
-          code?: string
-          color?: string | null
-          cost?: number
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          image_path?: string | null
-          is_active?: boolean
-          item_type_id?: string | null
-          name: string
-          notes?: string | null
-          parts?: string[]
-          price?: number
-          purpose?: string
-          sellable?: boolean
-          size?: string | null
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          color?: string | null
-          cost?: number
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          image_path?: string | null
-          is_active?: boolean
-          item_type_id?: string | null
-          name?: string
-          notes?: string | null
-          parts?: string[]
-          price?: number
-          purpose?: string
-          sellable?: boolean
-          size?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "goods_items_item_type_id_fkey"
-            columns: ["item_type_id"]
-            isOneToOne: false
-            referencedRelation: "item_types"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      goods_movements: {
-        Row: {
-          at_workshop: boolean
-          branch_id: string
-          created_at: string
-          created_by: string | null
-          id: string
-          invoice_id: string | null
-          item_id: string
-          kind: string
-          notes: string | null
-          qty: number
-          transfer_id: string | null
-        }
-        Insert: {
-          at_workshop?: boolean
-          branch_id: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          invoice_id?: string | null
-          item_id: string
-          kind: string
-          notes?: string | null
-          qty: number
-          transfer_id?: string | null
-        }
-        Update: {
-          at_workshop?: boolean
-          branch_id?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          invoice_id?: string | null
-          item_id?: string
-          kind?: string
-          notes?: string | null
-          qty?: number
-          transfer_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "goods_movements_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "goods_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      goods_stock: {
-        Row: {
-          at_workshop: boolean
-          branch_id: string
-          item_id: string
-          qty: number
-          updated_at: string
-        }
-        Insert: {
-          at_workshop?: boolean
-          branch_id: string
-          item_id: string
-          qty?: number
-          updated_at?: string
-        }
-        Update: {
-          at_workshop?: boolean
-          branch_id?: string
-          item_id?: string
-          qty?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "goods_stock_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "goods_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "goods_stock_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      goods_transfer_lines: {
-        Row: {
-          checklist: string[]
-          followup_issue_id: string | null
-          id: string
-          is_count: boolean
-          item_id: string | null
-          order_id: string | null
-          position: number
-          qty: number
-          received: string[] | null
-          received_qty: number | null
-          sent: string[]
-          title: string
-          transfer_id: string
-          units: string[] | null
-        }
-        Insert: {
-          checklist?: string[]
-          followup_issue_id?: string | null
-          id?: string
-          is_count?: boolean
-          item_id?: string | null
-          order_id?: string | null
-          position?: number
-          qty?: number
-          received?: string[] | null
-          received_qty?: number | null
-          sent?: string[]
-          title: string
-          transfer_id: string
-          units?: string[] | null
-        }
-        Update: {
-          checklist?: string[]
-          followup_issue_id?: string | null
-          id?: string
-          is_count?: boolean
-          item_id?: string | null
-          order_id?: string | null
-          position?: number
-          qty?: number
-          received?: string[] | null
-          received_qty?: number | null
-          sent?: string[]
-          title?: string
-          transfer_id?: string
-          units?: string[] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "goods_transfer_lines_transfer_id_fkey"
-            columns: ["transfer_id"]
-            isOneToOne: false
-            referencedRelation: "goods_transfers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      goods_transfers: {
-        Row: {
-          from_branch_id: string
-          from_workshop: boolean
-          id: string
-          notes: string | null
-          received_at: string | null
-          received_by: string | null
-          sent_at: string
-          sent_by: string | null
-          status: string
-          to_branch_id: string
-          to_workshop: boolean
-          transfer_no: string
-        }
-        Insert: {
-          from_branch_id: string
-          from_workshop?: boolean
-          id?: string
-          notes?: string | null
-          received_at?: string | null
-          received_by?: string | null
-          sent_at?: string
-          sent_by?: string | null
-          status?: string
-          to_branch_id: string
-          to_workshop?: boolean
-          transfer_no: string
-        }
-        Update: {
-          from_branch_id?: string
-          from_workshop?: boolean
-          id?: string
-          notes?: string | null
-          received_at?: string | null
-          received_by?: string | null
-          sent_at?: string
-          sent_by?: string | null
-          status?: string
-          to_branch_id?: string
-          to_workshop?: boolean
-          transfer_no?: string
-        }
-        Relationships: []
-      }
       invoice_lines: {
         Row: {
           created_at: string
           description: string
-          goods_item_id: string | null
           id: string
           invoice_id: string
-          list_price: number | null
           position: number
           qty: number
-          returned_qty: number
           unit_price: number
-          unit_price_incl: number | null
         }
         Insert: {
           created_at?: string
           description: string
-          goods_item_id?: string | null
           id?: string
           invoice_id: string
-          list_price?: number | null
           position?: number
           qty?: number
-          returned_qty?: number
           unit_price?: number
-          unit_price_incl?: number | null
         }
         Update: {
           created_at?: string
           description?: string
-          goods_item_id?: string | null
           id?: string
           invoice_id?: string
-          list_price?: number | null
           position?: number
           qty?: number
-          returned_qty?: number
           unit_price?: number
-          unit_price_incl?: number | null
         }
         Relationships: [
           {
@@ -910,8 +521,6 @@ export type Database = {
       invoices: {
         Row: {
           branch_id: string | null
-          client_name: string | null
-          client_phone: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -931,8 +540,6 @@ export type Database = {
         }
         Insert: {
           branch_id?: string | null
-          client_name?: string | null
-          client_phone?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -952,8 +559,6 @@ export type Database = {
         }
         Update: {
           branch_id?: string | null
-          client_name?: string | null
-          client_phone?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1165,11 +770,9 @@ export type Database = {
       material_movements: {
         Row: {
           branch_id: string | null
-          consume_reserved: number | null
           created_at: string
           created_by: string | null
           id: string
-          is_transfer: boolean
           kind: Database["public"]["Enums"]["material_movement_kind"]
           material_id: string
           notes: string | null
@@ -1178,11 +781,9 @@ export type Database = {
         }
         Insert: {
           branch_id?: string | null
-          consume_reserved?: number | null
           created_at?: string
           created_by?: string | null
           id?: string
-          is_transfer?: boolean
           kind: Database["public"]["Enums"]["material_movement_kind"]
           material_id: string
           notes?: string | null
@@ -1191,11 +792,9 @@ export type Database = {
         }
         Update: {
           branch_id?: string | null
-          consume_reserved?: number | null
           created_at?: string
           created_by?: string | null
           id?: string
-          is_transfer?: boolean
           kind?: Database["public"]["Enums"]["material_movement_kind"]
           material_id?: string
           notes?: string | null
@@ -1536,66 +1135,8 @@ export type Database = {
           },
         ]
       }
-      order_fittings: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          items: Json
-          number: number
-          order_id: string
-          result: string
-          returned_parts: string[]
-          stage: string | null
-          supervisor_note: string
-          transfer_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          items?: Json
-          number: number
-          order_id: string
-          result: string
-          returned_parts?: string[]
-          stage?: string | null
-          supervisor_note: string
-          transfer_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          items?: Json
-          number?: number
-          order_id?: string
-          result?: string
-          returned_parts?: string[]
-          stage?: string | null
-          supervisor_note?: string
-          transfer_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "order_fittings_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_fittings_transfer_id_fkey"
-            columns: ["transfer_id"]
-            isOneToOne: false
-            referencedRelation: "goods_transfers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       order_materials: {
         Row: {
-          branch_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -1607,7 +1148,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1619,7 +1159,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1767,9 +1306,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           current_stage: string
-          delivered_parts: string[] | null
           deposit_amount: number
-          dress_location: string
           due_date: string | null
           embroidery_model: string | null
           event_date: string | null
@@ -1786,7 +1323,6 @@ export type Database = {
           notes: string | null
           order_kind: Database["public"]["Enums"]["order_kind"]
           order_no: string
-          parts: string[]
           payment_status: Database["public"]["Enums"]["payment_status"]
           scope_set_at: string | null
           scope_set_by: string | null
@@ -1804,9 +1340,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_stage?: string
-          delivered_parts?: string[] | null
           deposit_amount?: number
-          dress_location?: string
           due_date?: string | null
           embroidery_model?: string | null
           event_date?: string | null
@@ -1823,7 +1357,6 @@ export type Database = {
           notes?: string | null
           order_kind?: Database["public"]["Enums"]["order_kind"]
           order_no?: string
-          parts?: string[]
           payment_status?: Database["public"]["Enums"]["payment_status"]
           scope_set_at?: string | null
           scope_set_by?: string | null
@@ -1841,9 +1374,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_stage?: string
-          delivered_parts?: string[] | null
           deposit_amount?: number
-          dress_location?: string
           due_date?: string | null
           embroidery_model?: string | null
           event_date?: string | null
@@ -1860,7 +1391,6 @@ export type Database = {
           notes?: string | null
           order_kind?: Database["public"]["Enums"]["order_kind"]
           order_no?: string
-          parts?: string[]
           payment_status?: Database["public"]["Enums"]["payment_status"]
           scope_set_at?: string | null
           scope_set_by?: string | null
@@ -1900,64 +1430,14 @@ export type Database = {
           },
         ]
       }
-      part_issues: {
-        Row: {
-          branch_id: string | null
-          created_at: string
-          created_by: string | null
-          id: string
-          missing: string[]
-          order_id: string | null
-          rental_record_id: string | null
-          resolution: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          stage: string
-          title: string
-          transfer_line_id: string | null
-        }
-        Insert: {
-          branch_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          missing: string[]
-          order_id?: string | null
-          rental_record_id?: string | null
-          resolution?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          stage: string
-          title: string
-          transfer_line_id?: string | null
-        }
-        Update: {
-          branch_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          missing?: string[]
-          order_id?: string | null
-          rental_record_id?: string | null
-          resolution?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          stage?: string
-          title?: string
-          transfer_line_id?: string | null
-        }
-        Relationships: []
-      }
       payments: {
         Row: {
-          is_security_deposit: boolean
           amount: number
           branch_id: string | null
           cash_account_id: string | null
           created_at: string
           created_by: string | null
           id: string
-          invoice_id: string | null
           is_deposit: boolean
           method: Database["public"]["Enums"]["payment_method"]
           notes: string | null
@@ -1969,14 +1449,12 @@ export type Database = {
           scope: Database["public"]["Enums"]["finance_scope"]
         }
         Insert: {
-          is_security_deposit?: boolean
           amount: number
           branch_id?: string | null
           cash_account_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
-          invoice_id?: string | null
           is_deposit?: boolean
           method?: Database["public"]["Enums"]["payment_method"]
           notes?: string | null
@@ -1988,14 +1466,12 @@ export type Database = {
           scope?: Database["public"]["Enums"]["finance_scope"]
         }
         Update: {
-          is_security_deposit?: boolean
           amount?: number
           branch_id?: string | null
           cash_account_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
-          invoice_id?: string | null
           is_deposit?: boolean
           method?: Database["public"]["Enums"]["payment_method"]
           notes?: string | null
@@ -2108,57 +1584,6 @@ export type Database = {
           },
         ]
       }
-      receipt_templates: {
-        Row: {
-          amount_label: string
-          customer_signature_label: string
-          fields: string[]
-          footer: string | null
-          id: string
-          key: string
-          note: string | null
-          show_signatures: boolean
-          show_staff_name: boolean
-          staff_signature_label: string
-          subtitle: string | null
-          terms: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          amount_label: string
-          customer_signature_label?: string
-          fields?: string[]
-          footer?: string | null
-          id?: string
-          key: string
-          note?: string | null
-          show_signatures?: boolean
-          show_staff_name?: boolean
-          staff_signature_label?: string
-          subtitle?: string | null
-          terms?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          amount_label?: string
-          customer_signature_label?: string
-          fields?: string[]
-          footer?: string | null
-          id?: string
-          key?: string
-          note?: string | null
-          show_signatures?: boolean
-          show_staff_name?: boolean
-          staff_signature_label?: string
-          subtitle?: string | null
-          terms?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       rental_dresses: {
         Row: {
           branch_id: string | null
@@ -2171,11 +1596,10 @@ export type Database = {
           image_path: string | null
           model_no: string | null
           notes: string | null
-          parts: string[]
           rent_price: number
           size: string | null
           source_order_id: string | null
-          status: string
+          status: Database["public"]["Enums"]["rental_dress_status"]
           updated_at: string
         }
         Insert: {
@@ -2189,11 +1613,10 @@ export type Database = {
           image_path?: string | null
           model_no?: string | null
           notes?: string | null
-          parts?: string[]
           rent_price?: number
           size?: string | null
           source_order_id?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["rental_dress_status"]
           updated_at?: string
         }
         Update: {
@@ -2207,11 +1630,10 @@ export type Database = {
           image_path?: string | null
           model_no?: string | null
           notes?: string | null
-          parts?: string[]
           rent_price?: number
           size?: string | null
           source_order_id?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["rental_dress_status"]
           updated_at?: string
         }
         Relationships: [
@@ -2229,41 +1651,10 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "rental_dresses_status_fkey"
-            columns: ["status"]
-            isOneToOne: false
-            referencedRelation: "rental_statuses"
-            referencedColumns: ["key"]
-          },
         ]
       }
       rental_records: {
         Row: {
-          event_date: string | null
-          fitting2_date: string | null
-          measurements: Json
-          sketch_path: string | null
-          cancel_voucher_no: string | null
-          deposit_receipt_no: string | null
-          external_invoice_no: string | null
-          fitting_date: string | null
-          refund_method: Database["public"]["Enums"]["payment_method"] | null
-          refund_voucher_no: string | null
-          cancel_kept: number
-          cancel_reason: string | null
-          cancel_refund: number
-          cancel_requested_at: string | null
-          cancel_requested_by: string | null
-          cancelled_at: string | null
-          cancelled_by: string | null
-          delivered_at: string | null
-          delivered_by: string | null
-          deposit_method: Database["public"]["Enums"]["payment_method"] | null
-          deposit_paid: number
-          deposit_refunded: number
-          paid_amount: number
-          tracks_money: boolean
           amount: number
           branch_id: string | null
           client_name: string
@@ -2278,37 +1669,11 @@ export type Database = {
           notes: string | null
           order_id: string | null
           out_date: string
-          out_parts: string[] | null
           return_condition: string | null
-          return_parts: string[] | null
           returned_at: string | null
           updated_at: string
         }
         Insert: {
-          event_date?: string | null
-          fitting2_date?: string | null
-          measurements?: Json
-          sketch_path?: string | null
-          cancel_voucher_no?: string | null
-          deposit_receipt_no?: string | null
-          external_invoice_no?: string | null
-          fitting_date?: string | null
-          refund_method?: Database["public"]["Enums"]["payment_method"] | null
-          refund_voucher_no?: string | null
-          cancel_kept?: number
-          cancel_reason?: string | null
-          cancel_refund?: number
-          cancel_requested_at?: string | null
-          cancel_requested_by?: string | null
-          cancelled_at?: string | null
-          cancelled_by?: string | null
-          delivered_at?: string | null
-          delivered_by?: string | null
-          deposit_method?: Database["public"]["Enums"]["payment_method"] | null
-          deposit_paid?: number
-          deposit_refunded?: number
-          paid_amount?: number
-          tracks_money?: boolean
           amount?: number
           branch_id?: string | null
           client_name: string
@@ -2323,37 +1688,11 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           out_date?: string
-          out_parts?: string[] | null
           return_condition?: string | null
-          return_parts?: string[] | null
           returned_at?: string | null
           updated_at?: string
         }
         Update: {
-          event_date?: string | null
-          fitting2_date?: string | null
-          measurements?: Json
-          sketch_path?: string | null
-          cancel_voucher_no?: string | null
-          deposit_receipt_no?: string | null
-          external_invoice_no?: string | null
-          fitting_date?: string | null
-          refund_method?: Database["public"]["Enums"]["payment_method"] | null
-          refund_voucher_no?: string | null
-          cancel_kept?: number
-          cancel_reason?: string | null
-          cancel_refund?: number
-          cancel_requested_at?: string | null
-          cancel_requested_by?: string | null
-          cancelled_at?: string | null
-          cancelled_by?: string | null
-          delivered_at?: string | null
-          delivered_by?: string | null
-          deposit_method?: Database["public"]["Enums"]["payment_method"] | null
-          deposit_paid?: number
-          deposit_refunded?: number
-          paid_amount?: number
-          tracks_money?: boolean
           amount?: number
           branch_id?: string | null
           client_name?: string
@@ -2368,9 +1707,7 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           out_date?: string
-          out_parts?: string[] | null
           return_condition?: string | null
-          return_parts?: string[] | null
           returned_at?: string | null
           updated_at?: string
         }
@@ -2397,42 +1734,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      rental_statuses: {
-        Row: {
-          bookable: boolean
-          created_at: string
-          id: string
-          is_builtin: boolean
-          key: string
-          label: string
-          position: number
-          tone: string
-          updated_at: string
-        }
-        Insert: {
-          bookable?: boolean
-          created_at?: string
-          id?: string
-          is_builtin?: boolean
-          key: string
-          label: string
-          position?: number
-          tone?: string
-          updated_at?: string
-        }
-        Update: {
-          bookable?: boolean
-          created_at?: string
-          id?: string
-          is_builtin?: boolean
-          key?: string
-          label?: string
-          position?: number
-          tone?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       role_permissions: {
         Row: {
@@ -2471,7 +1772,6 @@ export type Database = {
           is_builtin: boolean
           key: string
           label: string
-          material_categories: string[]
           position: number
           updated_at: string
         }
@@ -2482,7 +1782,6 @@ export type Database = {
           is_builtin?: boolean
           key: string
           label: string
-          material_categories?: string[]
           position?: number
           updated_at?: string
         }
@@ -2493,92 +1792,8 @@ export type Database = {
           is_builtin?: boolean
           key?: string
           label?: string
-          material_categories?: string[]
           position?: number
           updated_at?: string
-        }
-        Relationships: []
-      }
-      sale_return_lines: {
-        Row: {
-          goods_item_id: string | null
-          id: string
-          invoice_line_id: string
-          qty: number
-          return_id: string
-          unit_price_incl: number
-        }
-        Insert: {
-          goods_item_id?: string | null
-          id?: string
-          invoice_line_id: string
-          qty: number
-          return_id: string
-          unit_price_incl?: number
-        }
-        Update: {
-          goods_item_id?: string | null
-          id?: string
-          invoice_line_id?: string
-          qty?: number
-          return_id?: string
-          unit_price_incl?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sale_return_lines_return_id_fkey"
-            columns: ["return_id"]
-            isOneToOne: false
-            referencedRelation: "sale_returns"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sale_returns: {
-        Row: {
-          branch_id: string | null
-          cash_account_id: string | null
-          created_at: string
-          created_by: string | null
-          id: string
-          invoice_id: string
-          method: Database["public"]["Enums"]["payment_method"]
-          net: number
-          reason: string
-          return_no: string
-          total: number
-          vat: number
-          voucher_no: string | null
-        }
-        Insert: {
-          branch_id?: string | null
-          cash_account_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          invoice_id: string
-          method?: Database["public"]["Enums"]["payment_method"]
-          net?: number
-          reason: string
-          return_no: string
-          total?: number
-          vat?: number
-          voucher_no?: string | null
-        }
-        Update: {
-          branch_id?: string | null
-          cash_account_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          invoice_id?: string
-          method?: Database["public"]["Enums"]["payment_method"]
-          net?: number
-          reason?: string
-          return_no?: string
-          total?: number
-          vat?: number
-          voucher_no?: string | null
         }
         Relationships: []
       }
@@ -2588,14 +1803,10 @@ export type Database = {
           expected_days: number
           id: string
           is_active: boolean
-          is_fitting: boolean
           is_scope_gate: boolean
           label: string
-          order_kinds: Database["public"]["Enums"]["order_kind"][]
           position: number
           requires_review: boolean
-          sends_for_fitting: boolean
-          sends_to_branch: boolean
           stage: string
           updated_at: string
         }
@@ -2604,14 +1815,10 @@ export type Database = {
           expected_days?: number
           id?: string
           is_active?: boolean
-          is_fitting?: boolean
           is_scope_gate?: boolean
           label: string
-          order_kinds?: Database["public"]["Enums"]["order_kind"][]
           position: number
           requires_review?: boolean
-          sends_for_fitting?: boolean
-          sends_to_branch?: boolean
           stage: string
           updated_at?: string
         }
@@ -2620,14 +1827,10 @@ export type Database = {
           expected_days?: number
           id?: string
           is_active?: boolean
-          is_fitting?: boolean
           is_scope_gate?: boolean
           label?: string
-          order_kinds?: Database["public"]["Enums"]["order_kind"][]
           position?: number
           requires_review?: boolean
-          sends_for_fitting?: boolean
-          sends_to_branch?: boolean
           stage?: string
           updated_at?: string
         }
@@ -2750,30 +1953,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tailors: {
-        Row: {
-          created_at: string
-          id: string
-          is_active: boolean
-          is_default: boolean
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          is_default?: boolean
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          is_default?: boolean
-          name?: string
-        }
-        Relationships: []
-      }
       tax_settings: {
         Row: {
           branch_id: string | null
@@ -2889,182 +2068,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      alteration_action: {
-        Args: {
-          p_action: string
-          p_fee?: number
-          p_id: string
-          p_note?: string
-          p_parts?: string[]
-          p_tailor?: string
-        }
-        Returns: undefined
-      }
-      collect_alteration_fee: {
-        Args: { p_id: string; p_method?: Database["public"]["Enums"]["payment_method"] }
-        Returns: string
-      }
-      request_alteration: {
-        Args: {
-          p_fee?: number
-          p_items: Json
-          p_order_id: string
-          p_pickup_date: string
-          p_sketch_path?: string
-        }
-        Returns: string
-      }
-      cash_box_totals: {
-        Args: { p_branch?: string }
-        Returns: { account_id: string; total_in: number; total_out: number }[]
-      }
-      finance_account_totals: {
-        Args: { p_branch?: string; p_from?: string; p_to?: string }
-        Returns: { account_id: string; credit: number; debit: number }[]
-      }
-      transfer_cash: {
-        Args: { p_amount: number; p_date?: string; p_from: string; p_note?: string; p_to: string }
-        Returns: undefined
-      }
-      deliver_order_parts: {
-        Args: { p_order_id: string; p_parts: string[] }
-        Returns: undefined
-      }
-      issue_order_material: {
-        Args: { p_qty: number; p_row_id: string }
-        Returns: undefined
-      }
-      release_order_material: {
-        Args: { p_row_id: string }
-        Returns: undefined
-      }
-      record_rental_parts: {
-        Args: { p_parts: string[]; p_record_id: string; p_stage: string }
-        Returns: undefined
-      }
-      reserve_order_material: {
-        Args: { p_material_id: string; p_notes?: string; p_order_id: string; p_qty: number }
-        Returns: undefined
-      }
-      return_sale: {
-        Args: {
-          p_invoice_id: string
-          p_lines: Json
-          p_method: Database["public"]["Enums"]["payment_method"]
-          p_reason: string
-        }
-        Returns: string
-      }
-      send_missing_parts: {
-        Args: { p_issue_id: string; p_notes?: string }
-        Returns: string
-      }
-      goods_adjust: {
-        Args: {
-          p_at_workshop: boolean
-          p_branch_id: string
-          p_delta: number
-          p_item_id: string
-          p_notes?: string
-        }
-        Returns: undefined
-      }
-      ready_orders: {
-        Args: never
-        Returns: {
-          branch_id: string | null
-          client_name: string
-          client_phone: string | null
-          dress_location: string
-          due_date: string | null
-          event_date: string | null
-          for_fitting: boolean
-          id: string
-          order_kind: Database["public"]["Enums"]["order_kind"]
-          order_no: string
-          parts: string[]
-        }[]
-      }
-      receive_goods: {
-        Args: { p_lines: Json; p_transfer_id: string }
-        Returns: undefined
-      }
-      return_from_fitting: {
-        Args: {
-          p_items: Json
-          p_note: string
-          p_order_id: string
-          p_parts: string[]
-          p_result: string
-        }
-        Returns: string
-      }
-      resolve_part_issue: {
-        Args: { p_issue_id: string; p_note?: string }
-        Returns: undefined
-      }
-      sell_goods: {
-        Args: {
-          p_branch_id: string
-          p_client_name: string
-          p_client_phone: string
-          p_lines: Json
-          p_method: Database["public"]["Enums"]["payment_method"]
-          p_notes?: string
-        }
-        Returns: string
-      }
-      send_goods: {
-        Args: {
-          p_from_branch: string
-          p_from_workshop: boolean
-          p_lines: Json
-          p_notes?: string
-          p_to_branch: string
-        }
-        Returns: string
-      }
-      book_rental: {
-        Args: {
-          p_amount: number
-          p_client_name: string
-          p_client_phone: string
-          p_deposit_amount: number
-          p_dress_id: string
-          p_due_date: string
-          p_fitting_date?: string
-          p_invoice_no?: string
-          p_method?: Database["public"]["Enums"]["payment_method"]
-          p_notes?: string
-          p_out_date: string
-          p_paid?: number
-        }
-        Returns: string
-      }
-      decide_rental_cancel: {
-        Args: {
-          p_cancel: boolean
-          p_method?: Database["public"]["Enums"]["payment_method"]
-          p_note?: string
-          p_record_id: string
-          p_refund?: number
-        }
-        Returns: undefined
-      }
-      deliver_rental: {
-        Args: {
-          p_deposit_method?: Database["public"]["Enums"]["payment_method"]
-          p_deposit_paid?: number
-          p_record_id: string
-          p_rent_method?: Database["public"]["Enums"]["payment_method"]
-          p_rent_paid?: number
-        }
-        Returns: undefined
-      }
-      request_rental_cancel: {
-        Args: { p_reason?: string; p_record_id: string }
-        Returns: undefined
-      }
       add_journal_entry: {
         Args: { _entry_date: string; _lines: Json; _memo: string }
         Returns: string
@@ -3098,7 +2101,6 @@ export type Database = {
         Args: {
           p_condition?: string
           p_damage?: number
-          p_method?: Database["public"]["Enums"]["payment_method"]
           p_note?: string
           p_record_id: string
         }
@@ -3109,12 +2111,7 @@ export type Database = {
         Returns: undefined
       }
       deliver_rental_order: {
-        Args: {
-          p_deposit_method?: Database["public"]["Enums"]["payment_method"]
-          p_deposit_paid?: number
-          p_due_date?: string
-          p_order_id: string
-        }
+        Args: { p_due_date?: string; p_order_id: string }
         Returns: string
       }
       reorder_stage_templates: { Args: { p_ids: string[] }; Returns: undefined }
@@ -3138,7 +2135,7 @@ export type Database = {
       app_role: "admin" | "staff" | "supervisor" | "cs"
       cash_account_kind: "cash" | "card" | "bank"
       cash_direction: "in" | "out"
-      finance_scope: "order" | "rental" | "sale" | "alteration"
+      finance_scope: "order" | "rental"
       gl_account_type:
         | "asset"
         | "liability"
@@ -3317,7 +2314,7 @@ export const Constants = {
       app_role: ["admin", "staff", "supervisor", "cs"],
       cash_account_kind: ["cash", "card", "bank"],
       cash_direction: ["in", "out"],
-      finance_scope: ["order", "rental", "sale", "alteration"],
+      finance_scope: ["order", "rental"],
       gl_account_type: [
         "asset",
         "liability",
